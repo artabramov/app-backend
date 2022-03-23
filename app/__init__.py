@@ -1,7 +1,10 @@
 from flask import Flask
+import connexion
 
-app = Flask(__name__)
+app = connexion.App(__name__, specification_dir='./swagger/')
+app.add_api('swagger.yml')
+#app = Flask(__name__)
 
-@app.route('/')
+#@app.route('/')
 def hello():
-    return 'hello'
+    return 'hello2'
