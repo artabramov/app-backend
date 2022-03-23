@@ -1,0 +1,3 @@
+.htaccess
+venv/
+__pycache__/
