@@ -1,0 +1,20 @@
+openapi: 3.0.3
+
+info:
+  title: Sample REST APIs using Flask, OpenAPI and Connexion
+  version: "1.0.0"
+
+paths:
+  /hi:
+    get:
+      operationId: hello.hi
+      description: Returns all pets from the system that the user has access to
+      responses:
+        '200':
+          description: A list of pets.
+          content:
+            application/json:
+              schema:
+                type: array
+
+
