@@ -7,7 +7,7 @@ info:
 paths:
   /hi:
     get:
-      operationId: hello.hi
+      operationId: routes.hello.hi
       description: Returns all pets from the system that the user has access to
       responses:
         '200':
