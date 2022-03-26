@@ -6,6 +6,6 @@ def hi():
     #from app import log
 
     #log.debug('hi')
-    return 'hi'
+    return 'hi2'
 
 
