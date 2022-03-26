@@ -1,3 +1,4 @@
+"""
 from .config import Config
 from flask import Flask
 import connexion
@@ -7,8 +8,8 @@ connexion_app.add_api('swagger.yml')
 
 app = connexion_app.app
 app.config.from_object(Config)
-
 """
+
 from .config import Config
 from flask import Flask
 
@@ -18,4 +19,4 @@ app.config.from_object(Config)
 @app.route('/hi')
 def hi():
     return 'hi2!'
-"""
+

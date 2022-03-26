@@ -5,17 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Flask",
+            "name": "Python: Connexion",
             "type": "python",
             "request": "launch",
-            "module": "flask",
+            "module": "connexion",
             "env": {
                 "FLASK_APP": "/app/app/__init__.py",
-                "FLASK_ENV": "development"
+                "FLASK_ENV": "development",
+                "FLASK_DEBUG": "1"
             },
             "args": [
                 "run",
-                "--no-debugger"
+                "/app/app/swagger.yml",
+                "--port",
+                "5000"
             ],
             "jinja": true
         }
