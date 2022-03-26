@@ -1,8 +1,8 @@
 class Config:
-    #DEBUG = True
+    DEBUG = True
 
     LOG_FILENAME = '/var/log/app/app.log'
-    LOG_FORMAT = '[%(asctime)s] %(method)s: [%(url)s] %(levelname)s: [%(name)s in %(filename)s, line %(lineno)d: "%(message)s"]'
+    LOG_FORMAT = '[%(asctime)s] level: "%(levelname)s", uuid: "%(uuid)s", duration: "%(duration)s", url: "%(url)s", method: "%(method)s", headers: "%(headers)s", [%(name)s in %(filename)s, line %(lineno)d: "%(message)s"]'
     LOG_ROTATE_WHEN = 'H'
     LOG_BACKUP_COUNT = 24
 
