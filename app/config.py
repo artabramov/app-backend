@@ -1,5 +1,5 @@
 class Config:
-    DEBUG = True
+    #DEBUG = True
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/echidna'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

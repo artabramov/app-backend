@@ -1,6 +1,8 @@
 from flask import request
-from app import tmp
+
 
 def hi():
-    a = 1
-    return 'hi!'
+    from app import app
+    return 'connexion'
+
+

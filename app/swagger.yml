@@ -7,7 +7,8 @@ info:
 paths:
   /hi:
     get:
-      operationId: routes.hello.hi
+      x-openapi-router-controller: routes.hello
+      operationId: hi
       description: Returns all pets from the system that the user has access to
       responses:
         '200':
