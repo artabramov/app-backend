@@ -1,6 +1,11 @@
 class Config:
     #DEBUG = True
 
+    LOG_FILENAME = '/var/log/app/app.log'
+    LOG_FORMAT = '[%(asctime)s] %(method)s: [%(url)s] %(levelname)s: [%(name)s in %(filename)s, line %(lineno)d: "%(message)s"]'
+    LOG_ROTATE_WHEN = 'H'
+    LOG_BACKUP_COUNT = 24
+
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/echidna'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
