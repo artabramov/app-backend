@@ -3,9 +3,9 @@ from flask import request
 
 def hi():
     from app import a
-    from app import log
+    #from app import log
 
-    log.debug('hi')
+    #log.debug('hi')
     return 'hi'
 
 

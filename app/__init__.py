@@ -1,6 +1,6 @@
 from .config import Config
 from flask import Flask
-from app.core.logger import logger
+#from app.core.logger import logger
 
 #from core.connexion import ConnexionApp
 #connexion_app = ConnexionApp(__name__, specification_dir='./')
@@ -19,7 +19,7 @@ def before_request():
     print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
 
-log = logger(app)
+#log = logger(app)
 
 """
 app = Flask(__name__)
