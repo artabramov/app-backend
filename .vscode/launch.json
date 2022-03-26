@@ -10,7 +10,7 @@
             "request": "launch",
             "module": "connexion",
             "env": {
-                "FLASK_APP": "/app/app/app.py",
+                "FLASK_APP": "/app/app/__init__.py",
                 "FLASK_ENV": "development",
                 "FLASK_DEBUG": "1"
             },
