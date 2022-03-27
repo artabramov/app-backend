@@ -10,7 +10,7 @@ class Config:
     LOG_SENSITIVE_KEYS = ['token']
     LOG_SENSITIVE_VALUE = '*' * 8
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/echidna'
+    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/owl'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     CELERY_BROKER_URL = 'amqp://guest:guest@host.docker.internal:5672//'
