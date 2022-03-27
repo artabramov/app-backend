@@ -1,11 +1,10 @@
 from flask import request, g
 from uuid import uuid4
 from time import time
-#from logging.handlers import TimedRotatingFileHandler
 from logging.handlers import RotatingFileHandler
 import logging
 import json
-import os
+import os, pwd, grp
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -18,7 +17,10 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 
 
 def create_logger(app):
-    os.chmod(app.config['LOG_PATH'], 0o777)
+    for file in os.listdir(app.config['LOG_PATH']):
+        uid = pwd.getpwnam('www-data').pw_uid
+        gid = grp.getgrnam('www-data').gr_gid
+        os.chown(app.config['LOG_PATH'] + file, uid, gid)
     
     class ContextualFilter(logging.Filter):
         def filter(self, message):
