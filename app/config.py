@@ -2,10 +2,11 @@ class Config:
     #DEBUG = True
 
     LOG_LEVEL = 'DEBUG'
-    LOG_FILENAME = '/var/log/app/app.log'
+    LOG_PATH = '/var/log/app/'
+    LOG_FILENAME = 'app.log'
     LOG_FORMAT = 'time: "%(asctime)s", duration: "%(duration)s", level: "%(levelname)s", uuid: "%(uuid)s", url: "%(url)s", method: "%(method)s", headers: "%(headers)s", name: "%(name)s", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"'
-    LOG_ROTATE_WHEN = 'H'
-    LOG_BACKUP_COUNT = 24
+    LOG_MAX_BYTES = 1024 * 1024 * 1 # 1 MB
+    LOG_BACKUP_COUNT = 5
     LOG_SENSITIVE_KEYS = ['token']
     LOG_SENSITIVE_VALUE = '*' * 8
 

@@ -1,9 +1,11 @@
 from flask import request, g
 from uuid import uuid4
 from time import time
-from logging.handlers import TimedRotatingFileHandler
+#from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 import logging
 import json
+import os
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -16,7 +18,7 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 
 
 def create_logger(app):
-
+    os.chmod(app.config['LOG_PATH'], 0o777)
     
     class ContextualFilter(logging.Filter):
         def filter(self, message):
@@ -30,9 +32,9 @@ def create_logger(app):
     while app.logger.hasHandlers():
         app.logger.removeHandler(app.logger.handlers[0])
 
-    handler = TimedRotatingFileHandler(
-        filename=app.config['LOG_FILENAME'], 
-        when=app.config['LOG_ROTATE_WHEN'], 
+    handler = RotatingFileHandler(
+        filename=app.config['LOG_PATH'] + app.config['LOG_FILENAME'], 
+        maxBytes=app.config['LOG_MAX_BYTES'], 
         backupCount=app.config['LOG_BACKUP_COUNT'])
     handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
 
