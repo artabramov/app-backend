@@ -11,10 +11,10 @@ db = SQLAlchemy(app)
 log = create_logger(app)
 
 from app.routes.hello import hi
-from app.routes.user import user_post
+from app.routes.user_post import user_post
 
-from app.models import user
-db.create_all()
+#from app.models import user_model
+#db.create_all()
 
 
 

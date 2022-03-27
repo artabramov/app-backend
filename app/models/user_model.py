@@ -13,7 +13,7 @@ class UserStatus(enum.Enum):
     trash = 3
 
 
-class User(BaseModel):
+class UserModel(BaseModel):
     __tablename__ = 'users'
     __user_password = ''
     restored_date = db.Column(db.DateTime(timezone=False), server_default='1970-01-01 00:00:00', nullable=False)
