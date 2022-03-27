@@ -1,8 +1,18 @@
-from flask import request, g, has_request_context
-import logging
-from logging.handlers import TimedRotatingFileHandler
+from flask import request, g
 from uuid import uuid4
 from time import time
+from logging.handlers import TimedRotatingFileHandler
+import logging
+import json
+
+
+def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
+    for key, value in original_dict.items():
+        if isinstance(value, dict):
+            result_dict[key] = obscure_data(result_dict.get(key, {}), value, sensitive_keys, sensitive_value)
+        else:
+            result_dict[key] = sensitive_value if key.casefold() in sensitive_keys else value
+    return result_dict
 
 
 def create_logger(app):
@@ -27,15 +37,19 @@ def create_logger(app):
 
     app.logger.addHandler(handler)
     app.logger.addFilter(ContextualFilter())
+
+    level = logging.getLevelName(app.config['LOG_LEVEL'])
+    app.logger.setLevel(level)
     
     @app.before_request
     def before_request():
         g.request_context = RequestContext(request)
 
-
     @app.after_request
     def after_request(response):
-        app.logger.debug('debug')
+        response_dict = json.loads(response.data)
+        response_dict = obscure_data(dict(), response_dict, app.config['LOG_SENSITIVE_KEYS'], app.config['LOG_SENSITIVE_VALUE'])
+        app.logger.debug(str(response_dict))
         return response
 
     return app.logger

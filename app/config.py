@@ -1,10 +1,13 @@
 class Config:
-    DEBUG = True
+    #DEBUG = True
 
+    LOG_LEVEL = 'DEBUG'
     LOG_FILENAME = '/var/log/app/app.log'
-    LOG_FORMAT = '[%(asctime)s] level: "%(levelname)s", uuid: "%(uuid)s", duration: "%(duration)s", url: "%(url)s", method: "%(method)s", headers: "%(headers)s", [%(name)s in %(filename)s, line %(lineno)d: "%(message)s"]'
+    LOG_FORMAT = 'time: "%(asctime)s", duration: "%(duration)s", level: "%(levelname)s", uuid: "%(uuid)s", url: "%(url)s", method: "%(method)s", headers: "%(headers)s", name: "%(name)s", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"'
     LOG_ROTATE_WHEN = 'H'
     LOG_BACKUP_COUNT = 24
+    LOG_SENSITIVE_KEYS = ['token']
+    LOG_SENSITIVE_VALUE = '*' * 8
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/echidna'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
