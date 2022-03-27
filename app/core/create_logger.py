@@ -17,6 +17,7 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 
 def create_logger(app):
 
+    
     class ContextualFilter(logging.Filter):
         def filter(self, message):
             message.uuid = g.request_context.uuid
@@ -29,7 +30,7 @@ def create_logger(app):
     while app.logger.hasHandlers():
         app.logger.removeHandler(app.logger.handlers[0])
 
-    handler = logging.handlers.TimedRotatingFileHandler(
+    handler = TimedRotatingFileHandler(
         filename=app.config['LOG_FILENAME'], 
         when=app.config['LOG_ROTATE_WHEN'], 
         backupCount=app.config['LOG_BACKUP_COUNT'])
@@ -40,7 +41,7 @@ def create_logger(app):
 
     level = logging.getLevelName(app.config['LOG_LEVEL'])
     app.logger.setLevel(level)
-    
+        
     @app.before_request
     def before_request():
         g.request_context = RequestContext(request)
