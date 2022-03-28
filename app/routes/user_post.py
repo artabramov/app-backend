@@ -9,6 +9,7 @@ from marshmallow import ValidationError
 
 @app.route('/user/', methods=['POST'])
 def user_post():
+    user_status = request.args.get('user_status', '')
     user_email = request.args.get('user_email', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
@@ -17,13 +18,14 @@ def user_post():
         UserSchema().load({
             'user_email': user_email,
             'user_name': user_name,
-            'user_pass': user_pass
+            'user_pass': user_pass,
+            'user_status': user_status,
         })
     except ValidationError as e:
         return response({}, e.messages, 500)
 
     try:
-        user = UserModel(user_email, user_name, user_pass)
+        user = UserModel(user_email, user_name, user_pass, user_status)
         db.session.add(user)
         db.session.flush()
         db.session.commit()

@@ -1,4 +1,4 @@
-import enum
+from enum import Enum
 import hashlib
 from app import db
 from app.models.base_model import BaseModel
@@ -6,7 +6,7 @@ from app.models.base_model import BaseModel
 PASS_HASH_SALT = '123'
 
 
-class UserStatus(enum.Enum):
+class UserStatus(Enum):
     pending = 1
     approved = 2
     trash = 3
