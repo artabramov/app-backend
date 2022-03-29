@@ -38,3 +38,21 @@ def user_post():
         return response({}, {'db': ['Internal Server Error']}, 500)
 
     return response({'user': {'id': user.id}}, {}, 201)
+
+
+@app.route('/user/<int:user_id>', methods=['GET'])
+def user_get(user_id):
+    try:
+        user = UserModel.query.filter_by(id=user_id).first()
+    except SQLAlchemyError as e:
+        log.error(e.orig.msg)
+        db.session.rollback()
+        return response({}, {'db': ['Internal Server Error']}, 500)
+
+    if not user:
+        return response({}, {'id': ['Not Found']}, 404)
+
+    return response({'user': {'id': user.id, 'user_email': user.user_email}}, {}, 200)
+    #'user': {'id': user.id, 'user_email': user.user_email}
+
+
