@@ -2,6 +2,7 @@ from enum import Enum
 import hashlib
 from app import db
 from app.core.model import BaseModel
+from werkzeug.exceptions import Conflict
 
 PASS_HASH_SALT = '123'
 
@@ -40,3 +41,9 @@ class UserModel(BaseModel):
         encoded_pass = (user_email + user_pass + PASS_HASH_SALT).encode()
         hash_obj = hashlib.sha256(encoded_pass)
         return hash_obj.hexdigest()
+
+
+@db.event.listens_for(UserModel, 'before_insert')
+def before_insert_user(mapper, connect, user):
+    if UserModel.query.filter_by(user_email=user.user_email).first():
+        raise Conflict({'user_email': ['Already exists.']})
