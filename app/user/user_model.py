@@ -1,7 +1,7 @@
 from enum import Enum
 import hashlib
 from app import db
-from app.models.base_model import BaseModel
+from app.core.model import BaseModel
 
 PASS_HASH_SALT = '123'
 
