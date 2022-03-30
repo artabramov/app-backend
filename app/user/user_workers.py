@@ -1,16 +1,15 @@
 from flask import request
 from sqlalchemy.exc import SQLAlchemyError
-from app import app, db, log
+from app import app, db, celery, log
 from app.core.response import response
 from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
-from app.user.user_workers import user_insert
 from marshmallow import ValidationError
 from werkzeug.exceptions import Conflict
 
 
-@app.route('/user/', methods=['POST'])
-def user_post():
+@celery.task(name='app.user_insert', time_limit=10, ignore_result=False)
+def user_insert(user_email, user_password, user_name):
     user_email = request.args.get('user_email', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
@@ -39,29 +38,3 @@ def user_post():
         return response({}, {'db': ['Internal Server Error']}, 500)
 
     return response({'user': {'id': user.id}}, {}, 201)
-
-
-@app.route('/user/<int:user_id>', methods=['GET'])
-def user_get(user_id):
-    try:
-        user = UserModel.query.filter_by(id=user_id).first()
-    except SQLAlchemyError as e:
-        log.error(e.orig.msg)
-        db.session.rollback()
-        return response({}, {'db': ['Internal Server Error']}, 500)
-
-    if not user:
-        return response({}, {'id': ['Not Found']}, 404)
-
-    return response({'user': {'id': user.id, 'user_email': user.user_email}}, {}, 200)
-
-
-@app.route('/user2/', methods=['POST'])
-def user_post2():
-    async_result = user_insert.apply_async(args=[
-        request.args.get('user_email', None),
-        request.args.get('user_password', None),
-        request.args.get('user_name', None),
-    ])
-
-    return response({}, {}, 200)
