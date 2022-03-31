@@ -10,12 +10,12 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 
 celery = Celery(
-    broker=app.config['CELERY_BROKER_URL'],
-    backend=app.config['CELERY_RESULT_BACKEND'],
-    include=app.config['CELERY_TASK_LIST'],
+    'tasks',
+    broker='redis://host.docker.internal:6379/0',
+    backend='redis://host.docker.internal:6379/1'
 )
-celery.conf.task_routes = app.config['CELERY_TASK_ROUTES']
-celery.conf.result_expires = app.config['CELERY_RESULT_EXPIRES']
+
+
 
 log = create_logger(app)
 

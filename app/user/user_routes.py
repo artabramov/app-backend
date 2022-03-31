@@ -64,4 +64,4 @@ def user_post2():
         request.args.get('user_name', None),
     ])
 
-    return response({}, {}, 200)
+    return response({'async_id': async_result.id}, {}, 200)

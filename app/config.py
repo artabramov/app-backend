@@ -15,7 +15,7 @@ class Config:
 
     CELERY_BROKER_URL = 'redis://host.docker.internal:6379/0'
     CELERY_RESULT_BACKEND = 'redis://host.docker.internal:6379/1'
-    CELERY_TASK_LIST = ['app.tasks']
+    CELERY_TASK_LIST = ['app.user']
     CELERY_RESULT_EXPIRES = 30
     CELERY_TASK_ROUTES = {
         'app.*': {'queue': 'user'}
