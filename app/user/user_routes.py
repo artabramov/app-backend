@@ -4,7 +4,7 @@ from app import app, db, log
 from app.core.response import response
 from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
-from app.user.user_workers import user_insert
+from app.user.user_tasks import user_insert
 from marshmallow import ValidationError
 from werkzeug.exceptions import Conflict
 
@@ -62,6 +62,6 @@ def user_post2():
         request.args.get('user_email', None),
         request.args.get('user_password', None),
         request.args.get('user_name', None),
-    ])
+    ]).get(timeout=10)
 
-    return response({'async_id': async_result.id}, {}, 200)
+    return response(async_result)
