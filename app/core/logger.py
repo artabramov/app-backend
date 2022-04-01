@@ -3,7 +3,7 @@ from time import time
 from logging.handlers import RotatingFileHandler
 import logging
 import json
-#import os, pwd, grp
+import os, pwd, grp
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -18,7 +18,11 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 def create_logger(app):
     #log_file = app.config['LOG_PATH'] + app.config['LOG_FILENAME']
 
-
+    if not os.path.isfile(app.config['LOG_FILENAME']):
+        uid = pwd.getpwnam('www-data').pw_uid
+        gid = grp.getgrnam('root').gr_gid
+        open(app.config['LOG_FILENAME'], 'a').close()
+        os.chown(app.config['LOG_FILENAME'], uid, gid)
 
     #for file in os.listdir(app.config['LOG_PATH']):
     #    uid = pwd.getpwnam('www-data').pw_uid
