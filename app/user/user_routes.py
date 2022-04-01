@@ -58,10 +58,37 @@ def user_get(user_id):
 
 @app.route('/user2/', methods=['POST'])
 def user_post2():
+    user_email = request.args.get('user_email', '')
+    user_name = request.args.get('user_name', '')
+    user_pass = request.args.get('user_pass', '')
+    user_status = 'pending'
+
+    """
+    try:
+        user = UserModel(user_email, user_name, user_pass, user_status)
+        db.session.add(user)
+        db.session.flush()
+        db.session.commit()
+        return response({'user': {'id': user.id}}, {}, 201)
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return response({}, e.messages, 400)
+
+    except SQLAlchemyError as e:
+        log.error(e.orig.msg)
+        db.session.rollback()
+        return response({}, {'db': ['Internal Server Error']}, 500)
+    """
+    
+    log.debug('none')
+
     async_result = user_insert.apply_async(args=[
-        request.args.get('user_email', None),
-        request.args.get('user_password', None),
-        request.args.get('user_name', None),
+        user_email,
+        user_pass,
+        user_name,
+        user_status,
     ]).get(timeout=10)
 
     return response(async_result)
