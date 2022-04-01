@@ -14,10 +14,12 @@ db = SQLAlchemy(app)
 
 def make_celery():
     celery = Celery(
-        'app.tasks',
-        broker='redis://host.docker.internal:6379/0',
-        backend='redis://host.docker.internal:6379/1'
+        broker=app.config['CELERY_BROKER_URI'],
+        backend=app.config['CELERY_BACKEND_URI'],
+        include=app.config['CELERY_TASKS_LIST'],
     )
+    celery.conf.task_routes = app.config['CELERY_ROUTING_KEYS']
+    celery.conf.result_expires = app.config['CELERY_RESULT_EXPIRES']
     TaskBase = celery.Task
     class ContextTask(TaskBase):
         abstract = True
