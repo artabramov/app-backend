@@ -35,7 +35,7 @@ celery = make_celery()
 #if not os.path.isfile(app.config['LOG_FILENAME']):
 #    open(app.config['LOG_FILENAME'], 'a').close()
 #    os.chown(app.config['LOG_FILENAME'], uid, gid)
-#log = create_logger(app)
+log = create_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post
