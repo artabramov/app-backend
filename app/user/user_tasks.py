@@ -16,16 +16,16 @@ def user_insert(user_email, user_pass, user_name):
         return {'user': {'id': user.id}}, {}, 201
 
     except ValidationError as e:
-        log.debug(e.messages)
+        log.warning(e.messages)
         db.session.rollback()
         return {}, e.messages, 400
 
     except SQLAlchemyError as e:
-        log.error(e.orig.msg)
+        log.critical(e.orig.msg)
         db.session.rollback()
-        return {}, {'db': ['Internal Server Error']}, 500
+        return {}, {'db': ['Service Unavailable']}, 503
 
     except Exception as e:
-        log.error(e)
+        log.critical(e)
         db.session.rollback()
         return {}, {'db': ['Internal Server Error']}, 500

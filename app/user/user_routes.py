@@ -6,7 +6,7 @@ from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
 from app.user.user_tasks import user_insert
 from marshmallow import ValidationError
-from werkzeug.exceptions import Conflict
+from celery.exceptions import TimeoutError
 
 
 @app.route('/user/', methods=['POST'])
@@ -66,8 +66,14 @@ def user_post2():
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
 
-    async_result = user_insert.apply_async(args=[
-        user_email, user_pass, user_name
-    ]).get(timeout=10)
+    try:
+        async_result = user_insert.apply_async(args=[
+            user_email, user_pass, user_name
+        ]).get(timeout=5)
+        return response(async_result)
 
-    return response(async_result)
+    except TimeoutError as e:
+        log.critical(e)
+        return response({}, {'db': ['Gateway Timeout']}, 504)
+
+    
