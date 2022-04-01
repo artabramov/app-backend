@@ -3,7 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 from app.core.logger import create_logger
-#import os, pwd, grp
+import os, pwd, grp
 
 
 app = Flask(__name__)
