@@ -29,11 +29,11 @@ def make_celery():
 celery = make_celery()
 
 
-if not os.path.isfile(app.config['LOG_FILENAME']):
-    uid = pwd.getpwnam('www-data').pw_uid
-    gid = grp.getgrnam('root').gr_gid
-    open(app.config['LOG_FILENAME'], 'a').close()
-    os.chown(app.config['LOG_FILENAME'], uid, gid)
+#if not os.path.isfile(app.config['LOG_FILENAME']):
+#    uid = pwd.getpwnam('www-data').pw_uid
+#    gid = grp.getgrnam('root').gr_gid
+#    open(app.config['LOG_FILENAME'], 'a').close()
+#    os.chown(app.config['LOG_FILENAME'], uid, gid)
 log = create_logger(app)
 
 from app.hello.hello_routes import hi
