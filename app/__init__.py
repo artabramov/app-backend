@@ -3,6 +3,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 from app.core.logger import create_logger
+#import os, pwd, grp
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -27,7 +29,13 @@ def make_celery():
 celery = make_celery()
 
 
-log = create_logger(app)
+#uid = pwd.getpwnam('www-data').pw_uid
+#gid = grp.getgrnam('root').gr_gid
+#os.chown('/var/log/', uid, gid)
+#if not os.path.isfile(app.config['LOG_FILENAME']):
+#    open(app.config['LOG_FILENAME'], 'a').close()
+#    os.chown(app.config['LOG_FILENAME'], uid, gid)
+#log = create_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post

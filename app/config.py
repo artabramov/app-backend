@@ -7,8 +7,8 @@ class Config:
     IS_CELERY = sys.argv and sys.argv[0].endswith('celery') and 'worker' in sys.argv
 
     LOG_LEVEL = 'DEBUG'
-    LOG_PATH = '/var/log/app/'
-    LOG_FILENAME = 'app.log'
+    #LOG_PATH = '/var/log/app/'
+    LOG_FILENAME = '/var/log/app/app.log'
     if IS_CELERY:
         LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "celery", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"}'
     else:

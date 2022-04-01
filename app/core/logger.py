@@ -3,7 +3,7 @@ from time import time
 from logging.handlers import RotatingFileHandler
 import logging
 import json
-import os, pwd, grp
+#import os, pwd, grp
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -16,10 +16,14 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 
 
 def create_logger(app):
-    for file in os.listdir(app.config['LOG_PATH']):
-        uid = pwd.getpwnam('www-data').pw_uid
-        gid = grp.getgrnam('www-data').gr_gid
-        os.chown(app.config['LOG_PATH'] + file, uid, gid)
+    #log_file = app.config['LOG_PATH'] + app.config['LOG_FILENAME']
+
+
+
+    #for file in os.listdir(app.config['LOG_PATH']):
+    #    uid = pwd.getpwnam('www-data').pw_uid
+    #    gid = grp.getgrnam('www-data').gr_gid
+    #    os.chown(app.config['LOG_PATH'] + file, uid, gid)
     
     class ContextualFilter(logging.Filter):
         def filter(self, message):
@@ -34,7 +38,7 @@ def create_logger(app):
         app.logger.removeHandler(app.logger.handlers[0])
 
     handler = RotatingFileHandler(
-        filename=app.config['LOG_PATH'] + app.config['LOG_FILENAME'], 
+        filename=app.config['LOG_FILENAME'], 
         maxBytes=app.config['LOG_MAX_BYTES'], 
         backupCount=app.config['LOG_BACKUP_COUNT'])
     handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
