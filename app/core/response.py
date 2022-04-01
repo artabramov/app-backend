@@ -6,6 +6,7 @@ def response(data={}, errors={}, code=200):
             {
                 'data': data,
                 'errors': errors,
+                'user_token': 'askldfhaskdhfaskfd',
             }
         ),
         code,

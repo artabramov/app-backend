@@ -1,14 +1,22 @@
+import sys
+
+
 class Config:
     #DEBUG = True
+
+    IS_CELERY = sys.argv and sys.argv[0].endswith('celery') and 'worker' in sys.argv
 
     LOG_LEVEL = 'DEBUG'
     LOG_PATH = '/var/log/app/'
     LOG_FILENAME = 'app.log'
-    LOG_FORMAT = '{time: "%(asctime)s", duration: "%(duration)s", level: "%(levelname)s", uuid: "%(uuid)s", url: "%(url)s", method: "%(method)s", headers: "%(headers)s", name: "%(name)s", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"}'
-    LOG_MAX_BYTES = 1024 * 1024 * 1 # 1 MB
+    if IS_CELERY:
+        LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "celery", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"}'
+    else:
+        LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "app", duration: "%(duration)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", response: "%(message)s"}'
+    LOG_MAX_BYTES = 1024 * 20 # 20 KB
     LOG_BACKUP_COUNT = 5
-    LOG_SENSITIVE_KEYS = ['token']
-    LOG_SENSITIVE_VALUE = '*' * 8
+    LOG_SENSITIVE_KEYS = ['user_token']
+    LOG_SENSITIVE_VALUE = '*' * 4
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/owl'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

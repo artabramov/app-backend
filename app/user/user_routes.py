@@ -23,6 +23,7 @@ def user_post():
             'user_pass': user_pass,
             'user_status': user_status,
         })
+
     except ValidationError as e:
         return response({}, e.messages, 400)
 
@@ -31,8 +32,10 @@ def user_post():
         db.session.add(user)
         db.session.flush()
         db.session.commit()
+
     except Conflict as e:
         return response({}, e.description, 409)
+        
     except SQLAlchemyError as e:
         log.error(e.orig.msg)
         db.session.rollback()
@@ -45,6 +48,7 @@ def user_post():
 def user_get(user_id):
     try:
         user = UserModel.query.filter_by(id=user_id).first()
+
     except SQLAlchemyError as e:
         log.error(e.orig.msg)
         db.session.rollback()
@@ -61,34 +65,9 @@ def user_post2():
     user_email = request.args.get('user_email', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_status = 'pending'
-
-    """
-    try:
-        user = UserModel(user_email, user_name, user_pass, user_status)
-        db.session.add(user)
-        db.session.flush()
-        db.session.commit()
-        return response({'user': {'id': user.id}}, {}, 201)
-
-    except ValidationError as e:
-        log.debug(e.messages)
-        db.session.rollback()
-        return response({}, e.messages, 400)
-
-    except SQLAlchemyError as e:
-        log.error(e.orig.msg)
-        db.session.rollback()
-        return response({}, {'db': ['Internal Server Error']}, 500)
-    """
-    
-    log.debug('none')
 
     async_result = user_insert.apply_async(args=[
-        user_email,
-        user_pass,
-        user_name,
-        user_status,
+        user_email, user_pass, user_name
     ]).get(timeout=10)
 
     return response(async_result)
