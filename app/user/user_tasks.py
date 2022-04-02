@@ -45,7 +45,7 @@ def user_select(user_id):
     try:
         user = UserModel.query.filter_by(id=user_id).first()
         if user:
-            cache.set('user', user)
+            cache.set('user(id=%s)' % (user_id), user)
             return {'user': {
                 'id': user.id,
                 'user_name': user.user_name,

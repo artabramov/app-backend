@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 cache = Cache(config={
     'CACHE_TYPE': 'redis',
     'CACHE_DEFAULT_TIMEOUT': 60,
-    'CACHE_KEY_PREFIX': 'cached_',
+    'CACHE_KEY_PREFIX': '_cached.',
     'CACHE_REDIS_HOST': 'host.docker.internal',
     'CACHE_REDIS_PORT': 6379,
     'CACHE_REDIS_PASSWORD': '',
