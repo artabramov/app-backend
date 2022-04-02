@@ -36,23 +36,21 @@ def before_request():
     from app.user import user_model
     db.create_all()
 
-
-
-    path = os.path.dirname(app.config['LOG_FILENAME'])
-    if not path.endswith(os.path.sep):
-        path += os.path.sep
+    #path = os.path.dirname(app.config['LOG_FILENAME'])
+    #if not path.endswith(os.path.sep):
+    #    path += os.path.sep
 
     #if not os.path.isdir(path):
     #    os.mkdir(path)
     #    os.chown(path, uid, gid)
 
-    if not os.path.isfile(app.config['LOG_FILENAME']):
-        open(app.config['LOG_FILENAME'], 'a').close()
+    #if not os.path.isfile(app.config['LOG_FILENAME']):
+    #    open(app.config['LOG_FILENAME'], 'a').close()
 
-    uid = pwd.getpwnam('www-data').pw_uid
-    gid = grp.getgrnam('root').gr_gid
-    for file in os.listdir(path):
-        os.chown(path + file, uid, gid)
+    #uid = pwd.getpwnam('www-data').pw_uid
+    #gid = grp.getgrnam('root').gr_gid
+    #for file in os.listdir(path):
+    #    os.chown(path + file, uid, gid)
 
 
 log = create_logger(app)
