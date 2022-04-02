@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 from app.core.logger import create_logger
 import os, pwd, grp
+from app.user import user_model
 
 
 app = Flask(__name__)
@@ -33,13 +34,14 @@ celery = make_celery()
 @app.before_request
 def before_request():
     if not os.path.isfile(app.config['LOG_FILENAME']):
-        uid = pwd.getpwnam('www-data').pw_uid
-        gid = grp.getgrnam('root').gr_gid
         open(app.config['LOG_FILENAME'], 'a').close()
-        os.chown(app.config['LOG_FILENAME'], uid, gid)
 
-        from app.user import user_model
-        db.create_all()
+    uid = pwd.getpwnam('www-data').pw_uid
+    gid = grp.getgrnam('root').gr_gid
+    for file in os.path.dirname(app.config['LOG_FILENAME']):
+        os.chown(file, uid, gid)
+
+    db.create_all()
 
 log = create_logger(app)
 
