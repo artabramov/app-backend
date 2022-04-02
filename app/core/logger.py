@@ -3,7 +3,6 @@ from time import time
 from logging.handlers import RotatingFileHandler
 import logging
 import json
-#import os, pwd, grp
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
