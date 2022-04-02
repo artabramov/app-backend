@@ -30,19 +30,24 @@ def make_celery():
     return celery
 celery = make_celery()
 
-if not os.path.isfile(app.config['LOG_FILENAME']):
-    uid = pwd.getpwnam('www-data').pw_uid
-    gid = grp.getgrnam('root').gr_gid
-    open(app.config['LOG_FILENAME'], 'a').close()
-    os.chown(app.config['LOG_FILENAME'], uid, gid)
+@app.before_request
+def before_request():
+    if not os.path.isfile(app.config['LOG_FILENAME']):
+        uid = pwd.getpwnam('www-data').pw_uid
+        gid = grp.getgrnam('root').gr_gid
+        open(app.config['LOG_FILENAME'], 'a').close()
+        os.chown(app.config['LOG_FILENAME'], uid, gid)
+
+        from app.user import user_model
+        db.create_all()
+
 log = create_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post
 from app.user.user_routes import user_get
 
-from app.user import user_model
-db.create_all()
+
 
 
 
