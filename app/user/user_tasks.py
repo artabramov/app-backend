@@ -3,6 +3,7 @@ from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
+from app import cache
 
 #source /app/venv/bin/activate && celery -A app.core.worker.celery worker --loglevel=info
 
@@ -44,6 +45,7 @@ def user_select(user_id):
     try:
         user = UserModel.query.filter_by(id=user_id).first()
         if user:
+            cache.set('user', user)
             return {'user': {
                 'id': user.id,
                 'user_name': user.user_name,

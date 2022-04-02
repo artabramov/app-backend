@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 from app.core.logger import create_logger
+from flask_caching import Cache
 
 
 app = Flask(__name__)
@@ -10,6 +11,15 @@ app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 
+cache = Cache(config={
+    'CACHE_TYPE': 'redis',
+    'CACHE_DEFAULT_TIMEOUT': 60,
+    'CACHE_KEY_PREFIX': 'cached_',
+    'CACHE_REDIS_HOST': 'host.docker.internal',
+    'CACHE_REDIS_PORT': 6379,
+    'CACHE_REDIS_PASSWORD': '',
+    })
+cache.init_app(app)
 
 def make_celery():
     celery = Celery(
