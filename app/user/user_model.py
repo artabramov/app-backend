@@ -16,6 +16,7 @@ class UserModel(BaseModel):
     user_name = db.Column(db.String(128), nullable=False)
     pass_hash = db.Column(db.String(128), nullable=False)
     user_status = db.Column(db.Enum(UserStatus), nullable=False)
+    user_meta = db.relationship('UserMetaModel', backref='users')
 
     def __init__(self, user_email, user_pass, user_name, user_status='pending'):
         self.user_email = user_email
@@ -47,6 +48,7 @@ def before_insert_user(mapper, connect, user):
             'user_pass': user.user_pass,
             'user_status': user.user_status,
         })
+        
     except ValidationError:
         raise
 

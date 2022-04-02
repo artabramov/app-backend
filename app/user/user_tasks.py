@@ -1,5 +1,6 @@
 from app import db, log, celery
 from app.user.user_model import UserModel
+from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -12,6 +13,11 @@ def user_insert(user_email, user_pass, user_name):
         user = UserModel(user_email, user_pass, user_name)
         db.session.add(user)
         db.session.flush()
+
+        user_meta = UserMetaModel(user.id, 'key', 'value')
+        db.session.add(user_meta)
+        db.session.flush()
+
         db.session.commit()
         return {'user': {'id': user.id}}, {}, 201
 
@@ -21,7 +27,7 @@ def user_insert(user_email, user_pass, user_name):
         return {}, e.messages, 400
 
     except SQLAlchemyError as e:
-        log.critical(e.orig.msg)
+        log.critical(e)
         db.session.rollback()
         return {}, {'db': ['Service Unavailable']}, 503
 

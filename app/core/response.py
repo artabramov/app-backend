@@ -13,5 +13,4 @@ def response(data={}, errors={}, code=200):
     )
     response.headers['Content-Type'] = 'application/json'
     response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Server'] = 'noserver!'
     return response
