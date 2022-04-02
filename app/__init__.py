@@ -3,7 +3,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
 from app.core.logger import create_logger
-import os, pwd, grp
 
 
 app = Flask(__name__)
@@ -39,6 +38,8 @@ def before_request():
 
     # This code doesn't work in all cases and this functionality
     # has moved to Dockerfile.
+    #
+    #import os, pwd, grp
     #
     #path = os.path.dirname(app.config['LOG_FILENAME'])
     #if not path.endswith(os.path.sep):
