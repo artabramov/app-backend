@@ -11,7 +11,7 @@ class Config:
     if IS_CELERY:
         LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "celery", filename: "%(filename)s", lineno: "%(lineno)d", message: "%(message)s"}'
     else:
-        LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "app", duration: "%(duration)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", message: "%(message)s"}'
+        LOG_FORMAT = '{time: "%(asctime)s", level: "%(levelname)s", tag: "app", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", message: "%(message)s"}'
     LOG_MAX_BYTES = 1024 * 10 # 10 KB
     LOG_BACKUP_COUNT = 5
     LOG_SENSITIVE_KEYS = ['user_token']
