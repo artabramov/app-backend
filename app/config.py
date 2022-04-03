@@ -18,7 +18,7 @@ class Config:
     CELERY_LOG_MAX_BYTES = 1024 * 10 # 10 KB
     CELERY_LOG_BACKUP_COUNT = 5
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/owl'
+    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     CELERY_BROKER_URI = 'redis://host.docker.internal:6379/0'
