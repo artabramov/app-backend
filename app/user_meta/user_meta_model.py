@@ -1,5 +1,5 @@
 from app import db
-from app.core.model import BaseModel
+from app.core.base_model import BaseModel
 from app.user_meta.user_meta_schema import UserMetaSchema
 from marshmallow import ValidationError
 

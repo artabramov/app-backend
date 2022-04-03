@@ -1,9 +1,12 @@
-from app import db, log, celery
+from app import db, celery, cache
 from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
+from app.core.celery_logger import create_celery_logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-from app import cache
+
+log = create_celery_logger(__name__)
+
 
 #source /app/venv/bin/activate && celery -A app.core.worker.celery worker --loglevel=info
 
@@ -25,17 +28,17 @@ def user_insert(user_email, user_pass, user_name):
             }}, {}, 201
 
     except ValidationError as e:
-        log.warning(e.messages)
+        log.debug(e.messages)
         db.session.rollback()
         return {}, e.messages, 400
 
     except SQLAlchemyError as e:
-        log.critical(e)
+        log.error(e)
         db.session.rollback()
         return {}, {'error': ['Service Unavailable']}, 503
 
     except Exception as e:
-        log.critical(e)
+        log.error(e)
         db.session.rollback()
         return {}, {'error': ['Internal Server Error']}, 500
 
@@ -44,6 +47,9 @@ def user_insert(user_email, user_pass, user_name):
 def user_select(user_id):
     try:
         user = UserModel.query.filter_by(id=user_id).first()
+
+        log.debug('asdfasdffsda')
+
         if user:
             cache.set('user(id=%s)' % (user_id), user)
             return {'user': {
@@ -54,13 +60,13 @@ def user_select(user_id):
             return {}, {'user_id': ['Not Found']}, 404
 
     except ValidationError as e:
-        log.warning(e.messages)
+        log.debug(e.messages)
         return {}, e.messages, 400
 
     except SQLAlchemyError as e:
-        log.critical(e)
+        log.error(e)
         return {}, {'error': ['Service Unavailable']}, 503
 
     except Exception as e:
-        log.critical(e)
+        log.error(e)
         return {}, {'error': ['Internal Server Error']}, 500

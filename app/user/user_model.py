@@ -1,7 +1,7 @@
 from enum import Enum
 import hashlib
 from app import db
-from app.core.model import BaseModel
+from app.core.base_model import BaseModel
 from app.user.user_schema import UserSchema
 from app.user.user_schema import UserStatus
 from marshmallow import ValidationError

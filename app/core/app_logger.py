@@ -1,8 +1,8 @@
-from flask import request, g
-from time import time
 from logging.handlers import RotatingFileHandler
+from flask import request, g
 import logging
 import json
+from time import time
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -14,49 +14,48 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
     return result_dict
 
 
-def create_logger(app):
+def create_app_logger(app):
     class ContextualFilter(logging.Filter):
         def filter(self, message):
-            if not app.config['IS_CELERY']:
-                message.request = request.url
-                message.method = request.method
-                message.headers = str(dict(request.headers))
-                #message.duration = g.request_context.duration
+            message.request = request.url
+            message.method = request.method
+            message.headers = str(dict(request.headers))
+            message.duration = g.request_context.duration
             return True
 
     while app.logger.hasHandlers():
         app.logger.removeHandler(app.logger.handlers[0])
 
     handler = RotatingFileHandler(
-        filename=app.config['LOG_FILENAME'], 
-        maxBytes=app.config['LOG_MAX_BYTES'], 
-        backupCount=app.config['LOG_BACKUP_COUNT'])
-    handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
+        filename=app.config['APP_LOG_FILENAME'],
+        maxBytes=app.config['APP_LOG_MAX_BYTES'],
+        backupCount=app.config['APP_LOG_BACKUP_COUNT'])
+    handler.setFormatter(logging.Formatter(app.config['APP_LOG_FORMAT']))
 
     app.logger.addHandler(handler)
     app.logger.addFilter(ContextualFilter())
 
-    level = logging.getLevelName(app.config['LOG_LEVEL'])
+    level = logging.getLevelName(app.config['APP_LOG_LEVEL'])
     app.logger.setLevel(level)
-        
-    #@app.before_request
-    #def before_request():
-    #    g.request_context = RequestContext(request)
+
+    @app.before_request
+    def before_request():
+        g.request_context = RequestContext(request)
 
     @app.after_request
     def after_request(response):
         response_dict = json.loads(response.data)
-        response_dict = obscure_data(dict(), response_dict, app.config['LOG_SENSITIVE_KEYS'], app.config['LOG_SENSITIVE_VALUE'])
+        response_dict = obscure_data(dict(), response_dict, app.config['APP_LOG_SENSITIVE_KEYS'], app.config['APP_LOG_SENSITIVE_VALUE'])
         app.logger.debug(str(response_dict))
         return response
 
     return app.logger
 
 
-#class RequestContext:
-#    def __init__(self, req):
-#        self.start_time = time()
-#
-#    @property
-#    def duration(self):
-#        return time() - self.start_time
+class RequestContext:
+    def __init__(self, req):
+        self.start_time = time()
+
+    @property
+    def duration(self):
+        return time() - self.start_time

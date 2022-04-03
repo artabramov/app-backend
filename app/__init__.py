@@ -2,7 +2,7 @@ from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
-from app.core.logger import create_logger
+from app.core.app_logger import create_app_logger
 from flask_caching import Cache
 
 
@@ -40,8 +40,8 @@ def make_celery():
 celery = make_celery()
 
 
-@app.before_request
-def before_request():
+@app.before_first_request
+def before_first_request():
     from app.user import user_model
     from app.user_meta import user_meta_model
     db.create_all()
@@ -68,7 +68,7 @@ def before_request():
     #    os.chown(path + file, uid, gid)
 
 
-log = create_logger(app)
+log = create_app_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post

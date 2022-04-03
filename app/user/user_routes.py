@@ -13,26 +13,12 @@ from celery.exceptions import TimeoutError
 def user_get(user_id):
     try:
         async_result = user_select.apply_async(args=[user_id]).get(timeout=10)
+        log.debug('e')
         return response(*async_result)
 
     except TimeoutError as e:
-        log.critical(e)
+        log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
-
-    """
-    try:
-        user = UserModel.query.filter_by(id=user_id).first()
-
-    except SQLAlchemyError as e:
-        log.error(e.orig.msg)
-        db.session.rollback()
-        return response({}, {'db': ['Internal Server Error']}, 500)
-
-    if not user:
-        return response({}, {'id': ['Not Found']}, 404)
-
-    return response({'user': {'id': user.id, 'user_email': user.user_email}}, {}, 200)
-    """
 
 
 @app.route('/user/', methods=['POST'])
@@ -48,7 +34,7 @@ def user_post():
         return response(*async_result)
 
     except TimeoutError as e:
-        log.critical(e)
+        log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
     
