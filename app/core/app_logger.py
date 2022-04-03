@@ -20,7 +20,7 @@ def create_app_logger(app):
             message.request = request.url
             message.method = request.method
             message.headers = str(dict(request.headers))
-            message.duration = g.request_context.duration
+            #message.duration = g.request_context.duration
             return True
 
     while app.logger.hasHandlers():
@@ -38,9 +38,9 @@ def create_app_logger(app):
     level = logging.getLevelName(app.config['APP_LOG_LEVEL'])
     app.logger.setLevel(level)
 
-    @app.before_request
-    def before_request():
-        g.request_context = RequestContext(request)
+    #@app.before_request
+    #def before_request():
+    #    g.request_context = RequestContext(request)
 
     @app.after_request
     def after_request(response):
@@ -52,10 +52,10 @@ def create_app_logger(app):
     return app.logger
 
 
-class RequestContext:
-    def __init__(self, req):
-        self.start_time = time()
-
-    @property
-    def duration(self):
-        return time() - self.start_time
+#class RequestContext:
+#    def __init__(self, req):
+#        self.start_time = time()
+#
+#    @property
+#    def duration(self):
+#        return time() - self.start_time
