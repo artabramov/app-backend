@@ -47,8 +47,7 @@ def user_insert(user_email, user_pass, user_name):
 def user_select(user_id):
     try:
         user = UserModel.query.filter_by(id=user_id).first()
-
-        log.debug('asdfasdffsda')
+        #log.debug('asdfasdffsda')
 
         if user:
             cache.set('user(id=%s)' % (user_id), user)
