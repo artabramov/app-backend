@@ -50,7 +50,7 @@ def user_select(user_id):
         #log.debug('asdfasdffsda')
 
         if user:
-            cache.set('user(id=%s)' % (user_id), user)
+            cache.set('user.%s' % (user_id), user)
             return {'user': {
                 'id': user.id,
                 'user_name': user.user_name,

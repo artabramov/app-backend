@@ -19,7 +19,7 @@ cache = Cache(config={
     #CACHE_OPTIONS
     #CACHE_REDIS_DB
     'CACHE_REDIS_PORT': 6379,
-    'CACHE_REDIS_PASSWORD': 'admin',
+    'CACHE_REDIS_PASSWORD': '',
     })
 cache.init_app(app)
 
