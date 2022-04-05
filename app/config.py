@@ -13,7 +13,7 @@ class Config:
     APP_LOG_SENSITIVE_VALUE = '*' * 4
 
     CELERY_LOG_LEVEL = 'DEBUG'
-    CELERY_LOG_FILENAME = '/var/log/celery/celery.log'
+    CELERY_LOG_FILENAME = '/var/log/app/app-1.log'
     CELERY_LOG_FORMAT = '[%(asctime)s] %(levelname)s %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
     CELERY_LOG_MAX_BYTES = 1024 * 10 # 10 KB
     CELERY_LOG_BACKUP_COUNT = 5
