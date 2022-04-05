@@ -14,7 +14,7 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
     return result_dict
 
 
-def create_app_logger(app):
+def create_logger(app):
     class ContextualFilter(logging.Filter):
         def filter(self, message):
             message.request = request.url

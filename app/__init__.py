@@ -2,7 +2,7 @@ from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
-from app.core.app_logger import create_app_logger
+from app.core.app_logger import create_logger
 from flask_caching import Cache
 
 
@@ -70,7 +70,7 @@ def before_first_request():
     #    os.chown(path + file, uid, gid)
 
 
-log = create_app_logger(app)
+log = create_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post

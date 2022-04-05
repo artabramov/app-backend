@@ -13,7 +13,7 @@ from celery.exceptions import TimeoutError
 def user_get(user_id):
     try:
         async_result = user_select.apply_async(args=[user_id]).get(timeout=10)
-        log.debug('e')
+        log.debug('route debug')
         return response(*async_result)
 
     except TimeoutError as e:
