@@ -1,11 +1,11 @@
 from app import db, celery, cache
 from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
-from app.core.celery_logger import create_celery_logger
+from app.core.task_logger import create_logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-log = create_celery_logger(__name__)
+log = create_logger(__name__)
 
 
 #source /app/venv/bin/activate && celery -A app.core.worker.celery worker --loglevel=info

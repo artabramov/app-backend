@@ -9,7 +9,7 @@ CELERY_LOG_MAX_BYTES = Config.CELERY_LOG_MAX_BYTES
 CELERY_LOG_BACKUP_COUNT = Config.CELERY_LOG_BACKUP_COUNT
 
 
-def create_celery_logger(name):
+def create_logger(name):
     logger = logging.getLogger(name)
     
     level = logging.getLevelName(CELERY_LOG_LEVEL)
