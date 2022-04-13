@@ -1,17 +1,12 @@
 from app import db, celery, cache
 from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
-#from app.core.task_logger import create_logger
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-#log = create_logger(__name__)
-
 from celery.utils.log import get_task_logger
+
 log = get_task_logger(__name__)
 
-    
-
-#source /app/venv/bin/activate && celery -A app.core.worker.celery worker --loglevel=info
 
 @celery.task(name='app.user_insert', time_limit=10, ignore_result=False)
 def user_insert(user_email, user_pass, user_name):
