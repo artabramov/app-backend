@@ -4,19 +4,13 @@ import sys
 class Config:
     #DEBUG = True
 
-    APP_LOG_LEVEL = 'DEBUG'
-    APP_LOG_FILENAME = '/var/log/app/app.log'
-    APP_LOG_FORMAT = '[%(asctime)s] %(levelname)s duration: "%(duration)s", uuid: "%(uuid)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
-    APP_LOG_MAX_BYTES = 1024 * 10 # 10 KB
-    APP_LOG_BACKUP_COUNT = 5
-    APP_LOG_SENSITIVE_KEYS = ['user_token']
-    APP_LOG_SENSITIVE_VALUE = '*' * 4
-
-    CELERY_LOG_LEVEL = 'DEBUG'
-    CELERY_LOG_FILENAME = '/var/log/app/app-1.log'
-    CELERY_LOG_FORMAT = '[%(asctime)s] uuid: "%(uuid)s", %(levelname)s %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
-    CELERY_LOG_MAX_BYTES = 1024 * 10 # 10 KB
-    CELERY_LOG_BACKUP_COUNT = 5
+    LOG_LEVEL = 'DEBUG'
+    LOG_FILENAME = '/var/log/app/app.log'
+    LOG_FORMAT = '[%(asctime)s] %(levelname)s duration: "%(duration)s", uuid: "%(uuid)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
+    LOG_MAX_BYTES = 1024 * 10 # 10 KB
+    LOG_BACKUP_COUNT = 5
+    LOG_SENSITIVE_KEYS = ['user_token']
+    LOG_SENSITIVE_VALUE = '*' * 4
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

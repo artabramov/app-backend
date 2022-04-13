@@ -29,15 +29,15 @@ def create_logger(app):
         app.logger.removeHandler(app.logger.handlers[0])
 
     handler = RotatingFileHandler(
-        filename=app.config['APP_LOG_FILENAME'],
-        maxBytes=app.config['APP_LOG_MAX_BYTES'],
-        backupCount=app.config['APP_LOG_BACKUP_COUNT'])
-    handler.setFormatter(logging.Formatter(app.config['APP_LOG_FORMAT']))
+        filename=app.config['LOG_FILENAME'],
+        maxBytes=app.config['LOG_MAX_BYTES'],
+        backupCount=app.config['LOG_BACKUP_COUNT'])
+    handler.setFormatter(logging.Formatter(app.config['LOG_FORMAT']))
 
     app.logger.addHandler(handler)
     app.logger.addFilter(ContextualFilter())
 
-    level = logging.getLevelName(app.config['APP_LOG_LEVEL'])
+    level = logging.getLevelName(app.config['LOG_LEVEL'])
     app.logger.setLevel(level)
 
     @app.before_request
@@ -47,7 +47,7 @@ def create_logger(app):
     @app.after_request
     def after_request(response):
         response_dict = json.loads(response.data)
-        response_dict = obscure_data(dict(), response_dict, app.config['APP_LOG_SENSITIVE_KEYS'], app.config['APP_LOG_SENSITIVE_VALUE'])
+        response_dict = obscure_data(dict(), response_dict, app.config['LOG_SENSITIVE_KEYS'], app.config['LOG_SENSITIVE_VALUE'])
         app.logger.debug(str(response_dict))
         return response
 
