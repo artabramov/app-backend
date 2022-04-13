@@ -3,6 +3,7 @@ from flask import request, g
 import logging
 import json
 from time import time
+import uuid
 
 
 def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
@@ -17,6 +18,7 @@ def obscure_data(result_dict, original_dict, sensitive_keys, sensitive_value):
 def create_logger(app):
     class ContextualFilter(logging.Filter):
         def filter(self, message):
+            message.uuid = g.request_context.uuid
             message.request = request.url
             message.method = request.method
             message.headers = str(dict(request.headers))
@@ -55,6 +57,7 @@ def create_logger(app):
 class RequestContext:
     def __init__(self, req):
         self.start_time = time()
+        self.uuid = str(uuid.uuid4())
 
     @property
     def duration(self):

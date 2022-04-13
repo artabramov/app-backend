@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, g
 from sqlalchemy.exc import SQLAlchemyError
 from app import app, db, log
 from app.core.response import response
@@ -12,7 +12,7 @@ from celery.exceptions import TimeoutError
 @app.route('/user/<user_id>', methods=['GET'])
 def user_get(user_id):
     try:
-        async_result = user_select.apply_async(args=[user_id]).get(timeout=10)
+        async_result = user_select.apply_async(args=[user_id], task_id=g.request_context.uuid).get(timeout=10)
         log.debug('route debug')
         return response(*async_result)
 
@@ -30,7 +30,7 @@ def user_post():
     try:
         async_result = user_insert.apply_async(args=[
             user_email, user_pass, user_name
-        ]).get(timeout=10)
+        ], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:
