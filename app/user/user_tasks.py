@@ -21,8 +21,7 @@ def user_insert(user_email, user_pass, user_name):
 
         db.session.commit()
         return {'user': {
-            'id': user.id,
-            'user_name': user.user_name
+            'id': user.id
             }}, {}, 201
 
     except ValidationError as e:
@@ -52,6 +51,7 @@ def user_select(user_id):
             cache.set('user.%s' % (user_id), user)
             return {'user': {
                 'id': user.id,
+                'user_status': user.user_status.name,
                 'user_name': user.user_name,
             }}, {}, 200
         else:
