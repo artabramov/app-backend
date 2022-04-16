@@ -3,7 +3,7 @@ import hashlib
 from app import db
 from app.core.base_model import BaseModel
 from app.user.user_schema import UserSchema
-from app.user.user_schema import UserStatus
+from app.user.user_schema import UserType, UserStatus
 from marshmallow import ValidationError
 import random, string
 from datetime import datetime, timedelta
@@ -15,30 +15,31 @@ CONFIRM_CODE_TIME = 60 * 2
 ACCESS_TOKEN_SALT = 'abcd'
 ACCESS_TOKEN_TIME = 60 * 2
 REFRESH_TOKEN_LENGTH = 128
-REFRESH_TOKEN_TIME = 60 * 2
+REFRESH_TOKEN_TIME = 60 * 60 * 24 * 1
 
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
-    suspended_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # user is blocked until
-    confirm_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # confirm code is active until
-    refresh_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # refresh token is active until
+    lockout_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # user is blocked until
+    user_type = db.Column(db.Enum(UserType))
     user_status = db.Column(db.Enum(UserStatus), nullable=False)
     user_email = db.Column(db.String(255), nullable=False, index=True, unique=True)
-    pass_hash = db.Column(db.String(128), nullable=False, index=True)
     user_name = db.Column(db.String(128), nullable=False)
+    pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), default=0)
-    is_admin = db.Column(db.Boolean(), default=False)
+    #is_admin = db.Column(db.Boolean(), default=False)
     confirm_code = db.Column(db.String(8), nullable=True)
+    confirm_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # confirm code is active until
     refresh_token = db.Column(db.String(128), nullable=False, index=True, unique=True)
+    refresh_to = db.Column(db.DateTime(timezone=False), default='1970-01-01 00:00:00', nullable=False) # refresh token is active until
     user_meta = db.relationship('UserMetaModel', backref='users')
 
-    def __init__(self, user_email, user_pass, user_name, user_status='pending', is_admin=False):
+    def __init__(self, user_email, user_pass, user_name, user_type='user', user_status='pending'):
+        self.user_type = user_type
+        self.user_status = user_status
         self.user_email = user_email.lower()
         self.user_pass = user_pass
         self.user_name = user_name
-        self.user_status = user_status
-        self.is_admin = is_admin
 
     @property
     def user_pass(self):
@@ -70,16 +71,19 @@ class UserModel(BaseModel):
 def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({
-            #'user_status': user.user_status,
+            'user_type': user.user_type,
+            'user_status': user.user_status,
             'user_email': user.user_email,
             'user_pass': user.user_pass,
             'user_name': user.user_name,
             #'pass_attempts': 0,
             #'is_admin': user.is_admin,
         })
-        user.refresh_token = user._create_refresh_token()
+        
         user.confirm_code = user._create_confirm_code()
         user.confirm_to = datetime.now() + timedelta(seconds=CONFIRM_CODE_TIME)
+        user.refresh_token = user._create_refresh_token()
+        user.refresh_to = datetime.now() + timedelta(seconds=REFRESH_TOKEN_TIME)
         
     except ValidationError:
         raise

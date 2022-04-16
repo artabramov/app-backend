@@ -25,7 +25,6 @@ def user_insert(user_email, user_pass, user_name):
             }}, {}, 201
 
     except ValidationError as e:
-        log.error('e.messages')
         log.debug(e.messages)
         db.session.rollback()
         return {}, e.messages, 400
