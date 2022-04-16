@@ -46,7 +46,10 @@ def create_logger(app):
 
     @app.after_request
     def after_request(response):
-        response_dict = json.loads(response.data)
+        try:
+            response_dict = json.loads(response.data)
+        except Exception as e:
+            response_dict = {'response': str(response.data)}
         response_dict = obscure_data(dict(), response_dict, app.config['LOG_SENSITIVE_KEYS'], app.config['LOG_SENSITIVE_VALUE'])
         app.logger.debug(str(response_dict))
         return response
