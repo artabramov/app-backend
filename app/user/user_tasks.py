@@ -10,11 +10,9 @@ log = get_task_logger(__name__)
 
 
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
-def user_register(user_email, user_pass, user_name):
+def user_register(user_email, user_name):
     try:
-        user = UserModel(user_email, user_pass, user_name)
-        user.update_code()
-        user.update_token()
+        user = UserModel(user_email, user_name)
         db.session.add(user)
         db.session.flush()
 
@@ -24,7 +22,7 @@ def user_register(user_email, user_pass, user_name):
 
         db.session.commit()
 
-        # TODO: send confirm_code to email
+        # TODO: send user_pass to email
         return {'user': {'id': user.id}}, {}, 201
 
     except ValidationError as e:
@@ -43,6 +41,9 @@ def user_register(user_email, user_pass, user_name):
         return {}, {'error': ['Internal Server Error']}, 500
 
 
+
+
+"""
 @celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
 def user_restore(user_email, user_pass):
     try:
@@ -74,7 +75,7 @@ def user_restore(user_email, user_pass):
         log.error(e)
         return {}, {'error': ['Internal Server Error']}, 500
 
-"""
+
 @celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
 def user_restore(user_id, confirm_code):
     try:

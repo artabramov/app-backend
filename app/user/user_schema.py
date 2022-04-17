@@ -9,15 +9,8 @@ class UserType(Enum):
     root = 2
 
 
-class UserStatus(Enum):
-    pending = 1
-    approved = 2
-    trash = 3
-
-
 class UserSchema(Schema):
     user_type = EnumField(UserType)
-    user_status = EnumField(UserStatus)
     user_email = fields.Email(validate=validate.Length(min=8, max=255))
     user_pass = fields.Str(validate=validate.Length(min=8, max=20))
     #pass_hash = fields.Str(validate=validate.Length(equal=64))
