@@ -4,7 +4,7 @@ from app import app, db, log
 from app.core.response import response
 from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
-from app.user.user_tasks import user_register, user_select
+from app.user.user_tasks import user_register, user_login, user_select
 from marshmallow import ValidationError
 from celery.exceptions import TimeoutError
 
@@ -25,20 +25,18 @@ def user_post():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-
-
-"""
 # user login
 @app.route('/token/', methods=['GET'])
-def token_get(user_id):
+def token_get():
     try:
-        async_result = user_login.apply_async(args=[user_id], task_id=g.request_context.uuid).get(timeout=10)
+        user_email = request.args.get('user_email', '')
+        user_pass = request.args.get('user_pass', '')
+        async_result = user_login.apply_async(args=[user_email, user_pass], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
-"""
 
 
 # select user
