@@ -13,6 +13,8 @@ log = get_task_logger(__name__)
 def user_register(user_email, user_name):
     try:
         user = UserModel(user_email, user_name)
+        user.user_token = user.create_token()
+        user.user_pass = user.create_pass()
         db.session.add(user)
         db.session.flush()
 

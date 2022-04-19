@@ -36,8 +36,8 @@ class UserModel(BaseModel):
         self.user_type = user_type
         self.user_email = user_email.lower()
         self.user_name = user_name
-        self.user_token  = self.create_token()
-        self.user_pass = self.create_pass()
+        #self.user_token  = self.create_token()
+        #self.user_pass = self.create_pass()
         
 
     @property
