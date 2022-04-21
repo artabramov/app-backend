@@ -5,6 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
+from app.user.user_model import PASS_EXPIRATION_TIME
 
 log = get_task_logger(__name__)
 
@@ -13,8 +14,8 @@ log = get_task_logger(__name__)
 def user_register(user_email, user_name):
     try:
         user = UserModel(user_email, user_name)
-        user.user_token = user.create_token()
-        user.user_pass = user.create_pass()
+        #user.user_token = user.create_token()
+        #user.user_pass = user.create_pass()
         db.session.add(user)
         db.session.flush()
 
@@ -51,10 +52,10 @@ def user_login(user_email, user_pass):
         user = UserModel.query.filter_by(user_email=user_email, pass_hash=pass_hash, deleted=0).first()
 
         if not user:
-            return {}, {'user_email': ['Incorrect Credentials'], }, 404
+            return {}, {'user_pass': ['Incorrect Credentials'], }, 404
 
-        elif user.pass_suspended > time.time():
-            return {}, {'user_email': ['Temporary Lockout'], }, 404
+        elif user.pass_expires < time.time():
+            return {}, {'user_pass': ['Pass Expired'], }, 404
 
         else:
             cache.set('user.%s' % (user.id), user)
