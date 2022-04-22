@@ -29,6 +29,7 @@ def user_post():
 @app.route('/token/', methods=['GET'])
 def token_get():
     try:
+        log.debug('bla bla bla')
         user_email = request.args.get('user_email', '')
         user_pass = request.args.get('user_pass', '')
         async_result = user_login.apply_async(args=[user_email, user_pass], task_id=g.request_context.uuid).get(timeout=10)

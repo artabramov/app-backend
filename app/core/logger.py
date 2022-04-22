@@ -19,10 +19,10 @@ def create_logger(app):
     class ContextualFilter(logging.Filter):
         def filter(self, message):
             message.uuid = g.request_context.uuid
-            message.request = request.url
-            message.method = request.method
-            message.headers = str(dict(request.headers))
-            message.duration = g.request_context.duration
+            #message.request = request.url
+            #message.method = request.method
+            #message.headers = str(dict(request.headers))
+            #message.duration = g.request_context.duration
             return True
 
     while app.logger.hasHandlers():
@@ -43,6 +43,11 @@ def create_logger(app):
     @app.before_request
     def before_request():
         g.request_context = RequestContext(request)
+        app.logger.debug(str({
+            'request': request.url,
+            'method': request.method,
+            'headers': dict(request.headers),
+            }))
 
     @app.after_request
     def after_request(response):
@@ -51,7 +56,8 @@ def create_logger(app):
         except Exception as e:
             response_dict = {'response': str(response.data)}
         response_dict = obscure_data(dict(), response_dict, app.config['LOG_SENSITIVE_KEYS'], app.config['LOG_SENSITIVE_VALUE'])
-        app.logger.debug(str(response_dict))
+        #app.logger.debug(str(response_dict))
+        app.logger.debug({'response': str(response_dict)})
         return response
 
     return app.logger
@@ -59,9 +65,9 @@ def create_logger(app):
 
 class RequestContext:
     def __init__(self, req):
-        self.start_time = time()
+        #self.start_time = time()
         self.uuid = str(uuid.uuid4())
 
-    @property
-    def duration(self):
-        return time() - self.start_time
+    #@property
+    #def duration(self):
+    #    return time() - self.start_time

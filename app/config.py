@@ -6,7 +6,8 @@ class Config:
 
     LOG_LEVEL = 'DEBUG'
     LOG_FILENAME = '/var/log/app/app.log'
-    LOG_FORMAT = '[%(asctime)s] %(levelname)s duration: "%(duration)s", uuid: "%(uuid)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
+    #LOG_FORMAT = '[%(asctime)s] %(levelname)s duration: "%(duration)s", uuid: "%(uuid)s", request: "%(request)s", method: "%(method)s", headers: "%(headers)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
+    LOG_FORMAT = '[%(asctime)s] %(levelname)s uuid: "%(uuid)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
     LOG_MAX_BYTES = 1024 * 10 # 10 KB
     LOG_BACKUP_COUNT = 5
     LOG_SENSITIVE_KEYS = ['user_token']
