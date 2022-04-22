@@ -5,7 +5,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
-from app.user.user_model import PASS_EXPIRATION_TIME
+from app.user.user_model import PASS_EXPIRATION_TIME, PASS_ATTEMPTS_LIMIT
 
 log = get_task_logger(__name__)
 
@@ -26,7 +26,7 @@ def user_register(user_email, user_name):
         db.session.commit()
 
         # TODO: send user_pass to email
-        log.info("pass: " + user.user_pass)
+        log.info("user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
         return {'user': {'id': user.id}}, {}, 201
 
     except ValidationError as e:
@@ -48,21 +48,35 @@ def user_register(user_email, user_name):
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
 def user_login(user_email, user_pass):
     try:
-        pass_hash = UserModel.get_hash(user_email.lower() + user_pass)
-        user = UserModel.query.filter_by(user_email=user_email, pass_hash=pass_hash, deleted=0).first()
+        #pass_hash = UserModel.get_hash(user_email.lower() + user_pass)
+        user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
 
         if not user:
-            return {}, {'user_pass': ['Incorrect Credentials'], }, 404
+            return {}, {'user_email': ['Not Found'], }, 404
 
         elif user.pass_expires < time.time():
             return {}, {'user_pass': ['Pass Expired'], }, 404
 
+        elif user.pass_attempts >= PASS_ATTEMPTS_LIMIT - 1:
+            return {}, {'user_pass': ['Attempts Limit'], }, 404
+
+        elif user.pass_hash != UserModel.get_hash(user_email.lower() + user_pass):
+            user.pass_attempts += 1
+            db.session.flush()
+            db.session.commit()
+            return {}, {'user_pass': ['Incorrect'], }, 404
+
         else:
+            user.pass_expires = 0
+            user.pass_attempts = 0
+            db.session.flush()
+            db.session.commit()
             cache.set('user.%s' % (user.id), user)
             return {'user': {'id': user.id, 'user_token': user.user_token}}, {}, 201
 
     except SQLAlchemyError as e:
         log.error(e)
+        db.session.rollback()
         return {}, {'error': ['Service Unavailable']}, 503
 
     except Exception as e:
