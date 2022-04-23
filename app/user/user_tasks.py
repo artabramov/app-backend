@@ -3,11 +3,26 @@ from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
-from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger, get_logger, logging
+from logging import Logger
 import time
 from app.user.user_model import PASS_EXPIRATION_TIME, PASS_ATTEMPTS_LIMIT
+import json
 
 log = get_task_logger(__name__)
+
+
+
+
+def handle(self, record):
+    if (not self.disabled) and self.filter(record):
+
+        if 'Task ' in record.msg:
+            record.msg = '>>' + record.msg + '<<'
+
+        self.callHandlers(record)
+
+log.__class__.handle = handle
 
 
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
@@ -24,6 +39,8 @@ def user_register(user_email, user_name):
         db.session.flush()
 
         db.session.commit()
+
+        
 
         # TODO: send user_pass to email
         log.info("user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
