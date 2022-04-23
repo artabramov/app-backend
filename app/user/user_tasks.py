@@ -114,7 +114,6 @@ def user_login(user_email, user_pass):
         return {}, {'error': ['Internal Server Error']}, 500
 
 
-
 @celery.task(name='app.user_logout', time_limit=10, ignore_result=False)
 def user_logout(user_token):
     try:
@@ -137,12 +136,6 @@ def user_logout(user_token):
     except Exception as e:
         log.error(e)
         return {}, {'error': ['Internal Server Error']}, 500
-
-
-
-
-
-
 
 
 @celery.task(name='app.user_select', time_limit=10, ignore_result=False)
