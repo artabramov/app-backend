@@ -53,9 +53,6 @@ def token_get():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-
-
-
 # user logout
 @app.route('/token/', methods=['PUT'])
 def token_put():
