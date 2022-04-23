@@ -74,6 +74,8 @@ log = create_logger(app)
 
 from app.hello.hello_routes import hi
 from app.user.user_routes import user_post
+from app.user.user_routes import pass_get
 from app.user.user_routes import token_get
+from app.user.user_routes import token_put
 from app.user.user_routes import user_get
 

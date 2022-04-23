@@ -4,7 +4,7 @@ from app import app, db, log
 from app.core.response import response
 from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
-from app.user.user_tasks import user_register, user_login, user_select
+from app.user.user_tasks import user_register, user_restore, user_login, user_logout, user_select
 from marshmallow import ValidationError
 from celery.exceptions import TimeoutError
 
@@ -25,6 +25,19 @@ def user_post():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
+# user restore
+@app.route('/pass/', methods=['GET'])
+def pass_get():
+    try:
+        user_email = request.args.get('user_email', '')
+        async_result = user_restore.apply_async(args=[user_email], task_id=g.request_context.uuid).get(timeout=10)
+        return response(*async_result)
+
+    except TimeoutError as e:
+        log.error(e)
+        return response({}, {'db': ['Gateway Timeout']}, 504)
+
+
 # user login
 @app.route('/token/', methods=['GET'])
 def token_get():
@@ -38,6 +51,23 @@ def token_get():
     except TimeoutError as e:
         log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
+
+
+
+
+
+# user logout
+@app.route('/token/', methods=['PUT'])
+def token_put():
+    try:
+        user_token = request.headers.get('user_token')
+        async_result = user_logout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
+        return response(*async_result)
+
+    except TimeoutError as e:
+        log.error(e)
+        return response({}, {'db': ['Gateway Timeout']}, 504)
+
 
 
 # select user

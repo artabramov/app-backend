@@ -11,7 +11,7 @@ import time
 PASS_LENGTH = 8
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
-PASS_EXPIRATION_TIME = 60 * 2
+PASS_EXPIRATION_TIME = 60 * 1
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
@@ -31,8 +31,8 @@ class UserModel(BaseModel):
         #self.user_type = user_type
         self.user_email = user_email.lower()
         self.user_name = user_name
-        self.user_token = self.update_token()
-        self.user_pass = self.update_pass()
+        self.update_token()
+        self.update_pass()
         
 
     @property
@@ -53,7 +53,7 @@ class UserModel(BaseModel):
         return hash_obj.hexdigest()
 
     def update_pass(self):
-        return ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=PASS_LENGTH))
+        self.user_pass = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=PASS_LENGTH))
 
     def update_token(self):
         is_unique = False
@@ -61,7 +61,7 @@ class UserModel(BaseModel):
             user_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=128))
             if not UserModel.query.filter_by(user_token=user_token).count():
                 is_unique = True
-        return user_token
+        self.user_token = user_token
 
     #def create_code(self):
         #return ''.join(random.choices(string.digits, k=RESET_CODE_LENGTH))

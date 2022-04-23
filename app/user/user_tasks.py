@@ -15,8 +15,6 @@ log = get_task_logger(__name__)
 def user_register(user_email, user_name):
     try:
         user = UserModel(user_email, user_name)
-        #user.user_token = user.create_token()
-        #user.user_pass = user.create_pass()
         db.session.add(user)
         db.session.flush()
 
@@ -26,10 +24,8 @@ def user_register(user_email, user_name):
 
         db.session.commit()
 
-        
-
         # TODO: send user_pass to email
-        log.info("user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
+        log.info("REGISTER user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
         return {'user': {'id': user.id}}, {}, 201
 
     except ValidationError as e:
@@ -48,10 +44,41 @@ def user_register(user_email, user_name):
         return {}, {'error': ['Internal Server Error']}, 500
 
 
+@celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
+def user_restore(user_email):
+    try:
+        user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
+
+        if not user:
+            return {}, {'user_email': ['Not Found'], }, 404
+
+        elif user.pass_expires > time.time():
+            return {}, {'user_email': ['Wait a Bit'], }, 404
+
+        else:
+            user.update_pass()
+            db.session.add(user)
+            db.session.flush()
+            db.session.commit()
+
+            # TODO: send user_pass to email
+            log.info("RESTORE user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
+            return {'user': {'id': user.id}}, {}, 201
+
+    except SQLAlchemyError as e:
+        log.error(e)
+        db.session.rollback()
+        return {}, {'error': ['Service Unavailable']}, 503
+
+    except Exception as e:
+        log.error(e)
+        db.session.rollback()
+        return {}, {'error': ['Internal Server Error']}, 500
+
+
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
 def user_login(user_email, user_pass):
     try:
-        #pass_hash = UserModel.get_hash(user_email.lower() + user_pass)
         user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
 
         if not user:
@@ -60,7 +87,7 @@ def user_login(user_email, user_pass):
         elif user.pass_expires < time.time():
             return {}, {'user_pass': ['Pass Expired'], }, 404
 
-        elif user.pass_attempts >= PASS_ATTEMPTS_LIMIT - 1:
+        elif user.pass_attempts >= PASS_ATTEMPTS_LIMIT:
             return {}, {'user_pass': ['Attempts Limit'], }, 404
 
         elif user.pass_hash != UserModel.get_hash(user_email.lower() + user_pass):
@@ -86,32 +113,25 @@ def user_login(user_email, user_pass):
         log.error(e)
         return {}, {'error': ['Internal Server Error']}, 500
 
-"""
-@celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
-def user_restore(user_email, user_pass):
+
+
+@celery.task(name='app.user_logout', time_limit=10, ignore_result=False)
+def user_logout(user_token):
     try:
-        pass_hash = UserModel.get_hash(user_email.lower() + user_pass)
-        user = UserModel.query.filter_by(user_email=user_email, pass_hash=pass_hash, deleted_at=0).first()
+        user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
 
         if not user:
-            return {}, {'user_email': ['Incorrect Credentials'], }, 404
-
-        elif user.lockout_to > time.time():
-            return {}, {'user_email': ['Temporary Lockout'], }, 404
+            return {}, {'user_token': ['Not Found'], }, 404
 
         else:
-            user.update_code()
-            db.session.add(user)
+            user.update_token()
             db.session.flush()
             db.session.commit()
-
-            cache.set('user.%s' % (user.id), user)
-
-            # TODO: send confirm_code to email
-            return {'user': {'id': user.id}}, {}, 201
+            return {}, {}, 200
 
     except SQLAlchemyError as e:
         log.error(e)
+        db.session.rollback()
         return {}, {'error': ['Service Unavailable']}, 503
 
     except Exception as e:
@@ -119,39 +139,6 @@ def user_restore(user_email, user_pass):
         return {}, {'error': ['Internal Server Error']}, 500
 
 
-@celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
-def user_restore(user_id, confirm_code):
-    try:
-        pass_hash = UserModel.get_hash(user_email.lower() + user_pass)
-        user = UserModel.query.filter_by(user_email=user_email, pass_hash=pass_hash, deleted_at=0).first()
-
-        if not user:
-            return {}, {'user_email': ['Incorrect Credentials'], }, 404
-
-        elif user.lockout_to > time.time():
-            return {}, {'user_email': ['Temporary Lockout'], }, 404
-
-        else:
-            cache.set('user.%s' % (user.id), user)
-            return {'user': {
-                'id': user.id,
-                'deleted_at': user.deleted_at,
-                'user_status': user.user_status.name,
-                'user_name': user.user_name,
-            }}, {}, 200
-
-    except ValidationError as e:
-        log.debug(e.messages)
-        return {}, e.messages, 400
-
-    except SQLAlchemyError as e:
-        log.error(e)
-        return {}, {'error': ['Service Unavailable']}, 503
-
-    except Exception as e:
-        log.error(e)
-        return {}, {'error': ['Internal Server Error']}, 500
-"""
 
 
 
