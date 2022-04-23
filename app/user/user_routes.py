@@ -66,7 +66,6 @@ def token_put():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-
 # select user
 @app.route('/user/<user_id>', methods=['GET'])
 def user_get(user_id):
@@ -77,11 +76,3 @@ def user_get(user_id):
     except TimeoutError as e:
         log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-
-
-
-
-
-    
