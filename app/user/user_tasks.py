@@ -24,6 +24,11 @@ def user_register(user_email, user_name):
 
         db.session.commit()
 
+        if user.id == 1:
+            user.is_admin = True
+            db.session.flush()
+            db.session.commit()
+
         # TODO: send user_pass to email
         log.info("REGISTER user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
         return {'user': {'id': user.id}}, {}, 201

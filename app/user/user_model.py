@@ -25,12 +25,14 @@ class UserModel(BaseModel):
     pass_expires = db.Column(db.Integer(), nullable=False, default=0)
     pass_attempts = db.Column(db.SmallInteger(), default=0)
 
+    is_admin = db.Column(db.Boolean(), nullable=False, default=False)
     user_meta = db.relationship('UserMetaModel', backref='users')
 
-    def __init__(self, user_email, user_name):
+    def __init__(self, user_email, user_name, is_admin=False):
         #self.user_type = user_type
         self.user_email = user_email.lower()
         self.user_name = user_name
+        self.is_admin = is_admin
         self.update_token()
         self.update_pass()
         
