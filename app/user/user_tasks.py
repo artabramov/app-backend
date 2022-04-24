@@ -149,13 +149,13 @@ def user_logout(user_token):
 def user_select(user_token, user_id):
     try:
         authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
-
         if not authed_user:
             return {}, {'user_token': ['Not Found'], }, 404
-
         cache.set('user.%s' % (authed_user.id), authed_user)
 
-        user = UserModel.query.filter_by(id=user_id).first()
+        user = cache.get('user.%s' % (user_id))
+        if not user:
+            user = UserModel.query.filter_by(id=user_id).first()
 
         if user:
             cache.set('user.%s' % (user.id), user)
