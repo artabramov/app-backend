@@ -4,7 +4,6 @@ from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
-from logging import Logger
 import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT
 
@@ -67,6 +66,7 @@ def user_restore(user_email):
             db.session.add(user)
             db.session.flush()
             db.session.commit()
+            cache.set('user.%s' % (user.id), user)
 
             # TODO: send user_pass to email
             log.info("RESTORE user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
@@ -101,6 +101,7 @@ def user_login(user_email, user_pass):
             user.pass_attempts += 1
             db.session.flush()
             db.session.commit()
+            cache.set('user.%s' % (user.id), user)
             return {}, {'user_pass': ['Incorrect'], }, 404
 
         else:
@@ -124,16 +125,15 @@ def user_login(user_email, user_pass):
 @celery.task(name='app.user_logout', time_limit=10, ignore_result=False)
 def user_logout(user_token):
     try:
-        user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
-
-        if not user:
+        authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
+        if not authed_user:
             return {}, {'user_token': ['Not Found'], }, 404
 
-        else:
-            user.update_token()
-            db.session.flush()
-            db.session.commit()
-            return {}, {}, 200
+        authed_user.update_token()
+        db.session.flush()
+        db.session.commit()
+        cache.set('user.%s' % (authed_user.id), authed_user)
+        return {}, {}, 200
 
     except SQLAlchemyError as e:
         log.error(e)
@@ -159,11 +159,10 @@ def user_select(user_token, user_id):
 
         if user:
             cache.set('user.%s' % (user.id), user)
-            return {
-                'user': {
-                    'id': user.id,
-                    'user_name': user.user_name,
-                    'user_meta': {meta.meta_key: meta.meta_value for meta in user.user_meta}    
+            return {'user': {
+                'id': user.id,
+                'user_name': user.user_name,
+                'user_meta': {meta.meta_key: meta.meta_value for meta in user.user_meta}    
             }}, {}, 200
         else:
             return {}, {'user_id': ['Not Found']}, 404
