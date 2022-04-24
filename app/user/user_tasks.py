@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 from logging import Logger
 import time
-from app.user.user_model import PASS_EXPIRATION_TIME, PASS_ATTEMPTS_LIMIT
+from app.user.user_model import PASS_ATTEMPTS_LIMIT
 
 log = get_task_logger(__name__)
 
@@ -159,9 +159,11 @@ def user_select(user_token, user_id):
 
         if user:
             cache.set('user.%s' % (user.id), user)
-            return {'user': {
-                'id': user.id,
-                'user_name': user.user_name,
+            return {
+                'user': {
+                    'id': user.id,
+                    'user_name': user.user_name,
+                    'user_meta': {meta.meta_key: meta.meta_value for meta in user.user_meta}    
             }}, {}, 200
         else:
             return {}, {'user_id': ['Not Found']}, 404

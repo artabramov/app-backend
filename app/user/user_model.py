@@ -11,7 +11,7 @@ import time
 PASS_LENGTH = 8
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
-PASS_EXPIRATION_TIME = 60 * 1
+PASS_EXPIRATION_TTL = 60 * 1
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
@@ -26,7 +26,7 @@ class UserModel(BaseModel):
     pass_attempts = db.Column(db.SmallInteger(), default=0)
 
     is_admin = db.Column(db.Boolean(), nullable=False, default=False)
-    user_meta = db.relationship('UserMetaModel', backref='users')
+    user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
 
     def __init__(self, user_email, user_name, is_admin=False):
         #self.user_type = user_type
@@ -45,7 +45,7 @@ class UserModel(BaseModel):
     def user_pass(self, value):
         self.__user_pass = value
         self.pass_hash = UserModel.get_hash(self.user_email + self.__user_pass)
-        self.pass_expires = time.time() + PASS_EXPIRATION_TIME
+        self.pass_expires = time.time() + PASS_EXPIRATION_TTL
         self.pass_attempts = 0
 
     @staticmethod
