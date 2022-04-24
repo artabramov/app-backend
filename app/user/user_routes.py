@@ -70,7 +70,8 @@ def token_put():
 @app.route('/user/<user_id>', methods=['GET'])
 def user_get(user_id):
     try:
-        async_result = user_select.apply_async(args=[user_id], task_id=g.request_context.uuid).get(timeout=10)
+        user_token = request.headers.get('user_token')
+        async_result = user_select.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:

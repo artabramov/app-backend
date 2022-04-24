@@ -29,6 +29,8 @@ def user_register(user_email, user_name):
             db.session.flush()
             db.session.commit()
 
+        cache.set('user.%s' % (user.id), user)
+
         # TODO: send user_pass to email
         log.info("REGISTER user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
         return {'user': {'id': user.id}}, {}, 201
@@ -144,24 +146,25 @@ def user_logout(user_token):
 
 
 @celery.task(name='app.user_select', time_limit=10, ignore_result=False)
-def user_select(user_id):
+def user_select(user_token, user_id):
     try:
+        authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
+
+        if not authed_user:
+            return {}, {'user_token': ['Not Found'], }, 404
+
+        cache.set('user.%s' % (authed_user.id), authed_user)
+
         user = UserModel.query.filter_by(id=user_id).first()
-        log.debug('task debug')
 
         if user:
             cache.set('user.%s' % (user.id), user)
             return {'user': {
                 'id': user.id,
-                'user_status': user.user_status.name,
                 'user_name': user.user_name,
             }}, {}, 200
         else:
             return {}, {'user_id': ['Not Found']}, 404
-
-    except ValidationError as e:
-        log.debug(e.messages)
-        return {}, e.messages, 400
 
     except SQLAlchemyError as e:
         log.error(e)
