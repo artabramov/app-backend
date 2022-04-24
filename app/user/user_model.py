@@ -71,6 +71,7 @@ class UserModel(BaseModel):
 
 
 @db.event.listens_for(UserModel, 'before_insert')
+@db.event.listens_for(UserModel, 'before_update')
 def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({

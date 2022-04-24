@@ -174,3 +174,43 @@ def user_select(user_token, user_id):
     except Exception as e:
         log.error(e)
         return {}, {'error': ['Internal Server Error']}, 500
+
+
+@celery.task(name='app.user_update', time_limit=10, ignore_result=False)
+def user_update(user_token, user_id, user_email, user_name, is_admin, deleted):
+    try:
+        authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
+        if not authed_user:
+            return {}, {'user_token': ['Not Found'], }, 404
+        cache.set('user.%s' % (authed_user.id), authed_user)
+
+        if authed_user.id == user_id:
+            user = authed_user
+        elif authed_user.id != user_id  and authed_user.is_admin == True:
+            user = cache.get('user.%s' % (user_id))
+            if not user:
+                user = UserModel.query.filter_by(id=user_id).first()
+        
+        if not user:
+            return {}, {'user_token': ['Not Found'], }, 404
+
+        if user_name:
+            user.user_name = user_name
+
+        db.session.flush()
+        db.session.commit()
+        cache.set('user.%s' % (user.id), user)
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
+
+    except SQLAlchemyError as e:
+        log.error(e)
+        db.session.rollback()
+        return {}, {'error': ['Service Unavailable']}, 503
+
+    except Exception as e:
+        log.error(e)
+        return {}, {'error': ['Internal Server Error']}, 500
