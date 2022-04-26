@@ -71,7 +71,6 @@ class UserModel(BaseModel):
 
 
 @db.event.listens_for(UserModel, 'before_insert')
-@db.event.listens_for(UserModel, 'before_update')
 def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({
@@ -88,3 +87,14 @@ def before_insert_user(mapper, connect, user):
 
     if UserModel.query.filter_by(user_email=user.user_email).first():
         raise ValidationError({'user_email': ['Already exists.']})
+
+
+@db.event.listens_for(UserModel, 'before_update')
+def before_insert_user(mapper, connect, user):
+    try:
+        UserSchema().load({
+            'user_name': user.user_name,
+        })
+        
+    except ValidationError:
+        raise

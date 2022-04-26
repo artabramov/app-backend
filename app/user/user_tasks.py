@@ -177,7 +177,7 @@ def user_select(user_token, user_id):
 
 
 @celery.task(name='app.user_update', time_limit=10, ignore_result=False)
-def user_update(user_token, user_id, user_name=None, is_admin=None, deleted=None):
+def user_update(user_token, user_id, user_name, is_admin=None, deleted=None):
     try:
         authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
         if not authed_user:
@@ -197,6 +197,9 @@ def user_update(user_token, user_id, user_name=None, is_admin=None, deleted=None
 
         if user_name:
             user.user_name = user_name
+
+        #if authed_user.is_admin and isinstance(is_admin, bool):
+        #    user.is_admin = is_admin
 
         db.session.flush()
         db.session.commit()
