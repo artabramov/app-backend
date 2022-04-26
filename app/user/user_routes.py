@@ -83,12 +83,11 @@ def user_get(user_id):
 @app.route('/user/<user_id>', methods=['PUT'])
 def user_put(user_id):
     try:
-        user_token = request.headers.get('user_token')
-        user_email = request.args.get('user_email', None)
+        user_id = int(user_id)
+        user_token = request.headers.get('user_token', None)
         user_name = request.args.get('user_name', None)
-        is_admin = request.args.get('is_admin', None)
-        deleted = request.args.get('deleted', None)
-        async_result = user_update.apply_async(args=[user_token, user_id, user_email, user_name, is_admin, deleted], task_id=g.request_context.uuid).get(timeout=10)
+        async_result = user_update.apply_async(args=[user_token, user_id, user_name], task_id=g.request_context.uuid).get(timeout=10)
+        #async_result = user_update(user_token, user_id, user_name, is_admin)
         return response(*async_result)
 
     except TimeoutError as e:

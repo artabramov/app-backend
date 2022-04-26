@@ -177,13 +177,14 @@ def user_select(user_token, user_id):
 
 
 @celery.task(name='app.user_update', time_limit=10, ignore_result=False)
-def user_update(user_token, user_id, user_email, user_name, is_admin, deleted):
+def user_update(user_token, user_id, user_name=None, is_admin=None, deleted=None):
     try:
         authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
         if not authed_user:
             return {}, {'user_token': ['Not Found'], }, 404
         cache.set('user.%s' % (authed_user.id), authed_user)
 
+        user = None
         if authed_user.id == user_id:
             user = authed_user
         elif authed_user.id != user_id  and authed_user.is_admin == True:
@@ -192,7 +193,7 @@ def user_update(user_token, user_id, user_email, user_name, is_admin, deleted):
                 user = UserModel.query.filter_by(id=user_id).first()
         
         if not user:
-            return {}, {'user_token': ['Not Found'], }, 404
+            return {}, {'user_id': ['Not Found'], }, 404
 
         if user_name:
             user.user_name = user_name
@@ -200,6 +201,8 @@ def user_update(user_token, user_id, user_email, user_name, is_admin, deleted):
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
+
+        return {}, {'wtf:': ['Whoah!'], }, 404
 
     except ValidationError as e:
         log.debug(e.messages)
@@ -213,4 +216,4 @@ def user_update(user_token, user_id, user_email, user_name, is_admin, deleted):
 
     except Exception as e:
         log.error(e)
-        return {}, {'error': ['Internal Server Error']}, 500
+        return {}, {'error': ['Internal Server Error!']}, 500
