@@ -6,6 +6,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT
+import base64
+import json
 
 log = get_task_logger(__name__)
 
@@ -110,7 +112,24 @@ def user_login(user_email, user_pass):
             db.session.flush()
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
-            return {'user': {'id': user.id, 'user_token': user.user_token}}, {}, 201
+
+            user_cookie = {
+                'user_id': user.id,
+                'user_token': user.user_token
+            }
+            base64_bytes = base64.b64encode(json.dumps(user_cookie).encode())
+            user_cookie_encoded = base64_bytes.decode('ascii')
+
+            sample_string_bytes = base64.b64decode(user_cookie_encoded)
+            sample_string = sample_string_bytes.decode("ascii")
+            #tmp = json.load(sample_string)
+            user_cookie_decoded = json.loads(sample_string)
+
+            return {
+                'user': {'id': user.id, 'user_token': user.user_token},
+                'user_cookie_encoded': user_cookie_encoded,
+                'user_cookie_decoded': user_cookie_decoded
+                }, {}, 201
 
     except SQLAlchemyError as e:
         log.error(e)
