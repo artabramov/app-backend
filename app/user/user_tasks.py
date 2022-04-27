@@ -121,8 +121,7 @@ def user_login(user_email, user_pass):
             user_cookie_encoded = base64_bytes.decode('ascii')
 
             sample_string_bytes = base64.b64decode(user_cookie_encoded)
-            sample_string = sample_string_bytes.decode("ascii")
-            #tmp = json.load(sample_string)
+            sample_string = sample_string_bytes.decode('ascii')
             user_cookie_decoded = json.loads(sample_string)
 
             return {
