@@ -198,9 +198,10 @@ def user_update(user_token, user_id, user_name, is_admin=None, deleted=None):
         if user_name:
             user.user_name = user_name
 
-        #if authed_user.is_admin and isinstance(is_admin, bool):
-        #    user.is_admin = is_admin
+        if authed_user.is_admin and isinstance(is_admin, bool):
+            user.is_admin = is_admin
 
+        db.session.add(user)
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
