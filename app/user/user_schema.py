@@ -17,4 +17,3 @@ class UserSchema(Schema):
     user_name = fields.Str(validate=validate.Length(min=4, max=40))
     #pass_attempts = fields.Int(validate=validate.Range(min=0, max=5))
     #is_admin = fields.Boolean()
-

@@ -113,21 +113,24 @@ def user_login(user_email, user_pass):
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
 
-            user_cookie = {
-                'user_id': user.id,
-                'user_token': user.user_token
-            }
-            base64_bytes = base64.b64encode(json.dumps(user_cookie).encode())
-            user_cookie_encoded = base64_bytes.decode('ascii')
+            #user_cookie = {
+            #    'user_id': user.id,
+            #    'user_name': user.user_name,
+            #    'user_token': user.user_token
+            #}
+            #base64_bytes = base64.b64encode(json.dumps(user_cookie).encode())
+            #user_cookie_encoded = base64_bytes.decode('ascii')
 
-            sample_string_bytes = base64.b64decode(user_cookie_encoded)
-            sample_string = sample_string_bytes.decode('ascii')
-            user_cookie_decoded = json.loads(sample_string)
+            #sample_string_bytes = base64.b64decode(user_cookie_encoded)
+            #sample_string = sample_string_bytes.decode('ascii')
+            #user_cookie_decoded = json.loads(sample_string)
+
+            user_cookie = user.user_cookie
 
             return {
                 'user': {'id': user.id, 'user_token': user.user_token},
-                'user_cookie_encoded': user_cookie_encoded,
-                'user_cookie_decoded': user_cookie_decoded
+                'user_cookie': user_cookie,
+                'user_data': UserModel.decode_cookie(user_cookie)
                 }, {}, 201
 
     except SQLAlchemyError as e:

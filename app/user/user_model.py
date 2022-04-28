@@ -7,6 +7,8 @@ from app.user.user_schema import UserSchema
 from marshmallow import ValidationError
 import random, string
 import time
+import base64
+import json
 
 PASS_LENGTH = 8
 PASS_HASH_SALT = 'abcd'
@@ -18,7 +20,7 @@ class UserModel(BaseModel):
 
     #user_type = db.Column(db.Enum(UserType))
     user_email = db.Column(db.String(255), nullable=False, index=True, unique=True)
-    user_name = db.Column(db.String(128), nullable=False)
+    user_name = db.Column(db.String(80), nullable=False)
     user_token = db.Column(db.String(128), nullable=False, index=True, unique=True)
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
@@ -68,6 +70,23 @@ class UserModel(BaseModel):
     #def create_code(self):
         #return ''.join(random.choices(string.digits, k=RESET_CODE_LENGTH))
         #self.reset_expires = time.time() + RESET_CODE_TIME
+
+    @property
+    def user_cookie(self):
+        user_data = {
+            'user_id': self.id,
+            'user_name': self.user_name,
+            'user_token': self.user_token
+        }
+        base64_bytes = base64.b64encode(json.dumps(user_data).encode())
+        return base64_bytes.decode('ascii')
+
+    @staticmethod
+    def decode_cookie(user_cookie):
+        user_cookie_bytes = base64.b64decode(user_cookie)
+        user_cookie_string = user_cookie_bytes.decode('ascii')
+        user_cookie = json.loads(user_cookie_string)
+        return user_cookie
 
 
 @db.event.listens_for(UserModel, 'before_insert')
