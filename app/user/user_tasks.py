@@ -125,12 +125,12 @@ def user_login(user_email, user_pass):
             #sample_string = sample_string_bytes.decode('ascii')
             #user_cookie_decoded = json.loads(sample_string)
 
-            user_cookie = user.user_cookie
+            #user_cookie = user.user_cookie
 
             return {
                 'user': {'id': user.id, 'user_token': user.user_token},
-                'user_cookie': user_cookie,
-                'user_data': UserModel.decode_cookie(user_cookie)
+                'user_token': user.user_token,
+                'token_payload': UserModel.get_payload(user.user_token)
                 }, {}, 201
 
     except SQLAlchemyError as e:

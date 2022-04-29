@@ -14,18 +14,21 @@ PASS_LENGTH = 8
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
 PASS_EXPIRATION_TTL = 60 * 1
+TOKEN_EXPIRATION_TTL = 60 * 60 * 24 * 30
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
-
     #user_type = db.Column(db.Enum(UserType))
+
     user_email = db.Column(db.String(255), nullable=False, index=True, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
-    user_token = db.Column(db.String(128), nullable=False, index=True, unique=True)
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_expires = db.Column(db.Integer(), nullable=False, default=0)
     pass_attempts = db.Column(db.SmallInteger(), default=0)
+
+    token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
+    token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     is_admin = db.Column(db.Boolean(), nullable=False, default=False)
     user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
@@ -35,7 +38,7 @@ class UserModel(BaseModel):
         self.user_email = user_email.lower()
         self.user_name = user_name
         self.is_admin = is_admin
-        self.update_token()
+        self.update_signature()
         self.update_pass()
         
 
@@ -59,34 +62,37 @@ class UserModel(BaseModel):
     def update_pass(self):
         self.user_pass = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=PASS_LENGTH))
 
-    def update_token(self):
+    def update_signature(self):
         is_unique = False
         while not is_unique:
-            user_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=128))
-            if not UserModel.query.filter_by(user_token=user_token).count():
+            token_signature = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=128))
+            if not UserModel.query.filter_by(token_signature=token_signature).count():
                 is_unique = True
-        self.user_token = user_token
+        self.token_signature = token_signature
+        self.token_expires = time.time() + TOKEN_EXPIRATION_TTL
 
     #def create_code(self):
         #return ''.join(random.choices(string.digits, k=RESET_CODE_LENGTH))
         #self.reset_expires = time.time() + RESET_CODE_TIME
 
     @property
-    def user_cookie(self):
-        user_data = {
+    def user_token(self):
+        token_payload = {
             'user_id': self.id,
             'user_name': self.user_name,
-            'user_token': self.user_token
+            'token_signature': self.token_signature,
+            'token_expires': self.token_expires
         }
-        base64_bytes = base64.b64encode(json.dumps(user_data).encode())
-        return base64_bytes.decode('ascii')
+        base64_bytes = base64.b64encode(json.dumps(token_payload).encode())
+        user_token = base64_bytes.decode('ascii')
+        return user_token
 
     @staticmethod
-    def decode_cookie(user_cookie):
-        user_cookie_bytes = base64.b64decode(user_cookie)
-        user_cookie_string = user_cookie_bytes.decode('ascii')
-        user_cookie = json.loads(user_cookie_string)
-        return user_cookie
+    def get_payload(user_token):
+        user_token_bytes = base64.b64decode(user_token)
+        user_token_string = user_token_bytes.decode('ascii')
+        token_payload = json.loads(user_token_string)
+        return token_payload
 
 
 @db.event.listens_for(UserModel, 'before_insert')
