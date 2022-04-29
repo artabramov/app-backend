@@ -40,16 +40,15 @@ class UserModel(BaseModel):
         self.is_admin = is_admin
         self.update_signature()
         self.update_pass()
-        
 
     @property
     def user_pass(self):
-        return self.__user_pass
+        return self._user_pass
 
     @user_pass.setter
     def user_pass(self, value):
-        self.__user_pass = value
-        self.pass_hash = UserModel.get_hash(self.user_email + self.__user_pass)
+        self._user_pass = value
+        self.pass_hash = UserModel.get_hash(self.user_email + self._user_pass)
         self.pass_expires = time.time() + PASS_EXPIRATION_TTL
         self.pass_attempts = 0
 
@@ -71,10 +70,6 @@ class UserModel(BaseModel):
         self.token_signature = token_signature
         self.token_expires = time.time() + TOKEN_EXPIRATION_TTL
 
-    #def create_code(self):
-        #return ''.join(random.choices(string.digits, k=RESET_CODE_LENGTH))
-        #self.reset_expires = time.time() + RESET_CODE_TIME
-
     @property
     def user_token(self):
         token_payload = {
@@ -89,10 +84,14 @@ class UserModel(BaseModel):
 
     @staticmethod
     def get_payload(user_token):
-        user_token_bytes = base64.b64decode(user_token)
-        user_token_string = user_token_bytes.decode('ascii')
-        token_payload = json.loads(user_token_string)
-        return token_payload
+        try:
+            user_token_bytes = base64.b64decode(user_token)
+            user_token_string = user_token_bytes.decode('ascii')
+            token_payload = json.loads(user_token_string)
+            return token_payload
+
+        except Exception as e:
+            raise ValidationError({'user_token': ['Incorrect.']})
 
 
 @db.event.listens_for(UserModel, 'before_insert')

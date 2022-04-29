@@ -6,8 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT
-import base64
-import json
+from app.user.user_helpers import user_auth
 
 log = get_task_logger(__name__)
 
@@ -34,7 +33,7 @@ def user_register(user_email, user_name):
 
         # TODO: send user_pass to email
         log.info("REGISTER user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
-        return {'user': {'id': user.id}}, {}, 201
+        return {}, {}, 201
 
     except ValidationError as e:
         log.debug(e.messages)
@@ -72,7 +71,7 @@ def user_restore(user_email):
 
             # TODO: send user_pass to email
             log.info("RESTORE user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
-            return {'user': {'id': user.id}}, {}, 201
+            return {}, {}, 201
 
     except SQLAlchemyError as e:
         log.error(e)
@@ -89,7 +88,6 @@ def user_restore(user_email):
 def user_login(user_email, user_pass):
     try:
         user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
-
         if not user:
             return {}, {'user_email': ['Not Found'], }, 404
 
@@ -99,39 +97,19 @@ def user_login(user_email, user_pass):
         elif user.pass_attempts >= PASS_ATTEMPTS_LIMIT:
             return {}, {'user_pass': ['Attempts Limit'], }, 404
 
-        elif user.pass_hash != UserModel.get_hash(user_email.lower() + user_pass):
+        elif user.pass_hash == UserModel.get_hash(user_email.lower() + user_pass):
+            user.pass_expires = 0
+            db.session.flush()
+            db.session.commit()
+            cache.set('user.%s' % (user.id), user)
+            return {'user_token': user.user_token}, {}, 201
+
+        else:
             user.pass_attempts += 1
             db.session.flush()
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
             return {}, {'user_pass': ['Incorrect'], }, 404
-
-        else:
-            user.pass_expires = 0
-            user.pass_attempts = 0
-            db.session.flush()
-            db.session.commit()
-            cache.set('user.%s' % (user.id), user)
-
-            #user_cookie = {
-            #    'user_id': user.id,
-            #    'user_name': user.user_name,
-            #    'user_token': user.user_token
-            #}
-            #base64_bytes = base64.b64encode(json.dumps(user_cookie).encode())
-            #user_cookie_encoded = base64_bytes.decode('ascii')
-
-            #sample_string_bytes = base64.b64decode(user_cookie_encoded)
-            #sample_string = sample_string_bytes.decode('ascii')
-            #user_cookie_decoded = json.loads(sample_string)
-
-            #user_cookie = user.user_cookie
-
-            return {
-                'user': {'id': user.id, 'user_token': user.user_token},
-                'user_token': user.user_token,
-                'token_payload': UserModel.get_payload(user.user_token)
-                }, {}, 201
 
     except SQLAlchemyError as e:
         log.error(e)
@@ -146,15 +124,17 @@ def user_login(user_email, user_pass):
 @celery.task(name='app.user_logout', time_limit=10, ignore_result=False)
 def user_logout(user_token):
     try:
-        authed_user = UserModel.query.filter_by(user_token=user_token, deleted=0).first()
-        if not authed_user:
-            return {}, {'user_token': ['Not Found'], }, 404
-
-        authed_user.update_token()
+        authed_user = user_auth(user_token)
+        authed_user.update_signature()
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (authed_user.id), authed_user)
         return {}, {}, 200
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
 
     except SQLAlchemyError as e:
         log.error(e)
