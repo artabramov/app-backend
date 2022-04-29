@@ -5,7 +5,7 @@ import json
 import time
 import uuid
 
-SENSITIVE_KEYS = ['user_token']
+SENSITIVE_KEYS = ['user_token', 'user-token']
 SENSITIVE_VALUE = '*' * 4
 
 def obscure_data(result_dict, original_dict):
@@ -41,11 +41,20 @@ def create_logger(app):
     @app.before_request
     def before_request():
         g.request_context = RequestContext(request)
+        request_dict = {
+            'request': request.url,
+            'method': request.method,
+            'headers': obscure_data(dict(), dict(request.headers))}
+        app.logger.debug(str(request_dict))        
+        
+
+        """
         app.logger.debug(str({
             'request': request.url,
             'method': request.method,
             'headers': dict(request.headers),
             }))
+        """
 
     @app.after_request
     def after_request(response):
