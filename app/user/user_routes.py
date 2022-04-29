@@ -111,8 +111,6 @@ def image_post():
         return response({}, {'image': ['where is the file? 1']}, 504)
 
     file = request.files['file']
-    # if user does not select file, browser also
-    # submit an empty part without filename
     if file.filename == '':
         return response({}, {'image': ['where is the file? 2']}, 504)
 
