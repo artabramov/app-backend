@@ -20,3 +20,7 @@ class Config:
         'app.user_insert': {'queue': 'celery'}
     }
     CELERY_RESULT_EXPIRES = 30
+
+    UPLOAD_FOLDER = '/var'
+    UPLOAD_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+    UPLOAD_DOCUMENTS_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])

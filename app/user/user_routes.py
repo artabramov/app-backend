@@ -1,14 +1,10 @@
 from flask import request, g
-from sqlalchemy.exc import SQLAlchemyError
-from app import app, db, log
+from app import app, log
 from app.core.response import response
-from app.user.user_schema import UserSchema
-from app.user.user_model import UserModel
 from app.user.user_tasks import user_register, user_restore, user_login, user_logout, user_select, user_update
-from marshmallow import ValidationError
 from celery.exceptions import TimeoutError
 
-# register user
+# user register
 @app.route('/user/', methods=['POST'])
 def user_post():
     user_email = request.args.get('user_email', '')
@@ -66,7 +62,7 @@ def token_put():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-# select user
+# user select
 @app.route('/user/<user_id>', methods=['GET'])
 def user_get(user_id):
     try:
@@ -79,7 +75,7 @@ def user_get(user_id):
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-# update user
+# user update
 @app.route('/user/<user_id>', methods=['PUT'])
 def user_put(user_id):
     try:
@@ -96,3 +92,35 @@ def user_put(user_id):
     except TimeoutError as e:
         log.error(e)
         return response({}, {'db': ['Gateway Timeout']}, 504)
+
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['UPLOAD_IMAGES_EXTENSIONS']
+
+
+# user image upload
+@app.route('/image/', methods=['POST'])
+def image_post():
+    from werkzeug.utils import secure_filename
+    #from flask import url_for
+    import os
+
+    if 'file' not in request.files:
+        return response({}, {'image': ['where is the file? 1']}, 504)
+
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        return response({}, {'image': ['where is the file? 2']}, 504)
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        return response({}, {'file': str(file)}, 200)
+
+    return response({}, {}, 200)
+
