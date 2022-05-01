@@ -7,12 +7,12 @@ from celery.exceptions import TimeoutError
 # user register
 @app.route('/user/', methods=['POST'])
 def user_post():
-    user_email = request.args.get('user_email', '')
     user_name = request.args.get('user_name', '')
+    user_pass = request.args.get('user_pass', '')
 
     try:
         async_result = user_register.apply_async(args=[
-            user_email, user_name
+            user_name, user_pass
         ], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
@@ -25,8 +25,9 @@ def user_post():
 @app.route('/pass/', methods=['GET'])
 def pass_get():
     try:
-        user_email = request.args.get('user_email', '')
-        async_result = user_restore.apply_async(args=[user_email], task_id=g.request_context.uuid).get(timeout=10)
+        user_name = request.args.get('user_name', '')
+        user_pass = request.args.get('user_pass', '')
+        async_result = user_restore.apply_async(args=[user_name, user_pass], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:
@@ -38,10 +39,9 @@ def pass_get():
 @app.route('/token/', methods=['GET'])
 def token_get():
     try:
-        log.debug('bla bla bla')
-        user_email = request.args.get('user_email', '')
-        user_pass = request.args.get('user_pass', '')
-        async_result = user_login.apply_async(args=[user_email, user_pass], task_id=g.request_context.uuid).get(timeout=10)
+        user_name = request.args.get('user_name', '')
+        user_code = request.args.get('user_code', '')
+        async_result = user_login.apply_async(args=[user_name, user_code], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:

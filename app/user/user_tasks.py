@@ -5,16 +5,16 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
-from app.user.user_model import PASS_ATTEMPTS_LIMIT
+from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.user.user_helpers import user_auth
 
 log = get_task_logger(__name__)
 
 
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
-def user_register(user_email, user_name):
+def user_register(user_name, user_pass):
     try:
-        user = UserModel(user_email, user_name)
+        user = UserModel(user_name, user_pass)
         db.session.add(user)
         db.session.flush()
 
@@ -30,10 +30,7 @@ def user_register(user_email, user_name):
             db.session.commit()
 
         cache.set('user.%s' % (user.id), user)
-
-        # TODO: send user_pass to email
-        log.info("REGISTER user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
-        return {}, {}, 201
+        return {'code_secret': user.code_secret}, {}, 201
 
     except ValidationError as e:
         log.debug(e.messages)
@@ -52,26 +49,34 @@ def user_register(user_email, user_name):
 
 
 @celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
-def user_restore(user_email):
+def user_restore(user_name, user_pass):
     try:
-        user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
-
+        user = UserModel.query.filter_by(user_name=user_name, deleted=0).first()
         if not user:
-            return {}, {'user_email': ['Not Found'], }, 404
+            return {}, {'user_name': ['Not Found'], }, 404
 
-        elif user.pass_expires > time.time():
-            return {}, {'user_email': ['Wait a Bit'], }, 404
+        elif user.pass_suspended > time.time():
+            return {}, {'user_pass': ['Suspended'], }, 404
 
-        else:
-            user.update_pass()
-            db.session.add(user)
+        elif user.pass_hash == UserModel.get_pass_hash(user_name.lower() + user_pass):
+            user.pass_attempts = 0
+            user.pass_suspended = 0
+            user.code_attempts = 0
             db.session.flush()
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
+            return {}, {}, 200
 
-            # TODO: send user_pass to email
-            log.info("RESTORE user_email: %s, user_pass: %s" % (user.user_email, user.user_pass))
-            return {}, {}, 201
+        else:
+            user.pass_attempts += 1
+            if user.pass_attempts >= PASS_ATTEMPTS_LIMIT:
+                user.pass_attempts = 0
+                user.pass_suspended = time.time() + PASS_SUSPENSION_TIME
+
+            db.session.flush()
+            db.session.commit()
+            cache.set('user.%s' % (user.id), user)
+            return {}, {'user_pass': ['Incorrect'], }, 404
 
     except SQLAlchemyError as e:
         log.error(e)
@@ -85,31 +90,10 @@ def user_restore(user_email):
 
 
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
-def user_login(user_email, user_pass):
+def user_login(user_name, user_code):
     try:
-        user = UserModel.query.filter_by(user_email=user_email, deleted=0).first()
-        if not user:
-            return {}, {'user_email': ['Not Found'], }, 404
-
-        elif user.pass_expires < time.time():
-            return {}, {'user_pass': ['Pass Expired'], }, 404
-
-        elif user.pass_attempts >= PASS_ATTEMPTS_LIMIT:
-            return {}, {'user_pass': ['Attempts Limit'], }, 404
-
-        elif user.pass_hash == UserModel.get_hash(user_email.lower() + user_pass):
-            user.pass_expires = 0
-            db.session.flush()
-            db.session.commit()
-            cache.set('user.%s' % (user.id), user)
-            return {'user_token': user.user_token}, {}, 201
-
-        else:
-            user.pass_attempts += 1
-            db.session.flush()
-            db.session.commit()
-            cache.set('user.%s' % (user.id), user)
-            return {}, {'user_pass': ['Incorrect'], }, 404
+        user = UserModel.query.filter_by(user_name=user_name, deleted=0).first()
+        return {'user_totp': user.totp(), }, {}, 404
 
     except SQLAlchemyError as e:
         log.error(e)

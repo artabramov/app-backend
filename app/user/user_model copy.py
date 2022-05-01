@@ -1,4 +1,3 @@
-from enum import Enum
 import hashlib
 from app import db
 from app.core.base_model import BaseModel
@@ -6,31 +5,26 @@ from app.user.user_schema import UserSchema
 #from app.user.user_schema import UserType
 from marshmallow import ValidationError
 import random, string
+import time
 import base64
 import json
-import hmac, base64, struct, hashlib, time
 
+PASS_LENGTH = 8
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
-PASS_SUSPENSION_TIME = 30
-
-CODE_SECRET_LENGTH = 16
-CODE_ATTEMPTS_LIMIT = 5
-
-TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 30
-
+PASS_EXPIRATION_TTL = 60 * 1
+TOKEN_EXPIRATION_TTL = 60 * 60 * 24 * 30
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
     #user_type = db.Column(db.Enum(UserType))
-    user_name = db.Column(db.String(40), nullable=False)
+
+    user_email = db.Column(db.String(255), nullable=False, index=True, unique=True)
+    user_name = db.Column(db.String(80), nullable=False)
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
+    pass_expires = db.Column(db.Integer(), nullable=False, default=0)
     pass_attempts = db.Column(db.SmallInteger(), default=0)
-    pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
-
-    code_secret = db.Column(db.String(16), nullable=False, index=True)
-    code_attempts = db.Column(db.SmallInteger(), default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
@@ -38,20 +32,13 @@ class UserModel(BaseModel):
     is_admin = db.Column(db.Boolean(), nullable=False, default=False)
     user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
 
-    def __init__(self, user_name, user_pass, is_admin=False):
+    def __init__(self, user_email, user_name, is_admin=False):
         #self.user_type = user_type
-        #self.user_email = user_email.lower()
-        self.user_name = user_name.lower()
-        self.user_pass = user_pass
-        self.pass_attempts = 0
-        self.pass_suspended = 0
-        self.set_code_secret()
-        self.code_attempts = 0
-        self.set_token_signature()
-        self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
-
+        self.user_email = user_email.lower()
+        self.user_name = user_name
         self.is_admin = is_admin
-
+        self.update_signature()
+        self.update_pass()
 
     @property
     def user_pass(self):
@@ -60,55 +47,33 @@ class UserModel(BaseModel):
     @user_pass.setter
     def user_pass(self, value):
         self._user_pass = value
-        self.pass_hash = UserModel.get_pass_hash(self.user_name + self._user_pass)
-        #self.pass_suspended = time.time() + PASS_EXPIRATION_TTL
+        self.pass_hash = UserModel.get_hash(self.user_email + self._user_pass)
+        self.pass_expires = time.time() + PASS_EXPIRATION_TTL
+        self.pass_attempts = 0
 
     @staticmethod
-    def get_pass_hash(value):
+    def get_hash(value):
         encoded_value = (value + PASS_HASH_SALT).encode()
         hash_obj = hashlib.sha512(encoded_value)
         return hash_obj.hexdigest()
 
-    def set_code_secret(self):
-        self.code_secret = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=CODE_SECRET_LENGTH))
+    def update_pass(self):
+        self.user_pass = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=PASS_LENGTH))
 
-    def get_hotp_token(self, intervals_no):
-        key = base64.b32decode(self.code_secret, True)
-        msg = struct.pack(">Q", intervals_no)
-        h = hmac.new(key, msg, hashlib.sha1).digest()
-        o = ord(h[19]) & 15
-        h = (struct.unpack(">I", h[o:o+4])[0] & 0x7fffffff) % 1000000
-        return h
-
-    def get_totp_token(self):
-        return self.get_hotp_token(intervals_no=int(time.time())//30)
-
-    def totp(self):
-        """ Calculate TOTP using time and key """
-        now = int(time.time() // 30)
-        msg = now.to_bytes(8, "big")
-        digest = hmac.new(self.code_secret.encode(), msg, "sha1").digest()
-        offset = digest[19] & 0xF
-        code = digest[offset : offset + 4]
-        code = int.from_bytes(code, "big") & 0x7FFFFFFF
-        code = code % 1000000
-        return "{:06d}".format(code)
-
-
-
-    def set_token_signature(self):
+    def update_signature(self):
         is_unique = False
         while not is_unique:
             token_signature = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=128))
             if not UserModel.query.filter_by(token_signature=token_signature).count():
                 is_unique = True
         self.token_signature = token_signature
-        
+        self.token_expires = time.time() + TOKEN_EXPIRATION_TTL
 
     @property
     def user_token(self):
         token_payload = {
             'user_id': self.id,
+            'user_name': self.user_name,
             'token_signature': self.token_signature,
             'token_expires': self.token_expires
         }
@@ -133,9 +98,9 @@ def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({
             #'user_type': user.user_type,
-            #'user_email': user.user_email,
+            'user_email': user.user_email,
+            #'user_pass': user.user_pass,
             'user_name': user.user_name,
-            'user_pass': user.user_pass,
             #'pass_attempts': 0,
             #'is_admin': user.is_admin,
         })
@@ -143,12 +108,12 @@ def before_insert_user(mapper, connect, user):
     except ValidationError:
         raise
 
-    if UserModel.query.filter_by(user_name=user.user_name).first():
-        raise ValidationError({'user_name': ['Already exists.']})
+    if UserModel.query.filter_by(user_email=user.user_email).first():
+        raise ValidationError({'user_email': ['Already exists.']})
 
 
 @db.event.listens_for(UserModel, 'before_update')
-def before_update_user(mapper, connect, user):
+def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({
             'user_name': user.user_name,
