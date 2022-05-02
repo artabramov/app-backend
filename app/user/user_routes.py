@@ -1,7 +1,7 @@
 from flask import request, g
 from app import app, log
 from app.core.response import response
-from app.user.user_tasks import user_register, user_restore, user_login, user_logout, user_select, user_update
+from app.user.user_tasks import user_register, user_restore, user_signin, user_signout, user_select, user_update
 from celery.exceptions import TimeoutError
 
 # user register
@@ -40,9 +40,9 @@ def pass_get():
 @app.route('/token/', methods=['GET'])
 def token_get():
     try:
-        user_name = request.args.get('user_name', '')
+        user_login = request.args.get('user_login', '')
         user_code = request.args.get('user_code', '')
-        async_result = user_login.apply_async(args=[user_name, user_code], task_id=g.request_context.uuid).get(timeout=10)
+        async_result = user_signin.apply_async(args=[user_login, user_code], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:

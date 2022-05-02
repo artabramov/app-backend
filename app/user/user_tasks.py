@@ -89,9 +89,9 @@ def user_restore(user_login, user_pass):
 
 
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
-def user_login(user_name, user_code):
+def user_signin(user_login, user_code):
     try:
-        user = UserModel.query.filter_by(user_name=user_name, deleted=0).first()
+        user = UserModel.query.filter_by(user_login=user_login, deleted=0).first()
         return {'user_totp': user.totp(), }, {}, 404
 
     except SQLAlchemyError as e:
@@ -105,7 +105,7 @@ def user_login(user_name, user_code):
 
 
 @celery.task(name='app.user_logout', time_limit=10, ignore_result=False)
-def user_logout(user_token):
+def user_signout(user_token):
     try:
         authed_user = user_auth(user_token)
         authed_user.update_signature()
