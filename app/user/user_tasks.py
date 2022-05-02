@@ -16,6 +16,7 @@ log = get_task_logger(__name__)
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
 def user_register(user_login, user_name, user_pass):
     try:
+        UserModel.validate({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
         user = UserModel(user_login, user_name, user_pass)
         db.session.add(user)
         db.session.flush()
@@ -57,27 +58,27 @@ def user_restore(user_login, user_pass):
             return {}, {'user_login': ['Not Found'], }, 404
 
         elif user.pass_suspended > time.time():
-            return {}, {'user_pass': ['Suspended'], }, 404
+            return {}, {'user_pass': ['Not Acceptable'], }, 406
 
         elif user.pass_hash == pass_hash:
-            user.pass_attempts = 0
+            user.pass_attempts = PASS_ATTEMPTS_LIMIT
             user.pass_suspended = 0
-            user.code_attempts = 0
+            user.code_attempts = CODE_ATTEMPTS_LIMIT
             db.session.flush()
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
             return {}, {}, 200
 
         else:
-            user.pass_attempts += 1
-            if user.pass_attempts >= PASS_ATTEMPTS_LIMIT:
-                user.pass_attempts = 0
+            user.pass_attempts -= 1
+            if user.pass_attempts < 1:
+                user.pass_attempts = PASS_ATTEMPTS_LIMIT
                 user.pass_suspended = time.time() + PASS_SUSPENSION_TIME
 
             db.session.flush()
             db.session.commit()
             cache.set('user.%s' % (user.id), user)
-            return {}, {'user_pass': ['Incorrect'], }, 404
+            return {}, {'user_pass': ['Not Found'], }, 404
 
     except SQLAlchemyError as e:
         log.error(e)
@@ -93,13 +94,33 @@ def user_restore(user_login, user_pass):
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
 def user_signin(user_login, user_code):
     try:
+        UserModel.validate({'user_login': user_login, 'user_code': user_code})
         user = UserModel.query.filter_by(user_login=user_login, deleted=0).first()
-        #return {'user_totp': user.totp(), }, {}, 404
-        totp = pyotp.TOTP(user.code_secret)
-        return {
-            'code_secret': str(user.code_secret),
-            'user_totp': totp.now(),
-        }, {}, 404
+        
+        if not user:
+            return {}, {'user_login': ['Not Found'], }, 404
+        
+        elif user.code_attempts < 1:
+            return {}, {'user_code': ['Not Acceptable'], }, 406
+
+        elif user_code == user.get_code_value():
+            user.code_attempts = 0
+            db.session.flush()
+            db.session.commit()
+            cache.set('user.%s' % (user.id), user)
+            return {'user_token': user.user_token}, {}, 200
+
+        else:
+            user.code_attempts -= 1
+            db.session.flush()
+            db.session.commit()
+            cache.set('user.%s' % (user.id), user)
+            return {}, {'user_code': ['Incorrect'], }, 404
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
 
     except SQLAlchemyError as e:
         log.error(e)

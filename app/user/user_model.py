@@ -42,10 +42,10 @@ class UserModel(BaseModel):
         #self.user_role = UserRole.newbie
         self.user_role = user_role if user_role else UserRole.newbie
         self.user_pass = user_pass
-        self.pass_attempts = 0
+        self.pass_attempts = PASS_ATTEMPTS_LIMIT
         self.pass_suspended = 0
         self.set_code_secret()
-        self.code_attempts = 0
+        self.code_attempts = CODE_ATTEMPTS_LIMIT
         self.set_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
 
@@ -67,6 +67,10 @@ class UserModel(BaseModel):
     def set_code_secret(self):
         self.code_secret = pyotp.random_base32()
 
+    def get_code_value(self):
+        totp = pyotp.TOTP(self.code_secret)
+        return totp.now()
+
     def set_token_signature(self):
         is_unique = False
         while not is_unique:
@@ -79,6 +83,7 @@ class UserModel(BaseModel):
     def user_token(self):
         token_payload = {
             'user_id': self.id,
+            'user_name': self.user_name,
             'token_signature': self.token_signature,
             'token_expires': self.token_expires
         }
@@ -97,9 +102,20 @@ class UserModel(BaseModel):
         except Exception as e:
             raise ValidationError({'user_token': ['Incorrect.']})
 
+    @staticmethod
+    def validate(user_data):
+        try:
+            UserSchema().load(user_data)
+            
+        except ValidationError:
+            raise
+
+
+
 
 @db.event.listens_for(UserModel, 'before_insert')
 def before_insert_user(mapper, connect, user):
+    """
     try:
         UserSchema().load({
             'user_login': user.user_login,
@@ -110,11 +126,11 @@ def before_insert_user(mapper, connect, user):
         
     except ValidationError:
         raise
-
+    """
     if UserModel.query.filter_by(user_login=user.user_login).first():
         raise ValidationError({'user_login': ['Already exists.']})
 
-
+"""
 @db.event.listens_for(UserModel, 'before_update')
 def before_update_user(mapper, connect, user):
     try:
@@ -130,3 +146,4 @@ def before_update_user(mapper, connect, user):
         
     except ValidationError:
         raise
+"""
