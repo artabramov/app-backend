@@ -1,12 +1,9 @@
 from enum import Enum
-import hashlib
 from app import db
 from app.core.base_model import BaseModel
-from app.user.user_schema import UserSchema
-#from app.user.user_schema import UserType
+from app.user.user_schema import UserSchema, UserRole
 from marshmallow import ValidationError
 import random, string
-import base64
 import json
 import hmac, base64, struct, hashlib, time
 
@@ -22,26 +19,29 @@ TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 30
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
-    #user_type = db.Column(db.Enum(UserType))
-    user_name = db.Column(db.String(40), nullable=False)
+    user_login = db.Column(db.String(40), nullable=False, unique=True)
+    user_name = db.Column(db.String(80), nullable=False)
+    user_role = db.Column(db.Enum(UserRole), nullable=False, default='nobody')
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
-    pass_attempts = db.Column(db.SmallInteger(), default=0)
+    pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
     code_secret = db.Column(db.String(16), nullable=False, index=True)
-    code_attempts = db.Column(db.SmallInteger(), default=0)
+    code_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    is_admin = db.Column(db.Boolean(), nullable=False, default=False)
+    #is_admin = db.Column(db.Boolean(), nullable=False, default=False)
     user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
 
-    def __init__(self, user_name, user_pass, is_admin=False):
+    def __init__(self, user_login, user_name, user_pass, user_role=None):
         #self.user_type = user_type
         #self.user_email = user_email.lower()
-        self.user_name = user_name.lower()
+        self.user_login = user_login.lower()
+        self.user_name = user_name
+        self.user_role = UserRole.editor
         self.user_pass = user_pass
         self.pass_attempts = 0
         self.pass_suspended = 0
@@ -49,18 +49,16 @@ class UserModel(BaseModel):
         self.code_attempts = 0
         self.set_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
-
-        self.is_admin = is_admin
-
+        #self.is_admin = is_admin
 
     @property
     def user_pass(self):
-        return self._user_pass
+        return self._user_pass if hasattr(self, '_user_pass') else None
 
     @user_pass.setter
     def user_pass(self, value):
         self._user_pass = value
-        self.pass_hash = UserModel.get_pass_hash(self.user_name + self._user_pass)
+        self.pass_hash = UserModel.get_pass_hash(self.user_login + value)
         #self.pass_suspended = time.time() + PASS_EXPIRATION_TTL
 
     @staticmethod
@@ -132,9 +130,9 @@ class UserModel(BaseModel):
 def before_insert_user(mapper, connect, user):
     try:
         UserSchema().load({
-            #'user_type': user.user_type,
-            #'user_email': user.user_email,
+            'user_login': user.user_login,
             'user_name': user.user_name,
+            'user_role': user.user_role,
             'user_pass': user.user_pass,
             #'pass_attempts': 0,
             #'is_admin': user.is_admin,
@@ -143,16 +141,22 @@ def before_insert_user(mapper, connect, user):
     except ValidationError:
         raise
 
-    if UserModel.query.filter_by(user_name=user.user_name).first():
-        raise ValidationError({'user_name': ['Already exists.']})
+    if UserModel.query.filter_by(user_login=user.user_login).first():
+        raise ValidationError({'user_login': ['Already exists.']})
 
 
 @db.event.listens_for(UserModel, 'before_update')
 def before_update_user(mapper, connect, user):
     try:
-        UserSchema().load({
+        user_data = {
             'user_name': user.user_name,
-        })
+            'user_role': user.user_role,
+        }
+
+        if user.user_pass:
+            user_data['user_pass'] = user.user_pass
+
+        UserSchema().load(user_data)
         
     except ValidationError:
         raise

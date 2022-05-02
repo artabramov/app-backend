@@ -7,12 +7,13 @@ from celery.exceptions import TimeoutError
 # user register
 @app.route('/user/', methods=['POST'])
 def user_post():
+    user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
 
     try:
         async_result = user_register.apply_async(args=[
-            user_name, user_pass
+            user_login, user_name, user_pass
         ], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
@@ -25,9 +26,9 @@ def user_post():
 @app.route('/pass/', methods=['GET'])
 def pass_get():
     try:
-        user_name = request.args.get('user_name', '')
+        user_login = request.args.get('user_login', '')
         user_pass = request.args.get('user_pass', '')
-        async_result = user_restore.apply_async(args=[user_name, user_pass], task_id=g.request_context.uuid).get(timeout=10)
+        async_result = user_restore.apply_async(args=[user_login, user_pass], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:

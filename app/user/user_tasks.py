@@ -7,14 +7,16 @@ from celery.utils.log import get_task_logger
 import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.user.user_helpers import user_auth
+from app.user.user_schema import UserRole
 
 log = get_task_logger(__name__)
 
 
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
-def user_register(user_name, user_pass):
+def user_register(user_login, user_name, user_pass):
     try:
-        user = UserModel(user_name, user_pass)
+        user = UserModel(user_login, user_name, user_pass)
+        user.user_role = UserRole.admin if user.id == 1 else UserRole.nobody
         db.session.add(user)
         db.session.flush()
 
@@ -23,11 +25,6 @@ def user_register(user_name, user_pass):
         db.session.flush()
 
         db.session.commit()
-
-        if user.id == 1:
-            user.is_admin = True
-            db.session.flush()
-            db.session.commit()
 
         cache.set('user.%s' % (user.id), user)
         return {'code_secret': user.code_secret}, {}, 201
@@ -49,16 +46,18 @@ def user_register(user_name, user_pass):
 
 
 @celery.task(name='app.user_restore', time_limit=10, ignore_result=False)
-def user_restore(user_name, user_pass):
+def user_restore(user_login, user_pass):
     try:
-        user = UserModel.query.filter_by(user_name=user_name, deleted=0).first()
+        user_login = user_login.lower()
+        pass_hash = UserModel.get_pass_hash(user_login + user_pass)
+        user = UserModel.query.filter_by(user_login=user_login, deleted=0).first()
         if not user:
-            return {}, {'user_name': ['Not Found'], }, 404
+            return {}, {'user_login': ['Not Found'], }, 404
 
         elif user.pass_suspended > time.time():
             return {}, {'user_pass': ['Suspended'], }, 404
 
-        elif user.pass_hash == UserModel.get_pass_hash(user_name.lower() + user_pass):
+        elif user.pass_hash == pass_hash:
             user.pass_attempts = 0
             user.pass_suspended = 0
             user.code_attempts = 0
