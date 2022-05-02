@@ -6,6 +6,7 @@ from marshmallow import ValidationError
 import random, string
 import json
 import hmac, base64, struct, hashlib, time
+import pyotp
 
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
@@ -27,7 +28,7 @@ class UserModel(BaseModel):
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
-    code_secret = db.Column(db.String(16), nullable=False, index=True)
+    code_secret = db.Column(db.String(32), nullable=False, index=True)
     code_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
@@ -68,7 +69,8 @@ class UserModel(BaseModel):
         return hash_obj.hexdigest()
 
     def set_code_secret(self):
-        self.code_secret = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=CODE_SECRET_LENGTH))
+        #self.code_secret = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=CODE_SECRET_LENGTH))
+        self.code_secret = pyotp.random_base32()
 
     def get_hotp_token(self, intervals_no):
         key = base64.b32decode(self.code_secret, True)

@@ -8,6 +8,7 @@ import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
+import pyotp
 
 log = get_task_logger(__name__)
 
@@ -92,7 +93,12 @@ def user_restore(user_login, user_pass):
 def user_signin(user_login, user_code):
     try:
         user = UserModel.query.filter_by(user_login=user_login, deleted=0).first()
-        return {'user_totp': user.totp(), }, {}, 404
+        #return {'user_totp': user.totp(), }, {}, 404
+        totp = pyotp.TOTP(user.code_secret)
+        return {
+            'code_secret': str(user.code_secret),
+            'user_totp': totp.now(),
+        }, {}, 404
 
     except SQLAlchemyError as e:
         log.error(e)
