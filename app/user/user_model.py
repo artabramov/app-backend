@@ -5,7 +5,7 @@ from app.user.user_schema import UserSchema, UserRole
 from marshmallow import ValidationError
 import random, string
 import json
-import hmac, base64, struct, hashlib, time
+import base64, hashlib, time
 import pyotp
 
 PASS_HASH_SALT = 'abcd'
@@ -34,15 +34,13 @@ class UserModel(BaseModel):
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    #is_admin = db.Column(db.Boolean(), nullable=False, default=False)
     user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
-        #self.user_type = user_type
-        #self.user_email = user_email.lower()
         self.user_login = user_login.lower()
         self.user_name = user_name
-        self.user_role = UserRole.editor
+        #self.user_role = UserRole.newbie
+        self.user_role = user_role if user_role else UserRole.newbie
         self.user_pass = user_pass
         self.pass_attempts = 0
         self.pass_suspended = 0
@@ -50,7 +48,6 @@ class UserModel(BaseModel):
         self.code_attempts = 0
         self.set_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
-        #self.is_admin = is_admin
 
     @property
     def user_pass(self):
@@ -60,7 +57,6 @@ class UserModel(BaseModel):
     def user_pass(self, value):
         self._user_pass = value
         self.pass_hash = UserModel.get_pass_hash(self.user_login + value)
-        #self.pass_suspended = time.time() + PASS_EXPIRATION_TTL
 
     @staticmethod
     def get_pass_hash(value):
@@ -69,32 +65,7 @@ class UserModel(BaseModel):
         return hash_obj.hexdigest()
 
     def set_code_secret(self):
-        #self.code_secret = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=CODE_SECRET_LENGTH))
         self.code_secret = pyotp.random_base32()
-
-    def get_hotp_token(self, intervals_no):
-        key = base64.b32decode(self.code_secret, True)
-        msg = struct.pack(">Q", intervals_no)
-        h = hmac.new(key, msg, hashlib.sha1).digest()
-        o = ord(h[19]) & 15
-        h = (struct.unpack(">I", h[o:o+4])[0] & 0x7fffffff) % 1000000
-        return h
-
-    def get_totp_token(self):
-        return self.get_hotp_token(intervals_no=int(time.time())//30)
-
-    def totp(self):
-        """ Calculate TOTP using time and key """
-        now = int(time.time() // 30)
-        msg = now.to_bytes(8, "big")
-        digest = hmac.new(self.code_secret.encode(), msg, "sha1").digest()
-        offset = digest[19] & 0xF
-        code = digest[offset : offset + 4]
-        code = int.from_bytes(code, "big") & 0x7FFFFFFF
-        code = code % 1000000
-        return "{:06d}".format(code)
-
-
 
     def set_token_signature(self):
         is_unique = False
@@ -103,7 +74,6 @@ class UserModel(BaseModel):
             if not UserModel.query.filter_by(token_signature=token_signature).count():
                 is_unique = True
         self.token_signature = token_signature
-        
 
     @property
     def user_token(self):
@@ -136,8 +106,6 @@ def before_insert_user(mapper, connect, user):
             'user_name': user.user_name,
             'user_role': user.user_role,
             'user_pass': user.user_pass,
-            #'pass_attempts': 0,
-            #'is_admin': user.is_admin,
         })
         
     except ValidationError:

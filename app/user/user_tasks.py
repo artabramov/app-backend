@@ -17,9 +17,10 @@ log = get_task_logger(__name__)
 def user_register(user_login, user_name, user_pass):
     try:
         user = UserModel(user_login, user_name, user_pass)
-        user.user_role = UserRole.admin if user.id == 1 else UserRole.nobody
         db.session.add(user)
         db.session.flush()
+
+        user.user_role = UserRole.admin if user.id == 1 else UserRole.newbie
 
         user_meta = UserMetaModel(user.id, 'key', 'value')
         db.session.add(user_meta)

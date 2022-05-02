@@ -5,7 +5,7 @@ from enum import Enum
 
 
 class UserRole(Enum):
-    nobody = 0
+    newbie = 0
     reader = 1
     editor = 2
     admin = 3
