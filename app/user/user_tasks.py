@@ -30,6 +30,9 @@ def user_register(user_login, user_name, user_pass):
         db.session.commit()
 
         cache.set('user.%s' % (user.id), user)
+        import qrcode
+        img = qrcode.make(user.code_secret)
+        img.save('/app/qrs/%s.png' % user.code_secret)
         return {'code_secret': user.code_secret}, {}, 201
 
     except ValidationError as e:
