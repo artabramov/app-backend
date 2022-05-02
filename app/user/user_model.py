@@ -39,7 +39,6 @@ class UserModel(BaseModel):
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()
         self.user_name = user_name
-        #self.user_role = UserRole.newbie
         self.user_role = user_role if user_role else UserRole.newbie
         self.user_pass = user_pass
         self.pass_attempts = PASS_ATTEMPTS_LIMIT
