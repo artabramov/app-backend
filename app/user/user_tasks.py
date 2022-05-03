@@ -1,4 +1,4 @@
-from app import db, celery, cache
+from app import app, db, celery, cache
 from app.user.user_model import UserModel
 from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
@@ -8,7 +8,7 @@ import time
 from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
-import pyotp
+import qrcode
 
 log = get_task_logger(__name__)
 
@@ -20,20 +20,21 @@ def user_register(user_login, user_name, user_pass):
         user = UserModel(user_login, user_name, user_pass)
         db.session.add(user)
         db.session.flush()
-
         user.user_role = UserRole.admin if user.id == 1 else UserRole.newbie
 
         user_meta = UserMetaModel(user.id, 'key', 'value')
         db.session.add(user_meta)
         db.session.flush()
 
-        db.session.commit()
+        qr = qrcode.make(app.config['QR_LINK_MASK'] % (user.code_secret, user.user_login))
+        qr.save(app.config['QR_PATH_MASK'] % user.code_secret)
 
+        db.session.commit()
         cache.set('user.%s' % (user.id), user)
-        import qrcode
-        img = qrcode.make(user.code_secret)
-        img.save('/app/qr/%s.png' % user.code_secret)
-        return {'code_secret': user.code_secret}, {}, 201
+        return {
+            'code_secret': user.code_secret, 
+            'code_qr': app.config['QR_URI_MASK'] % user.code_secret
+        }, {}, 201
 
     except ValidationError as e:
         log.debug(e.messages)

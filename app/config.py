@@ -10,6 +10,11 @@ class Config:
     LOG_MAX_BYTES = 1024 * 10 # 10 KB
     LOG_BACKUP_COUNT = 5
 
+    QR_PATH_MASK = '/app/qr/%s.png'
+    QR_URI_MASK = 'http://localhost:8080/qr/%s.png'
+    #QR_LINK_MASK = 'otpauth://totp/Example:alice@google.com?secret=JBSWY3DPEHPK3PXP&issuer=Example'
+    QR_LINK_MASK = 'otpauth://totp/myapp?secret=%s&issuer=%s'
+
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
