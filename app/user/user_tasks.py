@@ -144,10 +144,9 @@ def user_signin(user_login, user_code):
 def user_signout(user_token):
     try:
         authed_user = user_auth(user_token)
-        authed_user.update_signature()
+        authed_user.set_token_signature()
         db.session.flush()
         db.session.commit()
-        cache.set('user.%s' % (authed_user.id), authed_user)
         return {}, {}, 200
 
     except ValidationError as e:

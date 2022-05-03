@@ -15,7 +15,7 @@ PASS_SUSPENSION_TIME = 30
 CODE_SECRET_LENGTH = 16
 CODE_ATTEMPTS_LIMIT = 5
 
-TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 30
+TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
 
 class UserModel(BaseModel):
@@ -91,7 +91,7 @@ class UserModel(BaseModel):
         return user_token
 
     @staticmethod
-    def get_payload(user_token):
+    def get_token_payload(user_token):
         try:
             user_token_bytes = base64.b64decode(user_token)
             user_token_string = user_token_bytes.decode('ascii')

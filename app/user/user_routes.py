@@ -36,7 +36,7 @@ def pass_get():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-# user login
+# user signin
 @app.route('/token/', methods=['GET'])
 def token_get():
     try:
@@ -50,12 +50,12 @@ def token_get():
         return response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-# user logout
+# user signout
 @app.route('/token/', methods=['PUT'])
 def token_put():
     try:
         user_token = request.headers.get('user_token')
-        async_result = user_logout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
+        async_result = user_signout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
         return response(*async_result)
 
     except TimeoutError as e:
