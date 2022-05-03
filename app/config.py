@@ -12,7 +12,6 @@ class Config:
 
     QR_PATH_MASK = '/app/qr/%s.png'
     QR_URI_MASK = 'http://localhost:8080/qr/%s.png'
-    #QR_LINK_MASK = 'otpauth://totp/Example:alice@google.com?secret=JBSWY3DPEHPK3PXP&issuer=Example'
     QR_LINK_MASK = 'otpauth://totp/myapp?secret=%s&issuer=%s'
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'

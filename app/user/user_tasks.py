@@ -9,6 +9,7 @@ from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_
 from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
 import qrcode
+import os
 
 log = get_task_logger(__name__)
 
@@ -108,6 +109,9 @@ def user_signin(user_login, user_code):
             return {}, {'user_code': ['Not Acceptable'], }, 406
 
         elif user_code == user.get_code_value():
+            if os.path.isfile(app.config['QR_PATH_MASK'] % user.code_secret):
+                os.remove(app.config['QR_PATH_MASK'] % user.code_secret)
+
             user.code_attempts = 0
             db.session.flush()
             db.session.commit()
