@@ -1,7 +1,16 @@
 import time
 from app.user.user_model import UserModel
+from app.user.user_schema import UserSchema
 from marshmallow import ValidationError
 from app import cache
+
+
+def user_validate(user_data):
+    try:
+        UserSchema().load(user_data)
+        
+    except ValidationError:
+        raise
 
 
 def user_auth(user_token):
@@ -17,16 +26,19 @@ def user_auth(user_token):
 
     elif user.token_signature != token_payload['token_signature']:
         cache.set('user.%s' % (user.id), user)
-        raise ValidationError({'token_signature': ['Not Found.']})
+        raise ValidationError({'user_token': ['Not Found.']})
 
     if user:
         cache.set('user.%s' % (user.id), user)
 
         if user.token_expires < time.time():
-            raise ValidationError({'token_signature': ['Token Expired.']})
+            raise ValidationError({'user_token': ['Token Expired.']})
 
         else:
             return user
 
     else:
-        raise ValidationError({'token_signature': ['Not Found.']})
+        raise ValidationError({'user_token': ['Not Found.']})
+
+
+

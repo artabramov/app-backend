@@ -101,6 +101,7 @@ class UserModel(BaseModel):
         except Exception as e:
             raise ValidationError({'user_token': ['Incorrect.']})
 
+    """
     @staticmethod
     def validate(user_data):
         try:
@@ -108,24 +109,11 @@ class UserModel(BaseModel):
             
         except ValidationError:
             raise
-
-
+    """
 
 
 @db.event.listens_for(UserModel, 'before_insert')
 def before_insert_user(mapper, connect, user):
-    """
-    try:
-        UserSchema().load({
-            'user_login': user.user_login,
-            'user_name': user.user_name,
-            'user_role': user.user_role,
-            'user_pass': user.user_pass,
-        })
-        
-    except ValidationError:
-        raise
-    """
     if UserModel.query.filter_by(user_login=user.user_login).first():
         raise ValidationError({'user_login': ['Already exists.']})
 

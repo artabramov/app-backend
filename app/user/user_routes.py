@@ -83,10 +83,9 @@ def user_put(user_id):
         user_id = int(user_id)
         user_token = request.headers.get('user_token', None)
         user_name = request.args.get('user_name', None)
-        is_admin = request.args.get('is_admin', None)
-        if is_admin is not None:
-            is_admin = bool(int(is_admin))
-        async_result = user_update.apply_async(args=[user_token, user_id, user_name, is_admin], task_id=g.request_context.uuid).get(timeout=10)
+        user_role = request.args.get('user_role', None)
+        user_pass = request.args.get('user_pass', None)
+        async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass], task_id=g.request_context.uuid).get(timeout=10)
         #async_result = user_update(user_token, user_id, user_name, is_admin)
         return response(*async_result)
 

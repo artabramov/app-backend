@@ -10,6 +10,7 @@ from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
 import qrcode
 import os
+from app.user.user_helpers import user_validate
 
 log = get_task_logger(__name__)
 
@@ -17,7 +18,7 @@ log = get_task_logger(__name__)
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
 def user_register(user_login, user_name, user_pass):
     try:
-        UserModel.validate({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
+        user_validate({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
         user = UserModel(user_login, user_name, user_pass)
         db.session.add(user)
         db.session.flush()
@@ -168,7 +169,6 @@ def user_signout(user_token):
 def user_select(user_token, user_id):
     try:
         authed_user = user_auth(user_token)
-        cache.set('user.%s' % (authed_user.id), authed_user)
 
         user = cache.get('user.%s' % (user_id))
         if not user:
@@ -184,6 +184,11 @@ def user_select(user_token, user_id):
         else:
             return {}, {'user_id': ['Not Found']}, 404
 
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
+
     except SQLAlchemyError as e:
         log.error(e)
         return {}, {'error': ['Service Unavailable']}, 503
@@ -194,38 +199,43 @@ def user_select(user_token, user_id):
 
 
 @celery.task(name='app.user_update', time_limit=10, ignore_result=False)
-def user_update(user_token, user_id, user_name, is_admin=None, deleted=None):
+def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None):
     try:
         authed_user = user_auth(user_token)
-        cache.set('user.%s' % (authed_user.id), authed_user)
-
-        user = None
-        if authed_user.id == user_id:
+        if user_id == authed_user.id:
             user = authed_user
 
-        elif authed_user.is_admin:
+        elif authed_user.user_role == UserRole.admin:
             user = cache.get('user.%s' % (user_id))
             if not user:
-                user = UserModel.query.filter_by(id=user_id).first()
+                user = UserModel.query.filter_by(id=user_id, deleted=0).first()
 
         else:
             return {}, {'user_id': ['Forbidden'], }, 403
 
-        if not user:
-            return {}, {'user_id': ['Not Found'], }, 404
-
+        user_data = {}
         if user_name:
-            user.user_name = user_name
+            user_data['user_name'] = user_name
 
-        if authed_user.is_admin and isinstance(is_admin, bool):
-            user.is_admin = is_admin
+        if user_role and authed_user.user_role == UserRole.admin and authed_user.id != user_id:
+            user_data['user_role'] = UserRole.get_role(user_role)
+
+        if user_pass:
+            user_data['user_pass'] = user_pass
+
+        user_validate(user_data)
+
+        for k in user_data:
+            setattr(user, k, user_data[k])
 
         db.session.add(user)
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
 
-        return {}, {'wtf:': ['Whoah!'], }, 404
+        #return {}, {'user_role:': str(authed_user.user_role), }, 404
+
+        return {}, {'user_role:': str({k: user_data[k] for k in user_data}), 'user': str(user)}, 404
 
     except ValidationError as e:
         log.debug(e.messages)

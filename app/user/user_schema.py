@@ -2,6 +2,7 @@ from marshmallow import Schema, fields, validate
 from marshmallow.validate import And
 from marshmallow_enum import EnumField
 from enum import Enum
+from marshmallow import ValidationError
 
 
 class UserRole(Enum):
@@ -10,9 +11,15 @@ class UserRole(Enum):
     editor = 2
     admin = 3
 
+    @classmethod
+    def get_role(cls, user_role):
+        try:
+            return cls._member_map_[user_role]
+        except:
+            return -1
+
 
 class UserSchema(Schema):
-    #user_email = fields.Email(validate=validate.Length(min=8, max=255))
     #pass_hash = fields.Str(validate=validate.Length(equal=64))
     user_login = fields.Str(validate=[validate.Length(min=4, max=40), lambda x: x.isalnum()])
     user_name = fields.Str(validate=validate.Length(min=4, max=80))
