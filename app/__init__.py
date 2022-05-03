@@ -2,7 +2,7 @@ from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
-from app.core.logger import create_logger
+from app.core.app_logger import create_logger
 from flask_caching import Cache
 
 

@@ -1,6 +1,6 @@
 from flask import make_response, jsonify
 
-def response(data={}, errors={}, code=200):
+def json_response(data={}, errors={}, code=200):
     response = make_response(
         jsonify(
             {

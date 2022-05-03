@@ -1,8 +1,9 @@
 from flask import request, g
 from app import app, log
-from app.core.response import response
+from app.core.json_response import json_response
 from app.user.user_tasks import user_register, user_restore, user_signin, user_signout, user_select, user_update
 from celery.exceptions import TimeoutError
+
 
 # user register
 @app.route('/user/', methods=['POST'])
@@ -15,11 +16,11 @@ def user_post():
         async_result = user_register.apply_async(args=[
             user_login, user_name, user_pass
         ], task_id=g.request_context.uuid).get(timeout=10)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user restore
@@ -29,11 +30,11 @@ def pass_get():
         user_login = request.args.get('user_login', '')
         user_pass = request.args.get('user_pass', '')
         async_result = user_restore.apply_async(args=[user_login, user_pass], task_id=g.request_context.uuid).get(timeout=10)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user signin
@@ -43,11 +44,11 @@ def token_get():
         user_login = request.args.get('user_login', '')
         user_code = request.args.get('user_code', '')
         async_result = user_signin.apply_async(args=[user_login, user_code], task_id=g.request_context.uuid).get(timeout=10)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user signout
@@ -56,11 +57,11 @@ def token_put():
     try:
         user_token = request.headers.get('user_token')
         async_result = user_signout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user select
@@ -69,11 +70,11 @@ def user_get(user_id):
     try:
         user_token = request.headers.get('user_token')
         async_result = user_select.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user update
@@ -87,11 +88,11 @@ def user_put(user_id):
         user_pass = request.args.get('user_pass', None)
         async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass], task_id=g.request_context.uuid).get(timeout=10)
         #async_result = user_update(user_token, user_id, user_name, is_admin)
-        return response(*async_result)
+        return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return response({}, {'db': ['Gateway Timeout']}, 504)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 
@@ -108,17 +109,17 @@ def image_post():
     import os
 
     if 'file' not in request.files:
-        return response({}, {'image': ['where is the file? 1']}, 504)
+        return json_response({}, {'image': ['where is the file? 1']}, 504)
 
     file = request.files['file']
     if file.filename == '':
-        return response({}, {'image': ['where is the file? 2']}, 504)
+        return json_response({}, {'image': ['where is the file? 2']}, 504)
 
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        return response({}, {'file': str(file)}, 200)
+        return json_response({}, {'file': str(file)}, 200)
 
-    return response({}, {}, 200)
+    return json_response({}, {}, 200)
 
