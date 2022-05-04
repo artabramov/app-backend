@@ -11,10 +11,14 @@ def user_post():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
+    meta_data = {
+        'key1': 'value1',
+        'key2': 'value2',
+    }
 
     try:
         async_result = user_register.apply_async(args=[
-            user_login, user_name, user_pass
+            user_login, user_name, user_pass, meta_data
         ], task_id=g.request_context.uuid).get(timeout=10)
         return json_response(*async_result)
 

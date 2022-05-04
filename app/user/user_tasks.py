@@ -1,5 +1,6 @@
 from app import app, db, celery, cache
 from app.user.user_model import UserModel
+from app.user_meta.user_meta_schema import UserMetaSchema
 from app.user_meta.user_meta_model import UserMetaModel
 from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
@@ -11,12 +12,13 @@ from app.user.user_schema import UserRole
 import qrcode
 import os
 from app.user.user_helpers import user_validate
+#from app.user_meta.user_meta_helpers import user_meta_insert_or_update
 
 log = get_task_logger(__name__)
 
 
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
-def user_register(user_login, user_name, user_pass):
+def user_register(user_login, user_name, user_pass, meta_data=None):
     try:
         user_validate({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
         user = UserModel(user_login, user_name, user_pass)
@@ -24,9 +26,24 @@ def user_register(user_login, user_name, user_pass):
         db.session.flush()
         user.user_role = UserRole.admin if user.id == 1 else UserRole.newbie
 
-        user_meta = UserMetaModel(user.id, 'key', 'value')
-        db.session.add(user_meta)
-        db.session.flush()
+        """
+        if user_meta:
+            for meta_key in user_meta:
+                user_meta_insert_or_update(user.id, meta_key, user_meta[meta_key])
+            db.session.flush()
+        """
+
+        if meta_data:
+            for meta_key in meta_data:
+                meta_value = meta_data[meta_key]
+                UserMetaSchema().load({
+                    'user_id': user.id,
+                    'meta_key': meta_key,
+                    'meta_value': meta_value,
+                })
+                user_meta = UserMetaModel(user.id, meta_key, meta_value)
+                db.session.add(user_meta)
+            db.session.flush()
 
         qr = qrcode.make(app.config['QR_LINK_MASK'] % (user.code_secret, user.user_login))
         qr.save(app.config['QR_PATH_MASK'] % user.code_secret)
