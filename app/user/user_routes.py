@@ -1,22 +1,25 @@
 from flask import request, g
 from app import app, log
 from app.core.json_response import json_response
-from app.user.user_tasks import user_register, user_restore, user_signin, user_signout, user_select, user_update
+from app.user.user_tasks import user_register, user_restore, user_signin, user_signout, user_select, user_update, user_remove
 from celery.exceptions import TimeoutError
+from app.user_meta.user_meta_schema import USER_META_KEYS
 
 
 # user register
 @app.route('/user/', methods=['POST'])
 def user_post():
-    user_login = request.args.get('user_login', '')
-    user_name = request.args.get('user_name', '')
-    user_pass = request.args.get('user_pass', '')
-    meta_data = {
-        'key1': 'value1',
-        'key2': 'value2',
-    }
-
     try:
+        user_login = request.args.get('user_login', '')
+        user_name = request.args.get('user_name', '')
+        user_pass = request.args.get('user_pass', '')
+
+        meta_data = {}
+        for meta_key in USER_META_KEYS:
+            meta_value = request.args.get(meta_key, None)
+            if meta_value:
+                meta_data[meta_key] = meta_value
+
         async_result = user_register.apply_async(args=[
             user_login, user_name, user_pass, meta_data
         ], task_id=g.request_context.uuid).get(timeout=10)
@@ -90,13 +93,35 @@ def user_put(user_id):
         user_name = request.args.get('user_name', None)
         user_role = request.args.get('user_role', None)
         user_pass = request.args.get('user_pass', None)
-        async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass], task_id=g.request_context.uuid).get(timeout=10)
-        #async_result = user_update(user_token, user_id, user_name, is_admin)
+
+        meta_data = {}
+        for meta_key in USER_META_KEYS:
+            meta_value = request.args.get(meta_key, None)
+            if meta_value:
+                meta_data[meta_key] = meta_value
+
+        async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass, meta_data], task_id=g.request_context.uuid).get(timeout=10)
         return json_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
         return json_response({}, {'db': ['Gateway Timeout']}, 504)
+
+
+# user delete
+@app.route('/user/<user_id>', methods=['DELETE'])
+def user_delete(user_id):
+    try:
+        user_id = int(user_id)
+        user_token = request.headers.get('user_token', None)
+
+        async_result = user_remove.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
+        return json_response(*async_result)
+
+    except TimeoutError as e:
+        log.error(e)
+        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+
 
 
 

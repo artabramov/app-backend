@@ -1,4 +1,5 @@
 from app import app, db, celery, cache
+from app.user.user_schema import UserSchema
 from app.user.user_model import UserModel
 from app.user_meta.user_meta_schema import UserMetaSchema
 from app.user_meta.user_meta_model import UserMetaModel
@@ -11,8 +12,6 @@ from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
 import qrcode
 import os
-from app.user.user_helpers import user_validate
-#from app.user_meta.user_meta_helpers import user_meta_insert_or_update
 
 log = get_task_logger(__name__)
 
@@ -20,18 +19,11 @@ log = get_task_logger(__name__)
 @celery.task(name='app.user_register', time_limit=10, ignore_result=False)
 def user_register(user_login, user_name, user_pass, meta_data=None):
     try:
-        user_validate({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
+        UserSchema().load({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
         user = UserModel(user_login, user_name, user_pass)
         db.session.add(user)
         db.session.flush()
         user.user_role = UserRole.admin if user.id == 1 else UserRole.newbie
-
-        """
-        if user_meta:
-            for meta_key in user_meta:
-                user_meta_insert_or_update(user.id, meta_key, user_meta[meta_key])
-            db.session.flush()
-        """
 
         if meta_data:
             for meta_key in meta_data:
@@ -117,7 +109,7 @@ def user_restore(user_login, user_pass):
 @celery.task(name='app.user_login', time_limit=10, ignore_result=False)
 def user_signin(user_login, user_code):
     try:
-        UserModel.validate({'user_login': user_login, 'user_code': user_code})
+        UserSchema().load({'user_login': user_login, 'user_code': user_code})
         user = UserModel.query.filter_by(user_login=user_login, deleted=0).first()
         
         if not user:
@@ -216,7 +208,7 @@ def user_select(user_token, user_id):
 
 
 @celery.task(name='app.user_update', time_limit=10, ignore_result=False)
-def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None):
+def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, meta_data=None):
     try:
         authed_user = user_auth(user_token)
         if user_id == authed_user.id:
@@ -231,28 +223,80 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
             return {}, {'user_id': ['Forbidden'], }, 403
 
         user_data = {}
-        if user_name:
+        if user_name and authed_user.id == user_id:
             user_data['user_name'] = user_name
 
         if user_role and authed_user.user_role == UserRole.admin and authed_user.id != user_id:
             user_data['user_role'] = UserRole.get_role(user_role)
 
-        if user_pass:
+        if user_pass and authed_user.id == user_id:
             user_data['user_pass'] = user_pass
 
-        user_validate(user_data)
+        UserSchema().load(user_data)
 
         for k in user_data:
             setattr(user, k, user_data[k])
 
         db.session.add(user)
         db.session.flush()
+
+        if meta_data:
+            for meta_key in meta_data:
+                meta_value = meta_data[meta_key]
+                UserMetaSchema().load({
+                    'user_id': user.id,
+                    'meta_key': meta_key,
+                    'meta_value': meta_value,
+                })
+
+                user_meta = UserMetaModel.query.filter_by(user_id=user_id, meta_key=meta_key).first()
+                if user_meta:
+                    user_meta.meta_value = meta_value
+                else:
+                    user_meta = UserMetaModel(user_id, meta_key, meta_value)
+                db.session.add(user_meta)
+            db.session.flush()
+
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
-
-        #return {}, {'user_role:': str(authed_user.user_role), }, 404
-
         return {}, {'user_role:': str({k: user_data[k] for k in user_data}), 'user': str(user)}, 404
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
+
+    except SQLAlchemyError as e:
+        log.error(e)
+        db.session.rollback()
+        return {}, {'error': ['Service Unavailable']}, 503
+
+    except Exception as e:
+        log.error(e)
+        return {}, {'error': ['Internal Server Error!']}, 500
+
+
+@celery.task(name='app.user_delete', time_limit=10, ignore_result=False)
+def user_remove(user_token, user_id):
+    try:
+        authed_user = user_auth(user_token)
+        if user_id == authed_user.id or authed_user.user_role != UserRole.admin:
+            return {}, {'user_id': ['Forbidden'], }, 403
+
+        else:
+            user = cache.get('user.%s' % (user_id))
+            if not user:
+                user = UserModel.query.filter_by(id=user_id, deleted=0).first()
+
+        if not user:
+            return {}, {'user_id': ['Not Found'], }, 404
+
+        user.deleted = time.time()
+        db.session.add(user)
+        db.session.flush()
+        db.session.commit()
+        cache.set('user.%s' % (user.id), user)
+        return {}, {}, 200
 
     except ValidationError as e:
         log.debug(e.messages)
