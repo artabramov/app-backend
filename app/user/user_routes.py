@@ -156,13 +156,11 @@ def image_post():
 
         """
         meta_key = 'user_image'
-        meta_value = file_path
-        
         user_meta = UserMetaModel.query.filter_by(user_id=user_id, meta_key=meta_key).first()
         if user_meta:
-            user_meta.meta_value = meta_value
+            user_meta.meta_value = file_path
         else:
-            user_meta = UserMetaModel(authed_user.id, meta_key, meta_value)
+            user_meta = UserMetaModel(authed_user.id, meta_key, file_path)
         db.session.add(user_meta)
         db.session.flush()
 
