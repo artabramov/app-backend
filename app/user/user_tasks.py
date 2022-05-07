@@ -315,12 +315,8 @@ def user_remove(user_token, user_id):
         return {}, {'error': ['Internal Server Error!']}, 500
 
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['USER_IMAGES_EXTENSIONS']
-
-
 @celery.task(name='app.image_upload', time_limit=10, ignore_result=False)
-def image_upload(user_token, file_data):
+def image_upload(user_token, file_data, tmp):
     try:
         authed_user = user_auth(user_token)
         meta_key = 'user_image'
@@ -328,6 +324,8 @@ def image_upload(user_token, file_data):
 
         user_meta = UserMetaModel.query.filter_by(user_id=authed_user.id, meta_key=meta_key).first()
         if user_meta:
+            if os.path.isfile(user_meta.meta_value):
+                os.remove(user_meta.meta_value)
             user_meta.meta_value = meta_value
         else:
             user_meta = UserMetaModel(authed_user.id, meta_key, meta_value)

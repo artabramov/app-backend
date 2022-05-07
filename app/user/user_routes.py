@@ -6,6 +6,7 @@ from celery.exceptions import TimeoutError
 from app.user_meta.user_meta_schema import USER_META_KEYS
 from werkzeug.utils import secure_filename
 from app.core.file_upload import file_upload
+from app.core.file_read import file_read
 
 
 # user register
@@ -125,8 +126,6 @@ def user_delete(user_id):
         return json_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
-
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['USER_IMAGES_EXTENSIONS']
 
@@ -136,30 +135,14 @@ def allowed_file(filename):
 def image_post():
     try:
         user_token = request.headers.get('user_token', None)
-        user_file = request.files.get('user_file', None)
+        #user_file = request.files.get('user_file', None)
+        user_file = request.files['user_file']
+        file_bytes = user_file.read()
+
         file_data = file_upload(user_file, app.config['USER_IMAGES_PATH'], app.config['USER_IMAGES_EXTENSIONS'])
+        file_tmp = file_read(user_file)
 
-        """
-        filename_src = getattr(user_file, 'filename', None)
-        if not user_file or not filename_src:
-            return json_response({}, {'user_file': ['Where is the file?']}, 406)
-
-        file_ext = user_file.filename.rsplit('.', 1)[1].lower()
-        if file_ext not in app.config['USER_IMAGES_EXTENSIONS']:
-            return json_response({}, {'user_file': ['Extension is incorrect']}, 406)
-
-        filename_dst = os.path.join(app.config['USER_IMAGES_PATH'], str(uuid.uuid4()) + '.' + file_ext)
-        user_file.save(filename_dst)
-        file_data = {
-            'filename_src': filename_src,
-            'filename_dst': filename_dst,
-            'file_size': os.path.getsize(filename_dst),
-            'file_mime': user_file.mimetype,
-            'file_ext': file_ext,
-        }
-        """
-
-        async_result = image_upload.apply_async(args=[user_token, file_data], task_id=g.request_context.uuid).get(timeout=10)
+        async_result = image_upload.apply_async(args=[user_token, file_data, request.files], task_id=g.request_context.uuid).get(timeout=10)
         return json_response(*async_result)
 
     except Exception as e:
