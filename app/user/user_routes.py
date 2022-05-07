@@ -126,8 +126,7 @@ def user_delete(user_id):
 
 
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in app.config['UPLOAD_IMAGES_EXTENSIONS']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['USER_IMAGES_EXTENSIONS']
 
 
 # user image upload
@@ -136,6 +135,7 @@ def image_post():
     from werkzeug.utils import secure_filename
     #from flask import url_for
     import os
+    import uuid
 
     if 'file' not in request.files:
         return json_response({}, {'image': ['where is the file? 1']}, 504)
@@ -145,9 +145,15 @@ def image_post():
         return json_response({}, {'image': ['where is the file? 2']}, 504)
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_source = secure_filename(file.filename)
+        file_ext = os.path.splitext(file_source)[1]
+        file_name = str(uuid.uuid4()) + file_ext
+        file_mime = file.mimetype
+        file_path = os.path.join(app.config['USER_IMAGES_PATH'], file_name)
+
         file.save(file_path)
+        file_size = os.path.getsize(file_path)
+
         return json_response({}, {'file': str(file)}, 200)
 
     return json_response({}, {}, 200)
