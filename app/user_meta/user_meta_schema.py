@@ -1,6 +1,6 @@
 from marshmallow import Schema, fields, validate
 
-USER_META_KEYS = {'user_timezone', 'user_language'}
+USER_META_KEYS = {'user_timezone', 'user_language', 'user_image'}
 
 
 class UserMetaSchema(Schema):

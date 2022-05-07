@@ -12,6 +12,8 @@ from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
 import qrcode
 import os
+from werkzeug.utils import secure_filename
+import uuid
 
 log = get_task_logger(__name__)
 
@@ -311,3 +313,40 @@ def user_remove(user_token, user_id):
     except Exception as e:
         log.error(e)
         return {}, {'error': ['Internal Server Error!']}, 500
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['USER_IMAGES_EXTENSIONS']
+
+
+@celery.task(name='app.image_upload', time_limit=10, ignore_result=False)
+def image_upload(user_token, file_data):
+    try:
+        authed_user = user_auth(user_token)
+        meta_key = 'user_image'
+        meta_value = file_data['filename_dst']
+
+        user_meta = UserMetaModel.query.filter_by(user_id=authed_user.id, meta_key=meta_key).first()
+        if user_meta:
+            user_meta.meta_value = meta_value
+        else:
+            user_meta = UserMetaModel(authed_user.id, meta_key, meta_value)
+        db.session.add(user_meta)
+        db.session.flush()
+
+        db.session.commit()
+        cache.set('user.%s' % (authed_user.id), authed_user)
+        return {}, {}, 200
+
+    except ValidationError as e:
+        log.debug(e.messages)
+        db.session.rollback()
+        return {}, e.messages, 400
+
+    except SQLAlchemyError as e:
+        log.error(e)
+        return {}, {'error': ['Service Unavailable']}, 503
+
+    except Exception as e:
+        log.error(e)
+        return {}, {'error': ['Internal Server Error']}, 500

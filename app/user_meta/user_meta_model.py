@@ -16,7 +16,7 @@ class UserMetaModel(BaseModel):
         self.meta_key = meta_key
         self.meta_value = meta_value
 
-
+"""
 @db.event.listens_for(UserMetaModel, 'before_insert')
 def before_insert_user(mapper, connect, user_meta):
     try:
@@ -31,3 +31,4 @@ def before_insert_user(mapper, connect, user_meta):
 
     if UserMetaModel.query.filter_by(user_id=user_meta.user_id, meta_key=user_meta.meta_key).first():
         raise ValidationError({'meta_key': ['Already exists.']})
+"""
