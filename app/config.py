@@ -25,6 +25,6 @@ class Config:
     }
     CELERY_RESULT_EXPIRES = 30
 
-    UPLOAD_FOLDER = '/var'
+    UPLOAD_FOLDER = '/app/images/'
     UPLOAD_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
     UPLOAD_DOCUMENTS_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
