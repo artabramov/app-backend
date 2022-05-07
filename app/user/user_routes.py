@@ -154,6 +154,22 @@ def image_post():
         file.save(file_path)
         file_size = os.path.getsize(file_path)
 
+        """
+        meta_key = 'user_image'
+        meta_value = file_path
+        
+        user_meta = UserMetaModel.query.filter_by(user_id=user_id, meta_key=meta_key).first()
+        if user_meta:
+            user_meta.meta_value = meta_value
+        else:
+            user_meta = UserMetaModel(authed_user.id, meta_key, meta_value)
+        db.session.add(user_meta)
+        db.session.flush()
+
+        db.session.commit()
+        cache.set('user.%s' % (user.id), user)
+        """
+
         return json_response({}, {'file': str(file)}, 200)
 
     return json_response({}, {}, 200)
