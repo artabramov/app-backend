@@ -9,6 +9,8 @@ from app.core.file_upload import file_upload
 from app.core.file_read import file_read
 
 
+ASYNC_ENABLE = app.config['APP_ASYNC_ENABLE']
+
 # user register
 @app.route('/user/', methods=['POST'])
 def user_post():
@@ -23,10 +25,13 @@ def user_post():
             if meta_value:
                 meta_data[meta_key] = meta_value
 
-        async_result = user_register.apply_async(args=[
-            user_login, user_name, user_pass, meta_data
-        ], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        if ASYNC_ENABLE:
+            result = user_register.apply_async(args=[
+                user_login, user_name, user_pass, meta_data
+            ], task_id=g.request_context.uuid).get(timeout=10)
+        else:
+            result = user_register(user_login, user_name, user_pass, meta_data)
+        return json_response(*result)
 
     except TimeoutError as e:
         log.error(e)

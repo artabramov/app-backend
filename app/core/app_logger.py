@@ -8,6 +8,7 @@ import uuid
 SENSITIVE_KEYS = ['user_token', 'user-token']
 SENSITIVE_VALUE = '*' * 4
 
+
 def obscure_data(result_dict, original_dict):
     for key, value in original_dict.items():
         if isinstance(value, dict):

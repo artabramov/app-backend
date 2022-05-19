@@ -17,9 +17,14 @@ import uuid
 
 log = get_task_logger(__name__)
 
+TIME_LIMIT = app.config['APP_ASYNC_TIME_LIMIT']
 
-@celery.task(name='app.user_register', time_limit=10, ignore_result=False)
+@celery.task(name='app.user_register', time_limit=TIME_LIMIT, ignore_result=False)
 def user_register(user_login, user_name, user_pass, meta_data=None):
+    from app.user.user_helpers import user_register
+    return user_register(user_login, user_name, user_pass, meta_data)
+
+    """
     try:
         UserSchema().load({'user_login': user_login, 'user_name': user_name, 'user_pass': user_pass})
         user = UserModel(user_login, user_name, user_pass)
@@ -63,6 +68,7 @@ def user_register(user_login, user_name, user_pass, meta_data=None):
         log.error(e)
         db.session.rollback()
         return {}, {'error': ['Internal Server Error']}, 500
+    """
 
 
 @celery.task(name='app.user_restore', time_limit=10, ignore_result=False)

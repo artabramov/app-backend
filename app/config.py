@@ -3,6 +3,8 @@ import sys
 
 class Config:
     #DEBUG = True
+    APP_ASYNC_ENABLE = False
+    APP_ASYNC_TIME_LIMIT = 10
 
     LOG_LEVEL = 'DEBUG'
     LOG_FILENAME = '/var/log/app/app.log'
