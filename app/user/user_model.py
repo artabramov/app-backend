@@ -1,24 +1,42 @@
 from enum import Enum
 from app import db
 from app.core.base_model import BaseModel
-from app.user.user_schema import UserSchema, UserRole
-from marshmallow import ValidationError
 import random, string
 import json
-import base64, hashlib, time
-import pyotp
+import base64, hashlib, time, pyotp
+from marshmallow import Schema, fields, validate, ValidationError
+from marshmallow_enum import EnumField
 
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
 PASS_SUSPENSION_TIME = 30
 
-CODE_SECRET_LENGTH = 16
+CODE_KEY_LENGTH = 16
 CODE_ATTEMPTS_LIMIT = 5
 
 TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
 
-class UserModel(BaseModel):
+class UserRole(Enum):
+    nobody = 0
+    reader = 1
+    editor = 2
+    admin = 3
+
+    @classmethod
+    def get_role(cls, user_role):
+            return cls._member_map_[user_role]
+
+
+class UserSchema(Schema):
+    user_login = fields.Str(validate=[validate.Length(min=4, max=40), lambda x: x.isalnum()])
+    user_name = fields.Str(validate=validate.Length(min=4, max=80))
+    user_role = EnumField(UserRole, by_value=True)
+    user_pass = fields.Str(validate=validate.Length(min=4))
+    user_code = fields.Int(validate=validate.Range(min=0, max=999999))
+
+
+class User(BaseModel):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
@@ -28,24 +46,24 @@ class UserModel(BaseModel):
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
-    code_secret = db.Column(db.String(32), nullable=False, index=True)
+    code_key = db.Column(db.String(32), nullable=False, index=True)
     code_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    user_meta = db.relationship('UserMetaModel', backref='users', lazy='subquery')
+    user_meta = db.relationship('UserMeta', backref='users', lazy='subquery')
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()
         self.user_name = user_name
-        self.user_role = user_role if user_role else UserRole.newbie
+        self.user_role = user_role if user_role else 'nobody'
         self.user_pass = user_pass
         self.pass_attempts = PASS_ATTEMPTS_LIMIT
         self.pass_suspended = 0
-        self.set_code_secret()
+        self.code_key = self.generate_code_key()
         self.code_attempts = CODE_ATTEMPTS_LIMIT
-        self.set_token_signature()
+        self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
 
     @property
@@ -55,7 +73,7 @@ class UserModel(BaseModel):
     @user_pass.setter
     def user_pass(self, value):
         self._user_pass = value
-        self.pass_hash = UserModel.get_pass_hash(self.user_login + value)
+        self.pass_hash = User.get_pass_hash(self.user_login + value)
 
     @staticmethod
     def get_pass_hash(value):
@@ -63,20 +81,21 @@ class UserModel(BaseModel):
         hash_obj = hashlib.sha512(encoded_value)
         return hash_obj.hexdigest()
 
-    def set_code_secret(self):
-        self.code_secret = pyotp.random_base32()
+    def generate_code_key(self):
+        return pyotp.random_base32()
 
-    def get_code_value(self):
-        totp = pyotp.TOTP(self.code_secret)
+    @property
+    def code_value(self):
+        totp = pyotp.TOTP(self.code_key)
         return totp.now()
 
-    def set_token_signature(self):
+    def generate_token_signature(self):
         is_unique = False
         while not is_unique:
             token_signature = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=128))
-            if not UserModel.query.filter_by(token_signature=token_signature).count():
+            if not User.query.filter_by(token_signature=token_signature).count():
                 is_unique = True
-        self.token_signature = token_signature
+        return token_signature
 
     @property
     def user_token(self):
@@ -101,24 +120,20 @@ class UserModel(BaseModel):
         except Exception as e:
             raise ValidationError({'user_token': ['Incorrect.']})
 
-    """
-    @staticmethod
-    def validate(user_data):
-        try:
-            UserSchema().load(user_data)
-            
-        except ValidationError:
-            raise
-    """
 
-
-@db.event.listens_for(UserModel, 'before_insert')
+@db.event.listens_for(User, 'before_insert')
 def before_insert_user(mapper, connect, user):
-    if UserModel.query.filter_by(user_login=user.user_login).first():
+    UserSchema().load({
+        'user_login': user.user_login, 
+        'user_name': user.user_name, 
+        'user_pass': user.user_pass
+    })
+
+    if User.query.filter_by(user_login=user.user_login).first():
         raise ValidationError({'user_login': ['Already exists.']})
 
 """
-@db.event.listens_for(UserModel, 'before_update')
+@db.event.listens_for(User, 'before_update')
 def before_update_user(mapper, connect, user):
     try:
         user_data = {
@@ -134,3 +149,5 @@ def before_update_user(mapper, connect, user):
     except ValidationError:
         raise
 """
+
+

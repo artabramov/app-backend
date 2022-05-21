@@ -1,43 +1,36 @@
 from flask import request, g
 from app import app, log
 from app.core.json_response import json_response
-from app.user.user_tasks import user_register, user_restore, user_signin, user_signout, user_select, user_update, user_remove, image_upload
-from celery.exceptions import TimeoutError
-from app.user_meta.user_meta_schema import USER_META_KEYS
-from werkzeug.utils import secure_filename
-from app.core.file_upload import file_upload
-from app.core.file_read import file_read
+from app.user_meta.user_meta_model import USER_META_KEYS
+#from werkzeug.utils import secure_filename
+#from app.core.file_upload import file_upload
+#from app.core.file_read import file_read
+from app.user import user_helpers
 
-
-ASYNC_ENABLE = app.config['APP_ASYNC_ENABLE']
 
 # user register
 @app.route('/user/', methods=['POST'])
-def user_post():
-    try:
-        user_login = request.args.get('user_login', '')
-        user_name = request.args.get('user_name', '')
-        user_pass = request.args.get('user_pass', '')
+def user_register():
+    user_login = request.args.get('user_login', '')
+    user_name = request.args.get('user_name', '')
+    user_pass = request.args.get('user_pass', '')
 
-        meta_data = {}
-        for meta_key in USER_META_KEYS:
-            meta_value = request.args.get(meta_key, None)
-            if meta_value:
-                meta_data[meta_key] = meta_value
+    meta_data = {
+        'user_thumbnail': 'no thumbnail'
+    }
+    """
+    for meta_key in USER_META_KEYS:
+        meta_value = request.args.get(meta_key, None)
+        if meta_value:
+            meta_data[meta_key] = meta_value
+    """
 
-        if ASYNC_ENABLE:
-            result = user_register.apply_async(args=[
-                user_login, user_name, user_pass, meta_data
-            ], task_id=g.request_context.uuid).get(timeout=10)
-        else:
-            result = user_register(user_login, user_name, user_pass, meta_data)
-        return json_response(*result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+    result = user_helpers.user_register(user_login, user_name, user_pass, meta_data)
+    return json_response(*result)
 
 
+
+"""
 # user restore
 @app.route('/pass/', methods=['GET'])
 def pass_get():
@@ -176,5 +169,5 @@ def image_post():
     file_size = os.path.getsize(file_name)
     file_mime = user_file.mimetype
     return json_response({}, {}, 200)
-
+"""
 

@@ -1,5 +1,5 @@
 from logging.handlers import RotatingFileHandler
-from flask import request, g
+from flask import request, g, has_request_context
 import logging
 import json
 import time
@@ -47,15 +47,6 @@ def create_logger(app):
             'method': request.method,
             'headers': obscure_data(dict(), dict(request.headers))}
         app.logger.debug(str(request_dict))        
-        
-
-        """
-        app.logger.debug(str({
-            'request': request.url,
-            'method': request.method,
-            'headers': dict(request.headers),
-            }))
-        """
 
     @app.after_request
     def after_request(response):

@@ -15,14 +15,20 @@ import os
 from werkzeug.utils import secure_filename
 import uuid
 
-log = get_task_logger(__name__)
+#log = get_task_logger(__name__)
 
-TIME_LIMIT = app.config['APP_ASYNC_TIME_LIMIT']
+APP_ASYNC_TIME_LIMIT = app.config['APP_ASYNC_TIME_LIMIT']
 
-@celery.task(name='app.user_register', time_limit=TIME_LIMIT, ignore_result=False)
-def user_register(user_login, user_name, user_pass, meta_data=None):
+
+
+@celery.task(name='app.user_register', time_limit=APP_ASYNC_TIME_LIMIT, ignore_result=False, bind=True)
+def user_register(self, user_login, user_name, user_pass, meta_data=None):
+    #from app import log
+    #log.debug('task_id: ' + str(self.request.id))
+    task_id = self.request.id
+
     from app.user.user_helpers import user_register
-    return user_register(user_login, user_name, user_pass, meta_data)
+    return user_register(user_login, user_name, user_pass, meta_data, task_id)
 
     """
     try:
@@ -126,7 +132,7 @@ def user_signin(user_login, user_code):
         elif user.code_attempts < 1:
             return {}, {'user_code': ['Not Acceptable'], }, 406
 
-        elif user_code == user.get_code_value():
+        elif user_code == user.code_value:
             if os.path.isfile(app.config['QR_PATH_MASK'] % user.code_secret):
                 os.remove(app.config['QR_PATH_MASK'] % user.code_secret)
 

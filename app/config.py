@@ -2,10 +2,6 @@ import sys
 
 
 class Config:
-    #DEBUG = True
-    APP_ASYNC_ENABLE = False
-    APP_ASYNC_TIME_LIMIT = 10
-
     LOG_LEVEL = 'DEBUG'
     LOG_FILENAME = '/var/log/app/app.log'
     LOG_FORMAT = '[%(asctime)s] %(levelname)s uuid: "%(uuid)s", %(name)s in %(filename)s line %(lineno)d: "%(message)s"'
@@ -18,14 +14,6 @@ class Config:
 
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    CELERY_BROKER_URI = 'redis://host.docker.internal:6379/0'
-    CELERY_BACKEND_URI = 'redis://host.docker.internal:6379/1'
-    CELERY_TASKS_LIST = ['app.user.user_tasks']
-    CELERY_ROUTING_KEYS = {
-        'app.user_insert': {'queue': 'celery'}
-    }
-    CELERY_RESULT_EXPIRES = 30
 
     USER_IMAGES_PATH = '/app/images/'
     USER_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])

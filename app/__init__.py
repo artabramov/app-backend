@@ -1,7 +1,6 @@
 from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from celery import Celery
 from app.core.app_logger import create_logger
 from flask_caching import Cache
 
@@ -16,30 +15,11 @@ cache = Cache(config={
     'CACHE_DEFAULT_TIMEOUT': 60 * 5,
     'CACHE_KEY_PREFIX': 'cache.',
     'CACHE_REDIS_HOST': 'host.docker.internal',
-    #CACHE_OPTIONS
-    #CACHE_REDIS_DB
     'CACHE_REDIS_PORT': 6379,
     'CACHE_REDIS_PASSWORD': '',
     })
 cache.init_app(app)
-
-def make_celery():
-    celery = Celery(
-        broker=app.config['CELERY_BROKER_URI'],
-        backend=app.config['CELERY_BACKEND_URI'],
-        include=app.config['CELERY_TASKS_LIST'],
-    )
-    celery.conf.task_routes = app.config['CELERY_ROUTING_KEYS']
-    celery.conf.result_expires = app.config['CELERY_RESULT_EXPIRES']
-    TaskBase = celery.Task
-    class ContextTask(TaskBase):
-        abstract = True
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    celery.Task = ContextTask
-    return celery
-celery = make_celery()
+cache.set('a', 'A')
 
 
 @app.before_first_request
@@ -73,10 +53,10 @@ def before_first_request():
 log = create_logger(app)
 
 from app.hello.hello_routes import hi
-from app.user.user_routes import user_post
-from app.user.user_routes import pass_get
-from app.user.user_routes import token_get
-from app.user.user_routes import token_put
-from app.user.user_routes import user_get
-from app.user.user_routes import user_put
-from app.user.user_routes import image_post
+from app.user.user_routes import user_register
+#from app.user.user_routes import pass_get
+#from app.user.user_routes import token_get
+#from app.user.user_routes import token_put
+#from app.user.user_routes import user_get
+#from app.user.user_routes import user_put
+#from app.user.user_routes import image_post
