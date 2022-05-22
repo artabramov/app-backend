@@ -8,12 +8,19 @@ class Config:
     LOG_MAX_BYTES = 1024 * 10 # 10 KB
     LOG_BACKUP_COUNT = 5
 
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://postgres:postgres@host.docker.internal:5432/postgres'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    CACHE_TYPE = 'redis'
+    CACHE_DEFAULT_TIMEOUT = 60 * 5
+    CACHE_KEY_PREFIX = 'cache.'
+    CACHE_REDIS_HOST = 'host.docker.internal'
+    CACHE_REDIS_PORT = 6379
+    CACHE_REDIS_PASSWORD = ''
+
     QR_PATH_MASK = '/app/qr/%s.png'
     QR_URI_MASK = 'http://localhost:8080/qr/%s.png'
     QR_LINK_MASK = 'otpauth://totp/myapp?secret=%s&issuer=%s'
-
-    SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://admin:admin@host.docker.internal:3306/app'
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     USER_IMAGES_PATH = '/app/images/'
     USER_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])

@@ -1,11 +1,9 @@
-from flask import request, g
+from flask import request
 from app import app, log
-from app.core.json_response import json_response
-from app.user_meta.user_meta_model import USER_META_KEYS
 #from werkzeug.utils import secure_filename
 #from app.core.file_upload import file_upload
 #from app.core.file_read import file_read
-from app.user import user_helpers
+from app.user import user_handlers
 
 
 # user register
@@ -14,19 +12,41 @@ def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-
     meta_data = {
         'user_thumbnail': 'no thumbnail'
     }
-    """
-    for meta_key in USER_META_KEYS:
-        meta_value = request.args.get(meta_key, None)
-        if meta_value:
-            meta_data[meta_key] = meta_value
-    """
+    return user_handlers.user_register(user_login, user_name, user_pass, meta_data)
 
-    result = user_helpers.user_register(user_login, user_name, user_pass, meta_data)
-    return json_response(*result)
+
+# user signin
+@app.route('/token/', methods=['GET'])
+def user_signin():
+    user_login = request.args.get('user_login', '')
+    user_code = request.args.get('user_code', '')
+    return user_handlers.user_signin(user_login, user_code)
+
+
+# user signout
+@app.route('/token/', methods=['PUT'])
+def user_signout():
+    user_token = request.headers.get('user_token')
+    return user_handlers.user_signout(user_token)
+
+
+# user restore
+@app.route('/pass/', methods=['GET'])
+def user_restore():
+    user_login = request.args.get('user_login', '')
+    user_pass = request.args.get('user_pass', '')
+    return user_handlers.user_restore(user_login, user_pass)
+
+
+# user select
+@app.route('/user/<user_id>', methods=['GET'])
+def user_select(user_id):
+        user_token = request.headers.get('user_token')
+        return user_handlers.user_select(user_token, user_id)
+
 
 
 
