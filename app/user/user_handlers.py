@@ -39,7 +39,7 @@ def user_register(user_login, user_name, user_pass, meta_data=None):
     user = User(user_login, user_name, user_pass)
     db.session.add(user)
     db.session.flush()
-    user.user_role = 'admin' if user.id == 1 else 'nobody'
+    user.user_role = 'admin' if user.id == 1 else 'guest'
 
     if meta_data:
         for meta_key in meta_data:
@@ -132,6 +132,9 @@ def user_restore(user_login, user_pass):
 @json_response
 def user_select(user_token, user_id):
     authed_user = user_auth(user_token)
+    is_admin = authed_user.is_admin()
+    can_edit = authed_user.can_edit()
+    can_read = authed_user.can_read()
 
     user = cache.get('user.%s' % (user_id))
     if not user:
@@ -142,7 +145,7 @@ def user_select(user_token, user_id):
         return {'user': {
             'id': user.id,
             'user_name': user.user_name,
-            'user_meta': {meta.meta_key: meta.meta_value for meta in user.user_meta}    
+            'user_meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
         }}, {}, 200
     else:
         return {}, {'user_id': ['Not Found']}, 404

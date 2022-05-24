@@ -18,7 +18,7 @@ TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
 
 class UserRole(Enum):
-    nobody = 0
+    guest = 0
     reader = 1
     editor = 2
     admin = 3
@@ -40,7 +40,7 @@ class User(BaseModel):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
-    user_role = db.Column(db.Enum(UserRole), nullable=False, default='nobody')
+    user_role = db.Column(db.Enum(UserRole), nullable=False, default='guest')
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
@@ -52,12 +52,12 @@ class User(BaseModel):
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    user_meta = db.relationship('UserMeta', backref='users', lazy='subquery')
+    meta = db.relationship('UserMeta', backref='users', lazy='select')
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()
         self.user_name = user_name
-        self.user_role = user_role if user_role else 'nobody'
+        self.user_role = user_role if user_role else 'guest'
         self.user_pass = user_pass
         self.pass_attempts = PASS_ATTEMPTS_LIMIT
         self.pass_suspended = 0
@@ -120,6 +120,28 @@ class User(BaseModel):
         except Exception as e:
             raise ValidationError({'user_token': ['Incorrect.']})
 
+    def is_admin(self):
+        return self.user_role == UserRole.admin
+
+    def can_edit(self):
+        return self.user_role in [UserRole.admin, UserRole.editor]
+
+    def can_read(self):
+        return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
+
+
+    # meta_mixin
+    def has_meta(self, meta_key):
+        pass
+
+    def set_meta(self, meta_key, meta_value):
+        pass
+
+    def get_meta(self, meta_key):
+        pass
+
+    def del_meta(self, meta_key):
+        pass
 
 @db.event.listens_for(User, 'before_insert')
 def before_insert_user(mapper, connect, user):

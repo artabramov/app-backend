@@ -6,7 +6,7 @@ from marshmallow import ValidationError
 
 
 class UserRole(Enum):
-    nobody = 0
+    guest = 0
     reader = 1
     editor = 2
     admin = 3
