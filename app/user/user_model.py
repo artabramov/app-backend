@@ -1,6 +1,7 @@
 from enum import Enum
 from app import db
 from app.core.base_model import BaseModel
+from app.core.meta_mixin import MetaMixin
 import random, string
 import json
 import base64, hashlib, time, pyotp
@@ -36,7 +37,7 @@ class UserSchema(Schema):
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(BaseModel):
+class User(BaseModel, MetaMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
@@ -52,7 +53,7 @@ class User(BaseModel):
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    meta = db.relationship('UserMeta', backref='users', lazy='select')
+    meta = db.relationship('UserMeta', backref='users', lazy='subquery')
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()
@@ -130,18 +131,6 @@ class User(BaseModel):
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
 
 
-    # meta_mixin
-    def has_meta(self, meta_key):
-        pass
-
-    def set_meta(self, meta_key, meta_value):
-        pass
-
-    def get_meta(self, meta_key):
-        pass
-
-    def del_meta(self, meta_key):
-        pass
 
 @db.event.listens_for(User, 'before_insert')
 def before_insert_user(mapper, connect, user):

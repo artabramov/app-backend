@@ -140,6 +140,11 @@ def user_select(user_token, user_id):
     if not user:
         user = User.query.filter_by(id=user_id).first()
 
+
+    has_meta = user.has_meta('meta_key_1')
+    get_meta = user.get_meta('meta_key_1')
+
+
     if user:
         cache.set('user.%s' % (user.id), user)
         return {'user': {

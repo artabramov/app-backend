@@ -3,7 +3,7 @@ from app.core.base_model import BaseModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
-USER_META_KEYS = {'user_thumbnail', 'user_image'}
+USER_META_KEYS = {'user_thumbnail', 'meta_key_1', 'meta_key_2', 'meta_key_3'}
 
 
 class UserMetaSchema(Schema):

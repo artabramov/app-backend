@@ -13,7 +13,9 @@ def user_register():
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
     meta_data = {
-        'user_thumbnail': 'no thumbnail'
+        'meta_key_1': 'meta value 1',
+        'meta_key_2': 'meta value 2',
+        'meta_key_3': 'meta value 3',
     }
     return user_handlers.user_register(user_login, user_name, user_pass, meta_data)
 
