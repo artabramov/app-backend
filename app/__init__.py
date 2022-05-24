@@ -18,8 +18,8 @@ cache.init_app(app)
 
 @app.before_first_request
 def before_first_request():
-    from app.user import user_model
-    from app.user_meta import user_meta_model
+    from app.user import user
+    from app.user_term import user_term
     db.create_all()
 
 

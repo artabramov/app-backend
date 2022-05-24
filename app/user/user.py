@@ -7,6 +7,7 @@ import json
 import base64, hashlib, time, pyotp
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
+from app.user_term.user_term import UserTerm
 
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
@@ -53,7 +54,9 @@ class User(BaseModel, MetaMixin):
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    meta = db.relationship('UserMeta', backref='users', lazy='subquery')
+    terms = db.relationship('UserTerm', backref='users', lazy='subquery')
+    term_parent = 'user_id'
+    term_class = UserTerm
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()

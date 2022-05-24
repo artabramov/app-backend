@@ -1,15 +1,15 @@
 import time
-from app.user.user_model import User
-from app.user_meta.user_meta_model import UserMeta
+from app.user.user import User
+from app.user_term.user_term import UserTerm
 from marshmallow import ValidationError
 from app import app, db, cache, log
 import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
-from app.user.user_model import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
+from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.core.json_response import json_response
 
-
+"""
 def user_auth(user_token):
     try:
         token_payload = User.get_token_payload(user_token)
@@ -32,20 +32,20 @@ def user_auth(user_token):
             raise ValidationError({'user_token': ['Token Expired.']})
         else:
             return user
-
+"""
 
 @json_response
-def user_register(user_login, user_name, user_pass, meta_data=None):
+def user_register(user_login, user_name, user_pass, terms_data=None):
     user = User(user_login, user_name, user_pass)
     db.session.add(user)
     db.session.flush()
     user.user_role = 'admin' if user.id == 1 else 'guest'
 
-    if meta_data:
-        for meta_key in meta_data:
-            meta_value = meta_data[meta_key]
-            user_meta = UserMeta(user.id, meta_key, meta_value)
-            db.session.add(user_meta)
+    if terms_data:
+        for term_key in terms_data:
+            term_value = terms_data[term_key]
+            user_term = UserTerm(user.id, term_key, term_value)
+            db.session.add(user_term)
         db.session.flush()
 
     qr = qrcode.make(app.config['QR_LINK_MASK'] % (user.code_key, user.user_login))
@@ -86,7 +86,7 @@ def user_signin(user_login, user_code):
         cache.set('user.%s' % (user.id), user)
         return {}, {'user_code': ['Incorrect'], }, 404
 
-
+"""
 @json_response
 def user_signout(user_token):
     authed_user = user_auth(user_token)
@@ -143,6 +143,7 @@ def user_select(user_token, user_id):
 
     has_meta = user.has_meta('meta_key_1')
     get_meta = user.get_meta('meta_key_1')
+    new_term = user.set_meta(user.id, 'meta_key_4', 'value 2')
 
 
     if user:
@@ -154,4 +155,4 @@ def user_select(user_token, user_id):
         }}, {}, 200
     else:
         return {}, {'user_id': ['Not Found']}, 404
-
+"""
