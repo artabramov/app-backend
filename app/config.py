@@ -18,9 +18,9 @@ class Config:
     CACHE_REDIS_PORT = 6379
     CACHE_REDIS_PASSWORD = ''
 
-    QR_PATH_MASK = '/app/qr/%s.png'
-    QR_URI_MASK = 'http://localhost:8080/qr/%s.png'
-    QR_LINK_MASK = 'otpauth://totp/myapp?secret=%s&issuer=%s' # QR_REF
+    QRCODES_PATH = '/app/qrcodes/%s.png'
+    QRCODES_URI = 'http://localhost:8080/qrcodes/%s.png'
+    QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s' # QR_REF
 
     USER_IMAGES_PATH = '/app/images/'
     USER_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])

@@ -6,7 +6,7 @@ from app import app, db, cache, log
 import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
-from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
+from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, CODE_REMAINS_LIMIT
 from app.core.json_response import json_response
 
 
@@ -52,14 +52,14 @@ def user_register(user_login, user_name, user_pass):
         db.session.add(user_term)
     db.session.flush()
 
-    qr = qrcode.make(app.config['QR_LINK_MASK'] % (user.code_key, user.user_login))
-    qr.save(app.config['QR_PATH_MASK'] % user.code_key)
+    qr = qrcode.make(app.config['QRCODES_REF'] % (user.code_key, user.user_login))
+    qr.save(app.config['QRCODES_PATH'] % user.code_key)
 
     db.session.commit()
     cache.set('user.%s' % (user.id), user)
     return {
         'code_key': user.code_key, 
-        'code_qr': app.config['QR_URI_MASK'] % user.code_key
+        'code_qr': app.config['QRCODES_URI'] % user.code_key
     }, {}, 201
 
 
@@ -70,21 +70,21 @@ def user_signin(user_login, user_code):
     if not user:
         return {}, {'user_login': ['Not Found'], }, 404
     
-    elif user.code_attempts < 1:
+    elif user.code_remains < 1:
         return {}, {'user_code': ['Not Acceptable'], }, 406
 
     elif user_code == user.user_code:
-        if os.path.isfile(app.config['QR_PATH_MASK'] % user.code_key):
-            os.remove(app.config['QR_PATH_MASK'] % user.code_key)
+        if os.path.isfile(app.config['QRCODES_PATH'] % user.code_key):
+            os.remove(app.config['QRCODES_PATH'] % user.code_key)
 
-        user.code_attempts = 0
+        user.code_remains = 0
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
         return {'user_token': user.user_token}, {}, 200
 
     else:
-        user.code_attempts -= 1
+        user.code_remains -= 1
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
@@ -113,18 +113,18 @@ def user_restore(user_login, user_pass):
         return {}, {'user_pass': ['Not Acceptable'], }, 406
 
     elif user.pass_hash == pass_hash:
-        user.pass_attempts = PASS_ATTEMPTS_LIMIT
+        user.pass_remains = PASS_REMAINS_LIMIT
         user.pass_suspended = 0
-        user.code_attempts = CODE_ATTEMPTS_LIMIT
+        user.code_remains = CODE_REMAINS_LIMIT
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)
         return {}, {}, 200
 
     else:
-        user.pass_attempts -= 1
-        if user.pass_attempts < 1:
-            user.pass_attempts = PASS_ATTEMPTS_LIMIT
+        user.pass_remains -= 1
+        if user.pass_remains < 1:
+            user.pass_remains = PASS_REMAINS_LIMIT
             user.pass_suspended = time.time() + PASS_SUSPENSION_TIME
 
         db.session.flush()

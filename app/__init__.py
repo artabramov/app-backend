@@ -23,6 +23,6 @@ def before_first_request():
     db.create_all()
 
 
-from app.hello import hello_routes
+from app.hi import hi_routes
 from app.user import user_routes
 

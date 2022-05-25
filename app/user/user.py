@@ -10,11 +10,11 @@ from marshmallow_enum import EnumField
 from app.user_term.user_term import UserTerm
 
 PASS_HASH_SALT = 'abcd'
-PASS_ATTEMPTS_LIMIT = 5
+PASS_REMAINS_LIMIT = 5
 PASS_SUSPENSION_TIME = 30
 
 CODE_KEY_LENGTH = 16
-CODE_ATTEMPTS_LIMIT = 5
+CODE_REMAINS_LIMIT = 5
 
 TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
@@ -45,11 +45,11 @@ class User(BaseModel, TermMixin):
     user_role = db.Column(db.Enum(UserRole), nullable=False, default='guest')
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
-    pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
+    pass_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
     code_key = db.Column(db.String(32), nullable=False, index=True)
-    code_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
+    code_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
@@ -61,10 +61,10 @@ class User(BaseModel, TermMixin):
         self.user_name = user_name
         self.user_role = user_role if user_role else 'guest'
         self.user_pass = user_pass
-        self.pass_attempts = PASS_ATTEMPTS_LIMIT
+        self.pass_remains = PASS_REMAINS_LIMIT
         self.pass_suspended = 0
         self.code_key = self.generate_code_key()
-        self.code_attempts = CODE_ATTEMPTS_LIMIT
+        self.code_remains = CODE_REMAINS_LIMIT
         self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
 

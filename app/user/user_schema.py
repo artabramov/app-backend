@@ -26,5 +26,5 @@ class UserSchema(Schema):
     user_role = EnumField(UserRole, by_value=True)
     user_pass = fields.Str(validate=validate.Length(min=4))
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
-    #pass_attempts = fields.Int(validate=validate.Range(min=0, max=5))
+    #pass_remains = fields.Int(validate=validate.Range(min=0, max=5))
     #is_admin = fields.Boolean()
