@@ -55,8 +55,8 @@ class User(BaseModel, MetaMixin):
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     terms = db.relationship('UserTerm', backref='users', lazy='subquery')
-    term_parent = 'user_id'
-    term_class = UserTerm
+    term_parent = 'user' # in mixin: term_parent + '_id'
+    #term_class = UserTerm
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()

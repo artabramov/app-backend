@@ -4,6 +4,8 @@ import logging
 import json
 import time
 import uuid
+import sys
+import traceback
 
 SENSITIVE_KEYS = ['user_token', 'user-token']
 SENSITIVE_VALUE = '*' * 4
@@ -22,6 +24,7 @@ def create_logger(app):
     class ContextualFilter(logging.Filter):
         def filter(self, message):
             message.uuid = g.request_context.uuid
+            message.tb = str(list(traceback.extract_stack()))
             return True
 
     while app.logger.hasHandlers():

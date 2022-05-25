@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, CODE_ATTEMPTS_LIMIT
 from app.core.json_response import json_response
 
-"""
+
 def user_auth(user_token):
     try:
         token_payload = User.get_token_payload(user_token)
@@ -32,21 +32,25 @@ def user_auth(user_token):
             raise ValidationError({'user_token': ['Token Expired.']})
         else:
             return user
-"""
+
 
 @json_response
-def user_register(user_login, user_name, user_pass, terms_data=None):
+def user_register(user_login, user_name, user_pass):
     user = User(user_login, user_name, user_pass)
     db.session.add(user)
     db.session.flush()
     user.user_role = 'admin' if user.id == 1 else 'guest'
 
-    if terms_data:
-        for term_key in terms_data:
-            term_value = terms_data[term_key]
-            user_term = UserTerm(user.id, term_key, term_value)
-            db.session.add(user_term)
-        db.session.flush()
+    terms_data = {
+        'key_1': 'value 1',
+        'key_2': 'value 2',
+        'key_3': 'value 3',
+    }
+    for term_key in terms_data:
+        term_value = terms_data[term_key]
+        user_term = UserTerm(user.id, term_key, term_value)
+        db.session.add(user_term)
+    db.session.flush()
 
     qr = qrcode.make(app.config['QR_LINK_MASK'] % (user.code_key, user.user_login))
     qr.save(app.config['QR_PATH_MASK'] % user.code_key)
@@ -86,7 +90,7 @@ def user_signin(user_login, user_code):
         cache.set('user.%s' % (user.id), user)
         return {}, {'user_code': ['Incorrect'], }, 404
 
-"""
+
 @json_response
 def user_signout(user_token):
     authed_user = user_auth(user_token)
@@ -132,18 +136,18 @@ def user_restore(user_login, user_pass):
 @json_response
 def user_select(user_token, user_id):
     authed_user = user_auth(user_token)
-    is_admin = authed_user.is_admin()
-    can_edit = authed_user.can_edit()
-    can_read = authed_user.can_read()
+    #is_admin = authed_user.is_admin()
+    #can_edit = authed_user.can_edit()
+    #can_read = authed_user.can_read()
 
     user = cache.get('user.%s' % (user_id))
     if not user:
         user = User.query.filter_by(id=user_id).first()
 
 
-    has_meta = user.has_meta('meta_key_1')
-    get_meta = user.get_meta('meta_key_1')
-    new_term = user.set_meta(user.id, 'meta_key_4', 'value 2')
+    #has_meta = user.has_meta('meta_key_1')
+    #get_meta = user.get_meta('meta_key_1')
+    #new_term = user.set_meta(user.id, 'meta_key_4', 'value 2')
 
 
     if user:
@@ -151,8 +155,8 @@ def user_select(user_token, user_id):
         return {'user': {
             'id': user.id,
             'user_name': user.user_name,
-            'user_meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
+            'terms': {term.term_key: term.term_value for term in user.terms}    
         }}, {}, 200
     else:
         return {}, {'user_id': ['Not Found']}, 404
-"""
+

@@ -12,12 +12,7 @@ def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    terms_data = {
-        'key_1': 'value 1',
-        'key_2': 'value 2',
-        'key_3': 'value 3',
-    }
-    return user_handlers.user_register(user_login, user_name, user_pass, terms_data)
+    return user_handlers.user_register(user_login, user_name, user_pass)
 
 
 # user signin
@@ -27,7 +22,7 @@ def user_signin():
     user_code = request.args.get('user_code', '')
     return user_handlers.user_signin(user_login, user_code)
 
-"""
+
 # user signout
 @app.route('/token/', methods=['PUT'])
 def user_signout():
@@ -52,7 +47,7 @@ def user_select(user_id):
 
 
 
-
+"""
 # user restore
 @app.route('/pass/', methods=['GET'])
 def pass_get():

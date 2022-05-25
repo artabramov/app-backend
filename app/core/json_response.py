@@ -31,6 +31,12 @@ def json_response(func):
             result = {}, {'error': ['Service Unavailable']}, 503
 
         except Exception as e:
+            #import sys, os
+            #exc_type, exc_obj, exc_tb = sys.exc_info()
+            #fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            
+            #log.error(e, exc_info=(exc_type, exc_value, exc_traceback))
+            
             log.error(e)
             db.session.rollback()
             result = {}, {'error': ['Internal Server Error']}, 500
