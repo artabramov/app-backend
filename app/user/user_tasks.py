@@ -132,7 +132,7 @@ def user_signin(user_login, user_code):
         elif user.code_attempts < 1:
             return {}, {'user_code': ['Not Acceptable'], }, 406
 
-        elif user_code == user.code_value:
+        elif user_code == user.user_code:
             if os.path.isfile(app.config['QR_PATH_MASK'] % user.code_secret):
                 os.remove(app.config['QR_PATH_MASK'] % user.code_secret)
 

@@ -87,7 +87,7 @@ class User(BaseModel, TermMixin):
         return pyotp.random_base32()
 
     @property
-    def code_value(self):
+    def user_code(self):
         totp = pyotp.TOTP(self.code_key)
         return totp.now()
 
