@@ -1,7 +1,7 @@
 from enum import Enum
 from app import db
 from app.core.base_model import BaseModel
-from app.core.meta_mixin import MetaMixin
+from app.core.term_mixin import TermMixin
 import random, string
 import json
 import base64, hashlib, time, pyotp
@@ -38,7 +38,7 @@ class UserSchema(Schema):
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(BaseModel, MetaMixin):
+class User(BaseModel, TermMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
@@ -55,8 +55,6 @@ class User(BaseModel, MetaMixin):
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     terms = db.relationship('UserTerm', backref='users', lazy='subquery')
-    term_parent = 'user' # in mixin: term_parent + '_id'
-    #term_class = UserTerm
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()
@@ -124,12 +122,15 @@ class User(BaseModel, MetaMixin):
         except Exception as e:
             raise ValidationError({'user_token': ['Incorrect.']})
 
+    @property
     def is_admin(self):
         return self.user_role == UserRole.admin
 
+    @property
     def can_edit(self):
         return self.user_role in [UserRole.admin, UserRole.editor]
 
+    @property
     def can_read(self):
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
 
