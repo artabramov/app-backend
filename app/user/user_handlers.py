@@ -22,6 +22,9 @@ def user_auth(user_token):
 
     if not user:
         raise ValidationError({'user_token': ['Not Found.']})
+
+    #elif user.deleted > 0:
+    #    raise ValidationError({'user_token': ['self user deleted.']})
         
     elif user.token_signature != token_payload['token_signature']:
         raise ValidationError({'user_token': ['Not Found.']})
@@ -141,8 +144,8 @@ def user_select(user_token, user_id):
     if not user:
         user = User.query.filter_by(id=user_id).first()
 
-    has_term = user.has_term('key_1')
-    get_term = user.get_term('key_1')
+    #has_term = user.has_term('key_1')
+    #get_term = user.get_term('key_1')
 
     if user:
         cache.set('user.%s' % (user.id), user)
@@ -159,7 +162,7 @@ def user_select(user_token, user_id):
 @json_response
 def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, terms_data=None):
     authed_user = user_auth(user_token)
-    if user_id == authed_user.id:
+    if str(user_id) == authed_user.id:
         user = authed_user
 
     elif authed_user.is_admin:
@@ -172,6 +175,9 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
 
     if not user:
         return {}, {'user_id': ['user_id not found']}, 404
+
+    #elif user.deleted > 0:
+    #    return {}, {'user_id': ['user deleted']}, 404
 
     user_data = {}
     if user_name:
@@ -197,3 +203,27 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
     db.session.commit()
     cache.set('user.%s' % (user.id), user)
     return {}, {'user_role:': str({k: user_data[k] for k in user_data}), 'user': str(user)}, 404
+
+
+@json_response
+def user_delete(user_token, user_id):
+    authed_user = user_auth(user_token)
+    if int(user_id) == authed_user.id or not authed_user.is_admin:
+        return {}, {'user_id': ['Forbidden'], }, 403
+
+    else:
+        user = cache.get('user.%s' % (user_id))
+        if not user:
+            user = User.query.filter_by(id=user_id, deleted=0).first()
+
+    if not user:
+        return {}, {'user_id': ['User not found'], }, 404
+
+    user.deleted = time.time()
+    db.session.add(user)
+    db.session.flush()
+    db.session.commit()
+    cache.set('user.%s' % (user.id), user)
+    return {}, {}, 200
+
+

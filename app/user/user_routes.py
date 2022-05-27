@@ -49,7 +49,7 @@ def user_select(user_id):
 @app.route('/user/<user_id>', methods=['PUT'])
 def user_update(user_id):
     user_token = request.headers.get('user_token', None)
-    user_id = int(user_id)
+    #user_id = int(user_id)
     user_name = request.args.get('user_name', None)
     user_role = request.args.get('user_role', None)
     user_pass = request.args.get('user_pass', None)
@@ -61,6 +61,16 @@ def user_update(user_id):
         terms_data['key_2'] = request.args.get('key_2')
 
     return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, terms_data)
+
+
+# user delete
+@app.route('/user/<user_id>', methods=['DELETE'])
+def user_delete(user_id):
+    user_token = request.headers.get('user_token', None)
+    #user_id = int(user_id)
+
+    return user_handlers.user_delete(user_token, user_id)
+
 
 
 
