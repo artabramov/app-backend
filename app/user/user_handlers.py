@@ -188,18 +188,16 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
     db.session.add(user)
     db.session.flush()
 
-    """
     if terms_data:
         for term_key in terms_data:
             term_value = terms_data[term_key]
-            user_term = UserMeta.query.filter_by(user_id=user_id, term_key=term_key).first()
+            user_term = UserTerm.query.filter_by(user_id=user_id, term_key=term_key).first()
             if user_term:
                 user_term.term_value = term_value
             else:
-                user_term = UserMeta(user_id, term_key, term_value)
+                user_term = UserTerm(user_id, term_key, term_value)
             db.session.add(user_term)
         db.session.flush()
-    """
 
     db.session.commit()
     cache.set('user.%s' % (user.id), user)
