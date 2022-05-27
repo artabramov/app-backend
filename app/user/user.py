@@ -27,7 +27,7 @@ class UserRole(Enum):
 
     @classmethod
     def get_role(cls, user_role):
-            return cls._member_map_[user_role]
+        return cls._member_map_[user_role] if user_role in cls._member_map_ else user_role
 
 
 class UserSchema(Schema):
@@ -139,30 +139,24 @@ class User(BaseModel, TermMixin):
 @db.event.listens_for(User, 'before_insert')
 def before_insert_user(mapper, connect, user):
     UserSchema().load({
-        'user_login': user.user_login, 
-        'user_name': user.user_name, 
-        'user_pass': user.user_pass
+        'user_login': user.user_login,
+        'user_name': user.user_name,
+        'user_pass': user.user_pass,
+        'user_role': UserRole.get_role(user.user_role),
     })
 
     if User.query.filter_by(user_login=user.user_login).first():
         raise ValidationError({'user_login': ['Already exists.']})
 
-"""
+
 @db.event.listens_for(User, 'before_update')
 def before_update_user(mapper, connect, user):
-    try:
-        user_data = {
-            'user_name': user.user_name,
-            'user_role': user.user_role,
-        }
+    user_data = {
+        'user_name': user.user_name,
+        'user_role': UserRole.get_role(user.user_role),
+    }
 
-        if user.user_pass:
-            user_data['user_pass'] = user.user_pass
+    if user.user_pass:
+        user_data['user_pass'] = user.user_pass
 
-        UserSchema().load(user_data)
-        
-    except ValidationError:
-        raise
-"""
-
-
+    UserSchema().load(user_data)

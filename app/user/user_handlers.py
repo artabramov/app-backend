@@ -151,6 +151,56 @@ def user_select(user_token, user_id):
             'user_name': user.user_name,
             'terms': {term.term_key: term.term_value for term in user.terms}    
         }}, {}, 200
+
     else:
         return {}, {'user_id': ['Not Found']}, 404
 
+
+@json_response
+def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, terms_data=None):
+    authed_user = user_auth(user_token)
+    if user_id == authed_user.id:
+        user = authed_user
+
+    elif authed_user.is_admin:
+        user = cache.get('user.%s' % (user_id))
+        if not user:
+            user = User.query.filter_by(id=user_id, deleted=0).first()
+
+    else:
+        return {}, {'user_id': ['user_id update forbidden'], }, 403
+
+    if not user:
+        return {}, {'user_id': ['user_id not found']}, 404
+
+    user_data = {}
+    if user_name:
+        user_data['user_name'] = user_name
+
+    if user_pass:
+        user_data['user_pass'] = user_pass
+
+    if user_role and authed_user.is_admin and authed_user.id != user_id:
+        user_data['user_role'] = user_role
+
+    for k in user_data:
+        setattr(user, k, user_data[k])
+    db.session.add(user)
+    db.session.flush()
+
+    """
+    if terms_data:
+        for term_key in terms_data:
+            term_value = terms_data[term_key]
+            user_term = UserMeta.query.filter_by(user_id=user_id, term_key=term_key).first()
+            if user_term:
+                user_term.term_value = term_value
+            else:
+                user_term = UserMeta(user_id, term_key, term_value)
+            db.session.add(user_term)
+        db.session.flush()
+    """
+
+    db.session.commit()
+    cache.set('user.%s' % (user.id), user)
+    return {}, {'user_role:': str({k: user_data[k] for k in user_data}), 'user': str(user)}, 404
