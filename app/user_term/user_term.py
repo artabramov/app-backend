@@ -20,9 +20,25 @@ class UserTerm(BaseModel):
     term_value = db.Column(db.String(255), nullable=True)
 
     def __init__(self, user_id, term_key, term_value):
+        #user_term = UserTerm.query.filter_by(user_id=user_id, term_key=term_key).first()
+        #if user_term:
+        #    for k in [k for k in user_term.__dict__ if not k.startswith('_')]:
+        #        setattr(self, k, user_term.__dict__[k])
+        #    pass
+        #else:
+        
         self.user_id = user_id
         self.term_key = term_key
         self.term_value = term_value
+
+    @classmethod
+    def set_term(cls, user_id, term_key, term_value):
+        user_term = cls.query.filter_by(user_id=user_id, term_key=term_key).first()
+        if user_term:
+            user_term.term_value = term_value
+        else:
+            user_term = cls(user_id, term_key, term_value)
+        return user_term
 
 
 @db.event.listens_for(UserTerm, 'before_insert')
@@ -35,3 +51,12 @@ def before_insert_user_term(mapper, connect, user_term):
 
     if UserTerm.query.filter_by(user_id=user_term.user_id, term_key=user_term.term_key).first():
         raise ValidationError({'term_key': ['Already exists.']})
+
+
+@db.event.listens_for(UserTerm, 'before_update')
+def before_update_user(mapper, connect, user_term):
+    UserTermSchema().load({
+        'user_id': user_term.user_id,
+        'term_key': user_term.term_key,
+        'term_value': user_term.term_value,
+    })
