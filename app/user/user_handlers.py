@@ -225,5 +225,3 @@ def user_delete(user_token, user_id):
     db.session.commit()
     cache.set('user.%s' % (user.id), user)
     return {}, {}, 200
-
-
