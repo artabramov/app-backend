@@ -54,13 +54,13 @@ def user_update(user_id):
     user_role = request.args.get('user_role', None)
     user_pass = request.args.get('user_pass', None)
 
-    traits_data = {}
+    props_data = {}
     if request.args.get('key_1', False): 
-        traits_data['key_1'] = request.args.get('key_1')
+        props_data['key_1'] = request.args.get('key_1')
     if request.args.get('key_2', False): 
-        traits_data['key_2'] = request.args.get('key_2')
+        props_data['key_2'] = request.args.get('key_2')
 
-    return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, traits_data)
+    return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, props_data)
 
 
 # user delete

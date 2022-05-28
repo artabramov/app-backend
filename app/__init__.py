@@ -19,7 +19,7 @@ cache.init_app(app)
 @app.before_first_request
 def before_first_request():
     from app.user import user
-    from app.user_trait import user_trait
+    from app.user_prop import user_prop
     db.create_all()
 
 

@@ -1,6 +1,6 @@
 import time
 from app.user.user import User
-from app.user_trait.user_trait import UserTrait
+from app.user_prop.user_prop import UserProp
 from marshmallow import ValidationError
 from app import app, db, cache, log
 import os
@@ -44,15 +44,15 @@ def user_register(user_login, user_name, user_pass):
     db.session.flush()
     user.user_role = 'admin' if user.id == 1 else 'guest'
 
-    traits_data = {
+    props_data = {
         'key_1': 'value 1',
         'key_2': 'value 2',
         'key_3': 'value 3',
     }
-    for trait_key in traits_data:
-        trait_value = traits_data[trait_key]
-        user_trait = UserTrait(user.id, trait_key, trait_value)
-        db.session.add(user_trait)
+    for prop_key in props_data:
+        prop_value = props_data[prop_key]
+        user_prop = UserProp(user.id, prop_key, prop_value)
+        db.session.add(user_prop)
     db.session.flush()
 
     qr = qrcode.make(app.config['QRCODES_REF'] % (user.code_key, user.user_login))
@@ -144,15 +144,15 @@ def user_select(user_token, user_id):
     if not user:
         user = User.query.filter_by(id=user_id).first()
 
-    #has_trait = user.has_trait('key_1')
-    #get_trait = user.get_trait('key_1')
+    #has_prop = user.has_prop('key_1')
+    #get_prop = user.get_prop('key_1')
 
     if user:
         cache.set('user.%s' % (user.id), user)
         return {'user': {
             'id': user.id,
             'user_name': user.user_name,
-            'traits': {trait.trait_key: trait.trait_value for trait in user.traits}    
+            'props': {prop.prop_key: prop.prop_value for prop in user.props}    
         }}, {}, 200
 
     else:
@@ -160,7 +160,7 @@ def user_select(user_token, user_id):
 
 
 @app_response
-def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, traits_data=None):
+def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, props_data=None):
     authed_user = user_auth(user_token)
     if user_id == authed_user.id:
         user = authed_user
@@ -194,10 +194,10 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
     db.session.add(user)
     db.session.flush()
 
-    if traits_data:
-        for trait_key in traits_data:
-            user_trait = UserTrait.set_trait(user.id, trait_key, traits_data[trait_key])
-            db.session.add(user_trait)
+    if props_data:
+        for prop_key in props_data:
+            user_prop = UserProp.set_prop(user.id, prop_key, props_data[prop_key])
+            db.session.add(user_prop)
         db.session.flush()
 
     db.session.commit()
