@@ -82,36 +82,18 @@ def image_post():
     user_token = request.headers.get('user_token', None)
     user_files = request.files.getlist('user_files')
 
+    uploaded_files = []
     for user_file in user_files:
-        upload_result = file_upload(user_file, '/app/images/', ['image/jpeg'])
-        pass
+        uploaded_file = file_upload(user_file, '/app/images/', ['image/jpeg'])
+        uploaded_files.append(uploaded_file)
 
-    #file_data = file_upload(user_file, app.config['USER_IMAGES_PATH'], app.config['USER_IMAGES_EXTENSIONS'])
-    #file_tmp = file_read(user_file)
-
-    #async_result = image_upload.apply_async(args=[user_token, file_data, request.files], task_id=g.request_context.uuid).get(timeout=10)
-    #return json_response(*async_result)
-    return {}, {'files': [], }, 200
+    return {}, {'files': uploaded_files, }, 200
 
 
 
 
 
-    user_file = request.files.get('user_file', None)
 
-    if not user_file or not getattr(user_file, 'filename'):
-        return json_response({}, {'user_file': ['Where is the file?']}, 504)
-
-    file_ext = user_file.filename.rsplit('.', 1)[1].lower()
-
-    if file_ext not in app.config['USER_IMAGES_EXTENSIONS']:
-        return json_response({}, {'user_file': ['Extebsion is incorrect']}, 504)
-
-    file_name = os.path.join(app.config['USER_IMAGES_PATH'], str(uuid.uuid4()) + file_ext)
-    user_file.save(file_name)
-    file_size = os.path.getsize(file_name)
-    file_mime = user_file.mimetype
-    return json_response({}, {}, 200)
 
 
 
