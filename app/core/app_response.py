@@ -15,7 +15,7 @@ def make_json(data={}, errors={}, code=200):
     return response
 
 
-def json_response(func):
+def app_response(func):
     def inner(*args):
         try:
             result = func(*args)

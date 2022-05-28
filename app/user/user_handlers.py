@@ -7,7 +7,7 @@ import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
 from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, CODE_REMAINS_LIMIT
-from app.core.json_response import json_response
+from app.core.app_response import app_response
 
 
 def user_auth(user_token):
@@ -37,7 +37,7 @@ def user_auth(user_token):
             return user
 
 
-@json_response
+@app_response
 def user_register(user_login, user_name, user_pass):
     user = User(user_login, user_name, user_pass)
     db.session.add(user)
@@ -66,7 +66,7 @@ def user_register(user_login, user_name, user_pass):
     }, {}, 201
 
 
-@json_response
+@app_response
 def user_signin(user_login, user_code):
     user = User.query.filter_by(user_login=user_login, deleted=0).first()
     
@@ -94,7 +94,7 @@ def user_signin(user_login, user_code):
         return {}, {'user_code': ['Incorrect'], }, 404
 
 
-@json_response
+@app_response
 def user_signout(user_token):
     authed_user = user_auth(user_token)
     authed_user.token_signature = authed_user.generate_token_signature()
@@ -104,7 +104,7 @@ def user_signout(user_token):
     return {}, {}, 200
 
 
-@json_response
+@app_response
 def user_restore(user_login, user_pass):
     user_login = user_login.lower()
     pass_hash = User.get_pass_hash(user_login + user_pass)
@@ -136,7 +136,7 @@ def user_restore(user_login, user_pass):
         return {}, {'user_pass': ['Not Found'], }, 404
 
 
-@json_response
+@app_response
 def user_select(user_token, user_id):
     authed_user = user_auth(user_token)
 
@@ -159,7 +159,7 @@ def user_select(user_token, user_id):
         return {}, {'user_id': ['Not Found']}, 404
 
 
-@json_response
+@app_response
 def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, traits_data=None):
     authed_user = user_auth(user_token)
     if user_id == authed_user.id:
@@ -205,7 +205,7 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
     return {}, {'user_role:': str({k: user_data[k] for k in user_data}), 'user': str(user)}, 404
 
 
-@json_response
+@app_response
 def user_delete(user_token, user_id):
     authed_user = user_auth(user_token)
     if user_id == authed_user.id or not authed_user.is_admin:

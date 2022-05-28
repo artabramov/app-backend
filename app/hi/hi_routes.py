@@ -1,4 +1,4 @@
-from app.core.json_response import make_json
+from app.core.app_response import make_json
 from app import app
 
 

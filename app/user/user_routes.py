@@ -72,12 +72,12 @@ def user_delete(user_id):
     return user_handlers.user_delete(user_token, user_id)
 
 
-from app.core.json_response import json_response
+from app.core.app_response import app_response
 from app.core.async_upload import async_upload
 
 # user image upload
 @app.route('/image/', methods=['POST'])
-@json_response
+@app_response
 def image_post():
     user_token = request.headers.get('user_token', None)
     user_files = request.files.getlist('user_files')
@@ -135,11 +135,11 @@ def pass_get():
         user_login = request.args.get('user_login', '')
         user_pass = request.args.get('user_pass', '')
         async_result = user_restore.apply_async(args=[user_login, user_pass], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user signin
@@ -149,11 +149,11 @@ def token_get():
         user_login = request.args.get('user_login', '')
         user_code = request.args.get('user_code', '')
         async_result = user_signin.apply_async(args=[user_login, user_code], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user signout
@@ -162,11 +162,11 @@ def token_put():
     try:
         user_token = request.headers.get('user_token')
         async_result = user_signout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user select
@@ -175,11 +175,11 @@ def user_get(user_id):
     try:
         user_token = request.headers.get('user_token')
         async_result = user_select.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user update
@@ -199,11 +199,11 @@ def user_put(user_id):
                 meta_data[meta_key] = meta_value
 
         async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass, meta_data], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 # user delete
@@ -214,11 +214,11 @@ def user_delete(user_id):
         user_token = request.headers.get('user_token', None)
 
         async_result = user_remove.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 def allowed_file(filename):
@@ -238,15 +238,15 @@ def image_post():
         file_tmp = file_read(user_file)
 
         async_result = image_upload.apply_async(args=[user_token, file_data, request.files], task_id=g.request_context.uuid).get(timeout=10)
-        return json_response(*async_result)
+        return app_response(*async_result)
 
     except Exception as e:
         log.error(e)
-        return json_response({}, {'db': ['Internal Server Error']}, 504)
+        return app_response({}, {'db': ['Internal Server Error']}, 504)
 
     except TimeoutError as e:
         log.error(e)
-        return json_response({}, {'db': ['Gateway Timeout']}, 504)
+        return app_response({}, {'db': ['Gateway Timeout']}, 504)
 
 
 
@@ -254,17 +254,17 @@ def image_post():
     user_file = request.files.get('user_file', None)
 
     if not user_file or not getattr(user_file, 'filename'):
-        return json_response({}, {'user_file': ['Where is the file?']}, 504)
+        return app_response({}, {'user_file': ['Where is the file?']}, 504)
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
 
     if file_ext not in app.config['USER_IMAGES_EXTENSIONS']:
-        return json_response({}, {'user_file': ['Extebsion is incorrect']}, 504)
+        return app_response({}, {'user_file': ['Extebsion is incorrect']}, 504)
 
     file_name = os.path.join(app.config['USER_IMAGES_PATH'], str(uuid.uuid4()) + file_ext)
     user_file.save(file_name)
     file_size = os.path.getsize(file_name)
     file_mime = user_file.mimetype
-    return json_response({}, {}, 200)
+    return app_response({}, {}, 200)
 """
 
