@@ -56,10 +56,10 @@ class User(BaseModel, PropMixin):
 
     props = db.relationship('UserProp', backref='users', lazy='subquery')
 
-    def __init__(self, user_login, user_name, user_pass, user_role=None):
+    def __init__(self, user_login, user_name, user_pass, user_role):
         self.user_login = user_login.lower()
         self.user_name = user_name
-        self.user_role = user_role if user_role else 'guest'
+        self.user_role = user_role
         self.user_pass = user_pass
         self.pass_remains = PASS_REMAINS_LIMIT
         self.pass_suspended = 0

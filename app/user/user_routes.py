@@ -12,7 +12,13 @@ def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    return user_handlers.user_register(user_login, user_name, user_pass)
+    user_role = 'guest'
+    user_props = {
+        'key_1': 'value 1',
+        'key_2': 'value 2',
+        'key_3': 'value 3',
+    }
+    return user_handlers.user_register(user_login, user_name, user_pass, user_role, user_props)
 
 
 # user signin

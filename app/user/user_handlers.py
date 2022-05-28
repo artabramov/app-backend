@@ -38,23 +38,19 @@ def user_auth(user_token):
 
 
 @app_response
-def user_register(user_login, user_name, user_pass):
-    user = User(user_login, user_name, user_pass)
+def user_register(user_login, user_name, user_pass, user_role, user_props):
+    user = User(user_login, user_name, user_pass, user_role)
     db.session.add(user)
     db.session.flush()
-    user.user_role = 'admin' if user.id == 1 else 'guest'
 
-    props_data = {
-        'key_1': 'value 1',
-        'key_2': 'value 2',
-        'key_3': 'value 3',
-    }
-    for prop_key in props_data:
-        prop_value = props_data[prop_key]
-        user_prop = UserProp(user.id, prop_key, prop_value)
-        db.session.add(user_prop)
-    db.session.flush()
+    if user_props:
+        for prop_key in user_props:
+            prop_value = user_props[prop_key]
+            user_prop = UserProp(user.id, prop_key, prop_value)
+            db.session.add(user_prop)
+        db.session.flush()
 
+    # TODO: make exception got QR creation
     qr = qrcode.make(app.config['QRCODES_REF'] % (user.code_key, user.user_login))
     qr.save(app.config['QRCODES_PATH'] % user.code_key)
 
