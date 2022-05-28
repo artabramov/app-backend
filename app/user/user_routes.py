@@ -1,10 +1,10 @@
 from flask import request
 from app import app, log
-#from werkzeug.utils import secure_filename
-#from app.core.file_upload import file_upload
-#from app.core.file_read import file_read
 from app.user import user_handlers
-
+from multiprocessing import Process
+from multiprocessing import Manager
+from app.core.app_response import app_response
+from app.core.async_upload import async_upload
 
 # user register
 @app.route('/user/', methods=['POST'])
@@ -72,8 +72,7 @@ def user_delete(user_id):
     return user_handlers.user_delete(user_token, user_id)
 
 
-from app.core.app_response import app_response
-from app.core.async_upload import async_upload
+
 
 # user image upload
 @app.route('/image/', methods=['POST'])
@@ -89,10 +88,6 @@ def image_post():
         uploaded_files.append(uploaded_file)
     """
 
-    from multiprocessing import Process
-    from multiprocessing import Manager
-    #from multiprocessing import Pool
-
     manager = Manager()
     uploaded_files = manager.list()
 
@@ -104,19 +99,6 @@ def image_post():
     
     for job in jobs:
         job.join()
-
-
-    #data = [(x, '/app/images/', []) for x in user_files]
-    #data = [(user_files[0], '/app/images/', [])]
-    #pool = Pool(processes=3)
-    #pool.map(file_upload, data)
-
-
-
-    #pool = Pool(processes=3)
-    #print(pool.map(f, range(10)))
-
-    #a = list(uploaded_files)
 
     return {}, {'files': list(uploaded_files), }, 200
 

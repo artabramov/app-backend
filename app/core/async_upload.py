@@ -2,7 +2,7 @@ from marshmallow import ValidationError
 import os
 import uuid
 
-
+# TODO: make secure filename for DB
 def async_upload(user_file, file_path, allowed_mimes, uploaded_files):
 
     file_data = {
