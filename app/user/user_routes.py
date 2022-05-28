@@ -73,7 +73,7 @@ def user_delete(user_id):
 
 
 from app.core.json_response import json_response
-from app.core.file_upload import file_upload
+from app.core.async_upload import async_upload
 
 # user image upload
 @app.route('/image/', methods=['POST'])
@@ -90,20 +90,20 @@ def image_post():
     """
 
     from multiprocessing import Process
-    from multiprocessing import Pool
+    from multiprocessing import Manager
+    #from multiprocessing import Pool
 
-    import multiprocessing
-    manager = multiprocessing.Manager()
-    return_dict = manager.list()
+    manager = Manager()
+    uploaded_files = manager.list()
 
-    procs = []
+    jobs = []
     for user_file in user_files:
-        proc = Process(target=file_upload, args=(user_file, '/app/images/', ['image/jpeg'], return_dict))
-        procs.append(proc)
-        proc.start()
+        job = Process(target=async_upload, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
+        jobs.append(job)
+        job.start()
     
-    for proc in procs:
-        proc.join()
+    for job in jobs:
+        job.join()
 
 
     #data = [(x, '/app/images/', []) for x in user_files]
@@ -116,9 +116,9 @@ def image_post():
     #pool = Pool(processes=3)
     #print(pool.map(f, range(10)))
 
-    a = list(return_dict)
+    #a = list(uploaded_files)
 
-    return {}, {'files': uploaded_files, }, 200
+    return {}, {'files': list(uploaded_files), }, 200
 
 
 

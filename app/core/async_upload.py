@@ -3,22 +3,31 @@ import os
 import uuid
 
 
-def file_upload(user_file, file_path, allowed_mimes, return_dict):
-    import time
-    time.sleep(10)
+def async_upload(user_file, file_path, allowed_mimes, uploaded_files):
+
+    file_data = {
+        'file': {
+            'file_name': user_file.filename,
+            'file_path': '',
+            'file_size': '',
+            'file_mime': ''
+        },
+        'error': ''
+    }
 
     if not user_file or not user_file.filename:
         #raise IOError({'user_file': ['File not found']})
         #return {'file': {}, 'error': 'File not found'}
         #return_dict[file_name] = {'file': {}, 'error': 'File not found'}
-        return_dict.append({'file': {'file_name': user_file.filename}, 'error': 'File not found'})
+        uploaded_files.append({'file': {'file_name': user_file.filename}, 'error': 'File not found'})
         return
 
     if allowed_mimes and user_file.mimetype not in allowed_mimes:
         #raise IOError({'user_file': ['File mimetype is incorrect']})
         #return {'file': {}, 'error': 'File mimetype is incorrect'}
         #return_dict[file_name] = {'file': {}, 'error': 'File mimetype is incorrect'}
-        return_dict.append({'file': {'file_name': user_file.filename}, 'error': 'File mimetype is incorrect'})
+        file_data['error'] = 'File mimetype is incorrect'
+        uploaded_files.append(file_data)
         return
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
@@ -44,8 +53,7 @@ def file_upload(user_file, file_path, allowed_mimes, return_dict):
 
     #return file_data
     #return_dict[file_name] = file_data
-    return_dict.append(file_data)
-    return
+    uploaded_files.append(file_data)
 
 
 
