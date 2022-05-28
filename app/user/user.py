@@ -1,13 +1,13 @@
 from enum import Enum
 from app import db
 from app.core.base_model import BaseModel
-from app.core.term_mixin import TermMixin
+from app.core.trait_mixin import TraitMixin
 import random, string
 import json
 import base64, hashlib, time, pyotp
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
-from app.user_term.user_term import UserTerm
+from app.user_trait.user_trait import UserTrait
 
 PASS_HASH_SALT = 'abcd'
 PASS_REMAINS_LIMIT = 5
@@ -38,7 +38,7 @@ class UserSchema(Schema):
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(BaseModel, TermMixin):
+class User(BaseModel, TraitMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
@@ -54,7 +54,7 @@ class User(BaseModel, TermMixin):
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    terms = db.relationship('UserTerm', backref='users', lazy='subquery')
+    traits = db.relationship('UserTrait', backref='users', lazy='subquery')
 
     def __init__(self, user_login, user_name, user_pass, user_role=None):
         self.user_login = user_login.lower()

@@ -3,14 +3,23 @@ import os
 import uuid
 
 
-def file_upload(user_file, file_path, allowed_mimes=None):
+def file_upload(user_file, file_path, allowed_mimes, return_dict):
+    import time
+    time.sleep(10)
+
     if not user_file or not user_file.filename:
         #raise IOError({'user_file': ['File not found']})
-        return {'file': {}, 'error': 'File not found'}
+        #return {'file': {}, 'error': 'File not found'}
+        #return_dict[file_name] = {'file': {}, 'error': 'File not found'}
+        return_dict.append({'file': {'file_name': user_file.filename}, 'error': 'File not found'})
+        return
 
     if allowed_mimes and user_file.mimetype not in allowed_mimes:
         #raise IOError({'user_file': ['File mimetype is incorrect']})
-        return {'file': {}, 'error': 'File mimetype is incorrect'}
+        #return {'file': {}, 'error': 'File mimetype is incorrect'}
+        #return_dict[file_name] = {'file': {}, 'error': 'File mimetype is incorrect'}
+        return_dict.append({'file': {'file_name': user_file.filename}, 'error': 'File mimetype is incorrect'})
+        return
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
     file_name = os.path.join(file_path, str(uuid.uuid4()) + '.' + file_ext)
@@ -18,7 +27,10 @@ def file_upload(user_file, file_path, allowed_mimes=None):
     try:
         user_file.save(file_name)
     except IOError:
-        return {'file': {}, 'error': 'No such file or directory'}
+        # TODO: add logging here
+        #return {'file': {}, 'error': 'No such file or directory'}
+        #return_dict[file_name] = {'file': {}, 'error': 'No such file or directory'}
+        pass
 
     file_data = {
         'file': {
@@ -29,7 +41,11 @@ def file_upload(user_file, file_path, allowed_mimes=None):
         },
         'error': ''
     }
-    return file_data
+
+    #return file_data
+    #return_dict[file_name] = file_data
+    return_dict.append(file_data)
+    return
 
 
 

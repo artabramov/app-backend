@@ -54,13 +54,13 @@ def user_update(user_id):
     user_role = request.args.get('user_role', None)
     user_pass = request.args.get('user_pass', None)
 
-    terms_data = {}
+    traits_data = {}
     if request.args.get('key_1', False): 
-        terms_data['key_1'] = request.args.get('key_1')
+        traits_data['key_1'] = request.args.get('key_1')
     if request.args.get('key_2', False): 
-        terms_data['key_2'] = request.args.get('key_2')
+        traits_data['key_2'] = request.args.get('key_2')
 
-    return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, terms_data)
+    return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, traits_data)
 
 
 # user delete
@@ -81,14 +81,44 @@ from app.core.file_upload import file_upload
 def image_post():
     user_token = request.headers.get('user_token', None)
     user_files = request.files.getlist('user_files')
-
     uploaded_files = []
+
+    """
     for user_file in user_files:
         uploaded_file = file_upload(user_file, '/app/images/', ['image/jpeg'])
         uploaded_files.append(uploaded_file)
+    """
+
+    from multiprocessing import Process
+    from multiprocessing import Pool
+
+    import multiprocessing
+    manager = multiprocessing.Manager()
+    return_dict = manager.list()
+
+    procs = []
+    for user_file in user_files:
+        proc = Process(target=file_upload, args=(user_file, '/app/images/', ['image/jpeg'], return_dict))
+        procs.append(proc)
+        proc.start()
+    
+    for proc in procs:
+        proc.join()
+
+
+    #data = [(x, '/app/images/', []) for x in user_files]
+    #data = [(user_files[0], '/app/images/', [])]
+    #pool = Pool(processes=3)
+    #pool.map(file_upload, data)
+
+
+
+    #pool = Pool(processes=3)
+    #print(pool.map(f, range(10)))
+
+    a = list(return_dict)
 
     return {}, {'files': uploaded_files, }, 200
-
 
 
 
