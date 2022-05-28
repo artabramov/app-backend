@@ -162,7 +162,7 @@ def user_select(user_token, user_id):
 @json_response
 def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, terms_data=None):
     authed_user = user_auth(user_token)
-    if str(user_id) == authed_user.id:
+    if user_id == authed_user.id:
         user = authed_user
 
     elif authed_user.is_admin:
@@ -208,7 +208,7 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
 @json_response
 def user_delete(user_token, user_id):
     authed_user = user_auth(user_token)
-    if int(user_id) == authed_user.id or not authed_user.is_admin:
+    if user_id == authed_user.id or not authed_user.is_admin:
         return {}, {'user_id': ['Forbidden'], }, 403
 
     else:
