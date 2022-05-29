@@ -10,6 +10,11 @@ from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, CODE_REMAINS
 from app.core.app_response import app_response
 
 
+def user_exists(**kwargs):
+    user = User.query.filter_by(**kwargs).first()
+    return user is not None
+
+
 def user_auth(user_token):
     try:
         token_payload = User.get_token_payload(user_token)

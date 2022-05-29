@@ -14,7 +14,7 @@ def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_role = 'guest'
+    user_role = 'guest' if user_handlers.user_exists(user_role='admin', deleted=0) else 'admin'
     user_props = {
         'key_1': 'value 1',
         'key_2': 'value 2',
