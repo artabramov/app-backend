@@ -15,12 +15,12 @@ def user_register():
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
     user_role = 'guest' if user_exists(user_role='admin', deleted=0) else 'admin'
-    user_props = {
+    user_meta = {
         'key_1': 'value 1',
         'key_2': 'value 2',
         'key_3': 'value 3',
     }
-    return user_insert(user_login, user_name, user_pass, user_role, user_props)
+    return user_insert(user_login, user_name, user_pass, user_role, user_meta)
 
 
 # user signin

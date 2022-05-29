@@ -1,6 +1,6 @@
 import time
 from app.user.user import User
-from app.user_prop.user_prop import UserProp
+from app.user_meta.user_meta import UserMeta
 from marshmallow import ValidationError
 from app import app, db, cache, log
 import os
@@ -15,16 +15,16 @@ def user_exists(**kwargs):
     return user is not None
 
 
-def user_insert(user_login, user_name, user_pass, user_role, user_props):
+def user_insert(user_login, user_name, user_pass, user_role, user_meta):
     user = User(user_login, user_name, user_pass, user_role)
     db.session.add(user)
     db.session.flush()
 
-    if user_props:
-        for prop_key in user_props:
-            prop_value = user_props[prop_key]
-            user_prop = UserProp(user.id, prop_key, prop_value)
-            db.session.add(user_prop)
+    if user_meta:
+        for meta_key in user_meta:
+            meta_value = user_meta[meta_key]
+            meta = UserMeta(user.id, meta_key, meta_value)
+            db.session.add(meta)
         db.session.flush()
 
     # TODO: make exception in app_response
