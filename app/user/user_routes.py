@@ -6,8 +6,10 @@ from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.async_upload import async_upload
 
+
 # user register
-@app.route('/user/', methods=['POST'])
+@app.route('/user/', methods=['POST'], endpoint='user_register')
+@app_response
 def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
@@ -81,7 +83,7 @@ def user_delete(user_id):
 
 
 # user image upload
-@app.route('/image/', methods=['POST'])
+@app.route('/image/', methods=['POST'], endpoint='image_post')
 @app_response
 def image_post():
     user_token = request.headers.get('user_token', None)

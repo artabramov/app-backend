@@ -37,7 +37,7 @@ def user_auth(user_token):
             return user
 
 
-@app_response
+#@app_response
 def user_register(user_login, user_name, user_pass, user_role, user_props):
     user = User(user_login, user_name, user_pass, user_role)
     db.session.add(user)
