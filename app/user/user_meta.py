@@ -3,12 +3,10 @@ from app.core.base_model import BaseModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
-USER_META_KEYS = {'key_1', 'key_2', 'key_3', 'key_4'}
-
 
 class UserMetaSchema(Schema):
     user_id = fields.Int(validate=validate.Range(min=1))
-    meta_key = fields.Str(validate=lambda x: x in USER_META_KEYS)
+    meta_key = fields.Str(validate=[validate.Length(min=2, max=40), lambda x: x.replace('_', '').isalnum()])
     meta_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 

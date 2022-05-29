@@ -5,7 +5,8 @@ from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.async_upload import async_upload
-from app.user.user_handlers import user_exists, user_insert, user_select, user_update, qrcode_create, qrcode_remove
+from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete
+from app.user.user_handlers import qrcode_create, qrcode_remove
 from app.user.user import TOTP_ATTEMPTS_LIMIT
 
 
@@ -56,17 +57,9 @@ def user_signin():
         user_update(this_user, totp_attempts=totp_attempts)
         return {}, {'user_totp': ['user_totp is incorrect'], }, 404
 
-        #this_user.totp_remains = 0
-        #db.session.flush()
-        #db.session.commit()
-        #cache.set('user.%s' % (user.id), user)
-        #return {'user_token': user.user_token}, {}, 200
 
-    #user = user_select(id=10)
-    pass
-    user_update(this_user, totp_remains=10)
-    #return user_handlers.user_signin(user_login, user_code)
-    return {}, {}, 200
+
+
 
 
 # user signout

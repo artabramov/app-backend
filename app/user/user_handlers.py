@@ -66,11 +66,18 @@ def user_update(user, **kwargs):
 
     db.session.add(user)
     db.session.flush()
-    
+
     cache.set('user.%s' % (user.id), user)
     return user
 
 
+def user_delete(user):
+    user.delete()
+    db.session.add(user)
+    db.session.flush()
+
+    cache.delete('user.%s' % (user.id))
+    return True
 
 
 
