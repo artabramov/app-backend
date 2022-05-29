@@ -45,7 +45,7 @@ def user_signin():
         return {}, {'user_login': ['user_login is not found'], }, 404
 
     elif this_user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
-        return {}, {'user_totp': ['user_totp attempts exhausted'], }, 406
+        return {}, {'user_totp': ['user_totp attempts are over'], }, 406
 
     elif user_totp == this_user.user_totp:
         qrcode_remove(this_user.user_totp)
@@ -59,13 +59,16 @@ def user_signin():
 
 
 # user signout
-@app.route('/token/', methods=['PUT'])
+@app.route('/token/', methods=['PUT'], endpoint='user_signout')
+@app_response
 def user_signout():
     user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
-    pass
-    #return user_handlers.user_signout(user_token)
+    token_signature = this_user.generate_token_signature()
+    user_update(this_user, token_signature=token_signature)
+    return {}, {}, 200
+
 
 
 
