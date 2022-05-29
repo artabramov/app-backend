@@ -6,7 +6,7 @@ from app import app, db, cache, log
 import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
-from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, TOTP_ATTEMPTS_LIMIT
+from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT
 from app.core.app_response import app_response
 
 
@@ -140,13 +140,6 @@ def _user_signin(user_login, user_code):
         return {}, {'user_code': ['Incorrect'], }, 404
 
 
-
-
-
-
-
-
-
 def _user_auth(user_token):
     try:
         token_payload = User.get_token_payload(user_token)
@@ -208,7 +201,7 @@ def _user_restore(user_login, user_pass):
         user.pass_remains -= 1
         if user.pass_remains < 1:
             user.pass_remains = PASS_REMAINS_LIMIT
-            user.pass_suspended = time.time() + PASS_SUSPENSION_TIME
+            user.pass_suspended = time.time() + PASS_SUSPEND_TIME
 
         db.session.flush()
         db.session.commit()

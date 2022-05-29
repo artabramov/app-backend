@@ -9,8 +9,7 @@ class BaseModel(db.Model):
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     deleted = db.Column(db.Integer(), nullable=False, default=0, index=True)
 
-    def delete(self, commit=True):
+    def delete(self):
         self.deleted = int(time.time())
-        if commit:
-            db.session.commit()
-
+        #if commit:
+        #    db.session.commit()

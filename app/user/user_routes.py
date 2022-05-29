@@ -7,7 +7,9 @@ from app.core.app_response import app_response
 from app.core.async_upload import async_upload
 from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete, user_auth
 from app.user.user_handlers import qrcode_create, qrcode_remove
-from app.user.user import TOTP_ATTEMPTS_LIMIT
+from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT
+from app.user.user import User
+import time
 
 
 # user register
@@ -42,7 +44,7 @@ def user_signin():
 
     this_user = user_select(user_login=user_login, deleted=0)
     if not this_user:
-        return {}, {'user_login': ['user_login is not found'], }, 404
+        return {}, {'user_login': ['user_login not found'], }, 404
 
     elif this_user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
         return {}, {'user_totp': ['user_totp attempts are over'], }, 406
@@ -70,7 +72,34 @@ def user_signout():
     return {}, {}, 200
 
 
+@app.route('/pass/', methods=['GET'], endpoint='pass_get')
+@app_response
+def pass_get():
+    """ User restore """
+    user_login = request.args.get('user_login', '').lower()
+    user_pass = request.args.get('user_pass', '')
+    pass_hash = User.get_pass_hash(user_login + user_pass)
 
+    this_user = user_select(user_login=user_login, deleted=0)
+    if not this_user:
+        return {}, {'user_login': ['user_login not found'], }, 404
+
+    elif this_user.pass_suspended > time.time():
+        return {}, {'user_pass': ['user_pass temporarily suspended'], }, 406
+
+    elif this_user.pass_hash == pass_hash:
+        user_update(this_user, pass_attempts=0, pass_suspended=0, totp_attempts=0)
+        return {}, {}, 200
+
+    else:
+        pass_attempts = this_user.pass_attempts + 1
+        pass_suspended = 0
+        if pass_attempts >= PASS_ATTEMPTS_LIMIT:
+            pass_attempts = 0
+            pass_suspended = time.time() + PASS_SUSPEND_TIME
+
+        user_update(this_user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
+        return {}, {'user_pass': ['user_pass is incorrect'], }, 406
 
 
 
@@ -117,8 +146,6 @@ def _user_remove(user_id):
     user_id = int(user_id)
 
     return user_handlers.user_delete(user_token, user_id)
-
-
 
 
 # user image upload
