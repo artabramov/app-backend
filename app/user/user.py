@@ -7,7 +7,7 @@ import json
 import base64, hashlib, time, pyotp
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
-from app.user_meta.user_meta import UserMeta
+from app.user.user_meta import UserMeta
 
 PASS_HASH_SALT = 'abcd'
 PASS_REMAINS_LIMIT = 5

@@ -1,6 +1,6 @@
 import time
 from app.user.user import User
-from app.user_meta.user_meta import UserMeta
+from app.user.user_meta import UserMeta
 from marshmallow import ValidationError
 from app import app, db, cache, log
 import os
