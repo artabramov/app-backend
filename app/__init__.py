@@ -25,4 +25,3 @@ def before_first_request():
 
 from app.hi import hi_routes
 from app.user import user_routes
-

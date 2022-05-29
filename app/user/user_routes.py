@@ -5,7 +5,9 @@ from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.async_upload import async_upload
-from app.user.user_handlers import user_exists, user_insert
+from app.user.user_handlers import user_exists, user_insert, user_select, user_update, qrcode_create, qrcode_remove
+from app.user.user import TOTP_ATTEMPTS_LIMIT
+
 
 # user register
 @app.route('/user/', methods=['POST'], endpoint='user_register')
@@ -20,7 +22,14 @@ def user_register():
         'key_2': 'value 2',
         'key_3': 'value 3',
     }
-    return user_insert(user_login, user_name, user_pass, user_role, user_meta)
+
+    this_user = user_insert(user_login, user_name, user_pass, user_role, user_meta)
+    qrcode_create(this_user.totp_key, this_user.user_login)
+
+    return {
+        'totp_key': this_user.totp_key, 
+        'totp_qrcode': app.config['QRCODES_URI'] % this_user.totp_key
+    }, {}, 201
 
 
 # user signin
@@ -28,20 +37,48 @@ def user_register():
 @app_response
 def user_signin():
     user_login = request.args.get('user_login', '')
-    user_code = request.args.get('user_code', '')
-    return user_handlers.user_signin(user_login, user_code)
+    user_totp = request.args.get('user_totp', '')
+
+    this_user = user_select(user_login=user_login, deleted=0)
+    if not this_user:
+        return {}, {'user_login': ['user_login is not found'], }, 404
+
+    elif this_user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
+        return {}, {'user_totp': ['user_totp attempts exhausted'], }, 406
+
+    elif user_totp == this_user.user_totp:
+        qrcode_remove(this_user.user_totp)
+        user_update(this_user, totp_attempts=0)
+        return {'user_token': this_user.user_token}, {}, 200
+
+    else:
+        totp_attempts = this_user.totp_attempts + 1
+        user_update(this_user, totp_attempts=totp_attempts)
+        return {}, {'user_totp': ['user_totp is incorrect'], }, 404
+
+        #this_user.totp_remains = 0
+        #db.session.flush()
+        #db.session.commit()
+        #cache.set('user.%s' % (user.id), user)
+        #return {'user_token': user.user_token}, {}, 200
+
+    #user = user_select(id=10)
+    pass
+    user_update(this_user, totp_remains=10)
+    #return user_handlers.user_signin(user_login, user_code)
+    return {}, {}, 200
 
 
 # user signout
 @app.route('/token/', methods=['PUT'])
-def user_signout():
+def _user_signout():
     user_token = request.headers.get('user_token')
     return user_handlers.user_signout(user_token)
 
 
 # user restore
 @app.route('/pass/', methods=['GET'])
-def user_restore():
+def _user_restore():
     user_login = request.args.get('user_login', '')
     user_pass = request.args.get('user_pass', '')
     return user_handlers.user_restore(user_login, user_pass)
@@ -49,14 +86,14 @@ def user_restore():
 
 # user select
 @app.route('/user/<user_id>', methods=['GET'])
-def user_select(user_id):
+def _user_select(user_id):
         user_token = request.headers.get('user_token')
         return user_handlers.user_select(user_token, user_id)
 
 
 # user update
 @app.route('/user/<user_id>', methods=['PUT'])
-def user_update(user_id):
+def _user_update(user_id):
     user_token = request.headers.get('user_token', None)
     user_id = int(user_id)
     user_name = request.args.get('user_name', None)
@@ -74,7 +111,7 @@ def user_update(user_id):
 
 # user delete
 @app.route('/user/<user_id>', methods=['DELETE'])
-def user_remove(user_id):
+def _user_remove(user_id):
     user_token = request.headers.get('user_token', None)
     user_id = int(user_id)
 
@@ -86,7 +123,7 @@ def user_remove(user_id):
 # user image upload
 @app.route('/image/', methods=['POST'], endpoint='image_post')
 @app_response
-def image_post():
+def _image_post():
     user_token = request.headers.get('user_token', None)
     user_files = request.files.getlist('user_files')
     uploaded_files = []

@@ -10,11 +10,11 @@ from marshmallow_enum import EnumField
 from app.user.user_meta import UserMeta
 
 PASS_HASH_SALT = 'abcd'
-PASS_REMAINS_LIMIT = 5
+PASS_ATTEMPTS_LIMIT = 5
 PASS_SUSPENSION_TIME = 30
 
 TOTP_KEY_LENGTH = 16
-TOTP_REMAINS_LIMIT = 5
+TOTP_ATTEMPTS_LIMIT = 5
 
 TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
@@ -45,11 +45,11 @@ class User(BaseModel, MetaMixin):
     user_role = db.Column(db.Enum(UserRole), nullable=False, default='guest')
 
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
-    pass_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
+    pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
     totp_key = db.Column(db.String(32), nullable=False, index=True)
-    totp_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
+    totp_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
@@ -61,10 +61,10 @@ class User(BaseModel, MetaMixin):
         self.user_name = user_name
         self.user_role = user_role
         self.user_pass = user_pass
-        self.pass_remains = PASS_REMAINS_LIMIT
+        self.pass_attempts = 0
         self.pass_suspended = 0
         self.totp_key = self.generate_totp_key()
-        self.totp_remains = TOTP_REMAINS_LIMIT
+        self.totp_attempts = 0
         self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
 
@@ -87,7 +87,7 @@ class User(BaseModel, MetaMixin):
         return pyotp.random_base32()
 
     @property
-    def user_code(self):
+    def user_totp(self):
         totp = pyotp.TOTP(self.totp_key)
         return totp.now()
 
@@ -127,11 +127,11 @@ class User(BaseModel, MetaMixin):
         return self.user_role == UserRole.admin
 
     @property
-    def can_edit(self):
+    def is_editor(self):
         return self.user_role in [UserRole.admin, UserRole.editor]
 
     @property
-    def can_read(self):
+    def is_reader(self):
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
 
 

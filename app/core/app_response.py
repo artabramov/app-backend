@@ -11,6 +11,7 @@ def app_response(func):
 
         try:
             data, errors, http_code = func(*args)
+            db.session.commit()
 
         except ValidationError as e:
             log.debug(e.messages)

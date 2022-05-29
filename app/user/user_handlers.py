@@ -6,12 +6,25 @@ from app import app, db, cache, log
 import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
-from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, TOTP_REMAINS_LIMIT
+from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPENSION_TIME, TOTP_ATTEMPTS_LIMIT
 from app.core.app_response import app_response
 
 
+def qrcode_create(totp_key, user_login):
+    # TODO: make exception in app_response
+    qr = qrcode.make(app.config['QRCODES_REF'] % (totp_key, user_login))
+    qr.save(app.config['QRCODES_PATH'] % totp_key)
+    return True
+
+
+def qrcode_remove(totp_key):
+    if os.path.isfile(app.config['QRCODES_PATH'] % totp_key):
+        os.remove(app.config['QRCODES_PATH'] % totp_key)
+    return True
+
+
 def user_exists(**kwargs):
-    user = User.query.filter_by(**kwargs).first()
+    user = user_select(**kwargs)
     return user is not None
 
 
@@ -27,19 +40,45 @@ def user_insert(user_login, user_name, user_pass, user_role, user_meta):
             db.session.add(meta)
         db.session.flush()
 
-    # TODO: make exception in app_response
-    qr = qrcode.make(app.config['QRCODES_REF'] % (user.totp_key, user.user_login))
-    qr.save(app.config['QRCODES_PATH'] % user.totp_key)
-
-    db.session.commit()
     cache.set('user.%s' % (user.id), user)
-    return {
-        'totp_key': user.totp_key, 
-        'code_qr': app.config['QRCODES_URI'] % user.totp_key
-    }, {}, 201
+    return user
 
 
-def user_signin(user_login, user_code):
+def user_select(**kwargs):
+    user = None
+
+    if 'id' in kwargs and len(kwargs) == 1:
+        user = cache.get('user.%s' % (kwargs['id']))
+
+    if not user:
+        user = User.query.filter_by(**kwargs).first()
+
+    if user:
+        cache.set('user.%s' % (user.id), user)
+
+    return user
+
+
+def user_update(user, **kwargs):
+    for key in kwargs:
+        value = kwargs[key]
+        setattr(user, key, value)
+
+    db.session.add(user)
+    db.session.flush()
+    
+    cache.set('user.%s' % (user.id), user)
+    return user
+
+
+
+
+
+
+
+
+
+def _user_signin(user_login, user_code):
     user = User.query.filter_by(user_login=user_login, deleted=0).first()
     
     if not user:
@@ -73,7 +112,7 @@ def user_signin(user_login, user_code):
 
 
 
-def user_auth(user_token):
+def _user_auth(user_token):
     try:
         token_payload = User.get_token_payload(user_token)
     except:
@@ -101,7 +140,7 @@ def user_auth(user_token):
 
 
 @app_response
-def user_signout(user_token):
+def _user_signout(user_token):
     authed_user = user_auth(user_token)
     authed_user.token_signature = authed_user.generate_token_signature()
     db.session.flush()
@@ -111,7 +150,7 @@ def user_signout(user_token):
 
 
 @app_response
-def user_restore(user_login, user_pass):
+def _user_restore(user_login, user_pass):
     user_login = user_login.lower()
     pass_hash = User.get_pass_hash(user_login + user_pass)
     user = User.query.filter_by(user_login=user_login, deleted=0).first()
@@ -143,7 +182,7 @@ def user_restore(user_login, user_pass):
 
 
 @app_response
-def user_select(user_token, user_id):
+def _user_select(user_token, user_id):
     authed_user = user_auth(user_token)
 
     user = cache.get('user.%s' % (user_id))
@@ -166,7 +205,7 @@ def user_select(user_token, user_id):
 
 
 @app_response
-def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, props_data=None):
+def _user_update(user_token, user_id, user_name=None, user_role=None, user_pass=None, props_data=None):
     authed_user = user_auth(user_token)
     if user_id == authed_user.id:
         user = authed_user
@@ -212,7 +251,7 @@ def user_update(user_token, user_id, user_name=None, user_role=None, user_pass=N
 
 
 @app_response
-def user_delete(user_token, user_id):
+def _user_delete(user_token, user_id):
     authed_user = user_auth(user_token)
     if user_id == authed_user.id or not authed_user.is_admin:
         return {}, {'user_id': ['Forbidden'], }, 403
