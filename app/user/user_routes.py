@@ -123,6 +123,48 @@ def user_get(user_id):
             return {}, {'user_id': ['user_id not found']}, 404
 
 
+# user update
+@app.route('/user/<user_id>', methods=['PUT'], endpoint='user_put')
+@app_response
+def user_put(user_id):
+    user_token = request.headers.get('user_token')
+    user_id = int(user_id)
+    user_name = request.args.get('user_name', None)
+    user_role = request.args.get('user_role', None)
+    user_pass = request.args.get('user_pass', None)
+
+    this_user = user_auth(user_token)
+    user = user_select(id=user_id)
+
+    if not user:
+        return {}, {'user_id': ['user_id not found']}, 404
+
+    elif this_user.id == user.id or this_user.is_admin:
+        user_data = {}
+        if user_name:
+            user_data['user_name'] = user_name
+
+        if user_pass:
+            user_data['user_pass'] = user_pass
+
+        if user_role and this_user.is_admin and this_user.id != user.id:
+            user_data['user_role'] = user_role
+
+        user_update(user, **user_data)
+        return {}, {}, 200
+
+    else:
+        return {}, {'user_id': ['user_id update forbidden'], }, 403
+
+    """
+    props_data = {}
+    if request.args.get('key_1', False): 
+        props_data['key_1'] = request.args.get('key_1')
+    if request.args.get('key_2', False): 
+        props_data['key_2'] = request.args.get('key_2')
+    """
+
+    #return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, props_data)
 
 
 
