@@ -6,13 +6,71 @@ from app import app, db, cache, log
 import os
 import qrcode
 from sqlalchemy.exc import SQLAlchemyError
-from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, CODE_REMAINS_LIMIT
+from app.user.user import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, TOTP_REMAINS_LIMIT
 from app.core.app_response import app_response
 
 
 def user_exists(**kwargs):
     user = User.query.filter_by(**kwargs).first()
     return user is not None
+
+
+def user_insert(user_login, user_name, user_pass, user_role, user_props):
+    user = User(user_login, user_name, user_pass, user_role)
+    db.session.add(user)
+    db.session.flush()
+
+    if user_props:
+        for prop_key in user_props:
+            prop_value = user_props[prop_key]
+            user_prop = UserProp(user.id, prop_key, prop_value)
+            db.session.add(user_prop)
+        db.session.flush()
+
+    # TODO: make exception in app_response
+    qr = qrcode.make(app.config['QRCODES_REF'] % (user.totp_key, user.user_login))
+    qr.save(app.config['QRCODES_PATH'] % user.totp_key)
+
+    db.session.commit()
+    cache.set('user.%s' % (user.id), user)
+    return {
+        'totp_key': user.totp_key, 
+        'code_qr': app.config['QRCODES_URI'] % user.totp_key
+    }, {}, 201
+
+
+def user_signin(user_login, user_code):
+    user = User.query.filter_by(user_login=user_login, deleted=0).first()
+    
+    if not user:
+        return {}, {'user_login': ['Not Found'], }, 404
+    
+    elif user.totp_remains < 1:
+        return {}, {'user_code': ['Not Acceptable'], }, 406
+
+    elif user_code == user.user_code:
+        if os.path.isfile(app.config['QRCODES_PATH'] % user.totp_key):
+            os.remove(app.config['QRCODES_PATH'] % user.totp_key)
+
+        user.totp_remains = 0
+        db.session.flush()
+        db.session.commit()
+        cache.set('user.%s' % (user.id), user)
+        return {'user_token': user.user_token}, {}, 200
+
+    else:
+        user.totp_remains -= 1
+        db.session.flush()
+        db.session.commit()
+        cache.set('user.%s' % (user.id), user)
+        return {}, {'user_code': ['Incorrect'], }, 404
+
+
+
+
+
+
+
 
 
 def user_auth(user_token):
@@ -42,59 +100,6 @@ def user_auth(user_token):
             return user
 
 
-#@app_response
-def user_register(user_login, user_name, user_pass, user_role, user_props):
-    user = User(user_login, user_name, user_pass, user_role)
-    db.session.add(user)
-    db.session.flush()
-
-    if user_props:
-        for prop_key in user_props:
-            prop_value = user_props[prop_key]
-            user_prop = UserProp(user.id, prop_key, prop_value)
-            db.session.add(user_prop)
-        db.session.flush()
-
-    # TODO: make exception got QR creation
-    qr = qrcode.make(app.config['QRCODES_REF'] % (user.code_key, user.user_login))
-    qr.save(app.config['QRCODES_PATH'] % user.code_key)
-
-    db.session.commit()
-    cache.set('user.%s' % (user.id), user)
-    return {
-        'code_key': user.code_key, 
-        'code_qr': app.config['QRCODES_URI'] % user.code_key
-    }, {}, 201
-
-
-@app_response
-def user_signin(user_login, user_code):
-    user = User.query.filter_by(user_login=user_login, deleted=0).first()
-    
-    if not user:
-        return {}, {'user_login': ['Not Found'], }, 404
-    
-    elif user.code_remains < 1:
-        return {}, {'user_code': ['Not Acceptable'], }, 406
-
-    elif user_code == user.user_code:
-        if os.path.isfile(app.config['QRCODES_PATH'] % user.code_key):
-            os.remove(app.config['QRCODES_PATH'] % user.code_key)
-
-        user.code_remains = 0
-        db.session.flush()
-        db.session.commit()
-        cache.set('user.%s' % (user.id), user)
-        return {'user_token': user.user_token}, {}, 200
-
-    else:
-        user.code_remains -= 1
-        db.session.flush()
-        db.session.commit()
-        cache.set('user.%s' % (user.id), user)
-        return {}, {'user_code': ['Incorrect'], }, 404
-
-
 @app_response
 def user_signout(user_token):
     authed_user = user_auth(user_token)
@@ -119,7 +124,7 @@ def user_restore(user_login, user_pass):
     elif user.pass_hash == pass_hash:
         user.pass_remains = PASS_REMAINS_LIMIT
         user.pass_suspended = 0
-        user.code_remains = CODE_REMAINS_LIMIT
+        user.totp_remains = TOTP_REMAINS_LIMIT
         db.session.flush()
         db.session.commit()
         cache.set('user.%s' % (user.id), user)

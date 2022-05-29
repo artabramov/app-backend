@@ -5,7 +5,7 @@ from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.async_upload import async_upload
-
+from app.user.user_handlers import user_exists, user_insert
 
 # user register
 @app.route('/user/', methods=['POST'], endpoint='user_register')
@@ -14,17 +14,18 @@ def user_register():
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_role = 'guest' if user_handlers.user_exists(user_role='admin', deleted=0) else 'admin'
+    user_role = 'guest' if user_exists(user_role='admin', deleted=0) else 'admin'
     user_props = {
         'key_1': 'value 1',
         'key_2': 'value 2',
         'key_3': 'value 3',
     }
-    return user_handlers.user_register(user_login, user_name, user_pass, user_role, user_props)
+    return user_insert(user_login, user_name, user_pass, user_role, user_props)
 
 
 # user signin
-@app.route('/token/', methods=['GET'])
+@app.route('/token/', methods=['GET'], endpoint='user_signin')
+@app_response
 def user_signin():
     user_login = request.args.get('user_login', '')
     user_code = request.args.get('user_code', '')
@@ -73,7 +74,7 @@ def user_update(user_id):
 
 # user delete
 @app.route('/user/<user_id>', methods=['DELETE'])
-def user_delete(user_id):
+def user_remove(user_id):
     user_token = request.headers.get('user_token', None)
     user_id = int(user_id)
 

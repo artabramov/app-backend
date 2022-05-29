@@ -13,8 +13,8 @@ PASS_HASH_SALT = 'abcd'
 PASS_REMAINS_LIMIT = 5
 PASS_SUSPENSION_TIME = 30
 
-CODE_KEY_LENGTH = 16
-CODE_REMAINS_LIMIT = 5
+TOTP_KEY_LENGTH = 16
+TOTP_REMAINS_LIMIT = 5
 
 TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
@@ -48,8 +48,8 @@ class User(BaseModel, PropMixin):
     pass_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
 
-    code_key = db.Column(db.String(32), nullable=False, index=True)
-    code_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
+    totp_key = db.Column(db.String(32), nullable=False, index=True)
+    totp_remains = db.Column(db.SmallInteger(), nullable=False, default=0)
 
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
@@ -63,8 +63,8 @@ class User(BaseModel, PropMixin):
         self.user_pass = user_pass
         self.pass_remains = PASS_REMAINS_LIMIT
         self.pass_suspended = 0
-        self.code_key = self.generate_code_key()
-        self.code_remains = CODE_REMAINS_LIMIT
+        self.totp_key = self.generate_totp_key()
+        self.totp_remains = TOTP_REMAINS_LIMIT
         self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
 
@@ -83,12 +83,12 @@ class User(BaseModel, PropMixin):
         hash_obj = hashlib.sha512(encoded_value)
         return hash_obj.hexdigest()
 
-    def generate_code_key(self):
+    def generate_totp_key(self):
         return pyotp.random_base32()
 
     @property
     def user_code(self):
-        totp = pyotp.TOTP(self.code_key)
+        totp = pyotp.TOTP(self.totp_key)
         return totp.now()
 
     def generate_token_signature(self):

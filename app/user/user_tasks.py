@@ -7,7 +7,7 @@ from marshmallow import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from celery.utils.log import get_task_logger
 import time
-from app.user.user_model import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, CODE_REMAINS_LIMIT
+from app.user.user_model import PASS_REMAINS_LIMIT, PASS_SUSPENSION_TIME, TOTP_REMAINS_LIMIT
 from app.user.user_helpers import user_auth
 from app.user.user_schema import UserRole
 import qrcode
