@@ -5,12 +5,12 @@ from app import db, log
 
 
 def app_response(func):
-    def inner(*args):
+    def inner(*args, **kwargs):
         data, errors = {}, {}
         http_code = 200
 
         try:
-            data, errors, http_code = func(*args)
+            data, errors, http_code = func(*args, **kwargs)
             db.session.commit()
 
         except ValidationError as e:

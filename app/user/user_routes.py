@@ -102,6 +102,34 @@ def pass_get():
         return {}, {'user_pass': ['user_pass is incorrect'], }, 406
 
 
+# user select
+@app.route('/user/<user_id>', methods=['GET'], endpoint='user_get')
+@app_response
+def user_get(user_id):
+        user_token = request.headers.get('user_token')
+        user_id = int(user_id)
+
+        this_user = user_auth(user_token)
+        user = user_select(id=user_id)
+
+        if user:
+            return {'user': {
+                'id': user.id,
+                'user_name': user.user_name,
+                'meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
+            }}, {}, 200
+
+        else:
+            return {}, {'user_id': ['user_id not found']}, 404
+
+
+
+
+
+
+
+
+
 
 
 
