@@ -80,6 +80,34 @@ def user_delete(user):
     return True
 
 
+def user_auth(user_token):
+    try:
+        token_payload = User.get_token_payload(user_token)
+        token_signature = token_payload['token_signature']
+        user_id = token_payload['user_id']
+    except:
+        raise ValidationError({'user_token': ['user_token is incorrect']})
+
+    user = user_select(id=user_id)
+    if not user:
+        raise ValidationError({'user_token': ['token_token not found']})
+
+    elif user.deleted > 0:
+        raise ValidationError({'user_token': ['user_token deleted']})
+        
+    elif user.token_signature != token_signature:
+        raise ValidationError({'user_token': ['user_token is invalid']})
+
+    elif user.token_expires < time.time():
+        raise ValidationError({'user_token': ['user_token expired']})
+
+    else:
+        return user
+
+
+
+
+
 
 
 
