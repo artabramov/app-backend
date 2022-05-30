@@ -14,13 +14,11 @@ def qrcode_create(totp_key, user_login):
     # TODO: make exception in app_response
     qr = qrcode.make(app.config['QRCODES_REF'] % (totp_key, user_login))
     qr.save(app.config['QRCODES_PATH'] % totp_key)
-    return True
 
 
 def qrcode_remove(totp_key):
     if os.path.isfile(app.config['QRCODES_PATH'] % totp_key):
         os.remove(app.config['QRCODES_PATH'] % totp_key)
-    return True
 
 
 def user_exists(**kwargs):

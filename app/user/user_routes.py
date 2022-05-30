@@ -155,12 +155,36 @@ def user_put(user_id):
             'key_1': 'value 111', 
             'key_2': 'None', 
             'key_4': 'value 44'}
+            
         user_update(user, **user_data)
-
         return {}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id update forbidden'], }, 403
+
+
+@app.route('/user/<user_id>', methods=['DELETE'], endpoint='user_del')
+@app_response
+def user_del(user_id):
+    user_token = request.headers.get('user_token')
+    user_id = int(user_id)
+
+    this_user = user_auth(user_token)
+    user = user_select(id=user_id)
+
+    if not user:
+        return {}, {'user_id': ['user_id not found']}, 404
+
+    elif this_user.id != user.id and this_user.is_admin:
+        user_delete(user)
+        return {}, {}, 200
+
+    else:
+        return {}, {'user_id': ['user_id delete forbidden'], }, 403
+
+    
+
+
 
 
 
