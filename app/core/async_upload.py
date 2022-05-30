@@ -2,15 +2,16 @@ from marshmallow import ValidationError
 import os
 import uuid
 
-# TODO: make secure filename for DB
+
+# TODO: make secure filename for DB!
 def async_upload(user_file, file_path, allowed_mimes, uploaded_files):
 
     file_data = {
         'file': {
             'file_name': user_file.filename,
+            'file_mime': user_file.mimetype,
             'file_path': '',
             'file_size': '',
-            'file_mime': ''
         },
         'error': ''
     }
@@ -44,9 +45,9 @@ def async_upload(user_file, file_path, allowed_mimes, uploaded_files):
     file_data = {
         'file': {
             'file_name': user_file.filename,
+            'file_mime': user_file.mimetype,
             'file_path': file_name,
             'file_size': os.path.getsize(file_name),
-            'file_mime': user_file.mimetype,
         },
         'error': ''
     }
@@ -54,25 +55,3 @@ def async_upload(user_file, file_path, allowed_mimes, uploaded_files):
     #return file_data
     #return_dict[file_name] = file_data
     uploaded_files.append(file_data)
-
-
-
-def old_file_upload(file, upload_path, allowed_exts=None):
-    filename_src = getattr(file, 'filename', None)
-    if not file or not filename_src:
-        raise ValidationError({'file': ['Where is the file?']})
-
-    file_ext = file.filename.rsplit('.', 1)[1].lower()
-    if allowed_exts and file_ext not in allowed_exts:
-        raise ValidationError({'file': ['Extension is incorrect']})
-
-    filename_dst = os.path.join(upload_path, str(uuid.uuid4()) + '.' + file_ext)
-    file.save(filename_dst)
-    file_data = {
-        'filename_src': filename_src,
-        'filename_dst': filename_dst,
-        'file_size': os.path.getsize(filename_dst),
-        'file_mime': file.mimetype,
-        'file_ext': file_ext,
-    }
-    return file_data

@@ -102,13 +102,15 @@ def pass_get():
         return {}, {'user_pass': ['user_pass is incorrect'], }, 406
 
 
-# user select
 @app.route('/user/<user_id>', methods=['GET'], endpoint='user_get')
 @app_response
 def user_get(user_id):
     """ User select """
-    user_token = request.headers.get('user_token')
+    if not user_id.isnumeric():
+        return {}, {'user_id': ['user_id is incorrect']}, 404
+
     user_id = int(user_id)
+    user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
     user = user_select(id=user_id)
@@ -128,8 +130,11 @@ def user_get(user_id):
 @app_response
 def user_put(user_id):
     """ User update """
-    user_token = request.headers.get('user_token')
+    if not user_id.isnumeric():
+        return {}, {'user_id': ['user_id is incorrect']}, 404
+
     user_id = int(user_id)
+    user_token = request.headers.get('user_token')
     user_name = request.args.get('user_name', None)
     user_role = request.args.get('user_role', None)
     user_pass = request.args.get('user_pass', None)
@@ -155,7 +160,7 @@ def user_put(user_id):
             'key_1': 'value 111', 
             'key_2': 'None', 
             'key_4': 'value 44'}
-            
+
         user_update(user, **user_data)
         return {}, {}, 200
 
@@ -166,8 +171,12 @@ def user_put(user_id):
 @app.route('/user/<user_id>', methods=['DELETE'], endpoint='user_del')
 @app_response
 def user_del(user_id):
-    user_token = request.headers.get('user_token')
+    """ User delete """
+    if not user_id.isnumeric():
+        return {}, {'user_id': ['user_id is incorrect']}, 404
+
     user_id = int(user_id)
+    user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
     user = user_select(id=user_id)
@@ -183,7 +192,28 @@ def user_del(user_id):
         return {}, {'user_id': ['user_id delete forbidden'], }, 403
 
     
+@app.route('/image/', methods=['POST'], endpoint='files_post')
+@app_response
+def files_post():
+    """ Files upload """
+    user_token = request.headers.get('user_token', None)
+    user_files = request.files.getlist('user_files')
 
+    this_user = user_auth(user_token)
+
+    manager = Manager()
+    uploaded_files = manager.list()
+
+    jobs = []
+    for user_file in user_files:
+        job = Process(target=async_upload, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
+        jobs.append(job)
+        job.start()
+    
+    for job in jobs:
+        job.join()
+
+    return {}, {'files': list(uploaded_files), }, 200
 
 
 
@@ -239,7 +269,7 @@ def _user_remove(user_id):
 
 
 # user image upload
-@app.route('/image/', methods=['POST'], endpoint='image_post')
+@app.route('/image/', methods=['POST'], endpoint='_image_post')
 @app_response
 def _image_post():
     user_token = request.headers.get('user_token', None)
@@ -272,145 +302,4 @@ def _image_post():
 
 
 
-
-"""
-# user restore
-@app.route('/pass/', methods=['GET'])
-def pass_get():
-    try:
-        user_login = request.args.get('user_login', '')
-        user_pass = request.args.get('user_pass', '')
-        async_result = user_restore.apply_async(args=[user_login, user_pass], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-# user signin
-@app.route('/token/', methods=['GET'])
-def token_get():
-    try:
-        user_login = request.args.get('user_login', '')
-        user_code = request.args.get('user_code', '')
-        async_result = user_signin.apply_async(args=[user_login, user_code], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-# user signout
-@app.route('/token/', methods=['PUT'])
-def token_put():
-    try:
-        user_token = request.headers.get('user_token')
-        async_result = user_signout.apply_async(args=[user_token], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-# user select
-@app.route('/user/<user_id>', methods=['GET'])
-def user_get(user_id):
-    try:
-        user_token = request.headers.get('user_token')
-        async_result = user_select.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-# user update
-@app.route('/user/<user_id>', methods=['PUT'])
-def user_put(user_id):
-    try:
-        user_id = int(user_id)
-        user_token = request.headers.get('user_token', None)
-        user_name = request.args.get('user_name', None)
-        user_role = request.args.get('user_role', None)
-        user_pass = request.args.get('user_pass', None)
-
-        meta_data = {}
-        for meta_key in USER_META_KEYS:
-            meta_value = request.args.get(meta_key, None)
-            if meta_value:
-                meta_data[meta_key] = meta_value
-
-        async_result = user_update.apply_async(args=[user_token, user_id, user_name, user_role, user_pass, meta_data], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-# user delete
-@app.route('/user/<user_id>', methods=['DELETE'])
-def user_delete(user_id):
-    try:
-        user_id = int(user_id)
-        user_token = request.headers.get('user_token', None)
-
-        async_result = user_remove.apply_async(args=[user_token, user_id], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['USER_IMAGES_EXTENSIONS']
-
-
-# user image upload
-@app.route('/image/', methods=['POST'])
-def image_post():
-    try:
-        user_token = request.headers.get('user_token', None)
-        #user_file = request.files.get('user_file', None)
-        user_file = request.files['user_file']
-        file_bytes = user_file.read()
-
-        file_data = file_upload(user_file, app.config['USER_IMAGES_PATH'], app.config['USER_IMAGES_EXTENSIONS'])
-        file_tmp = file_read(user_file)
-
-        async_result = image_upload.apply_async(args=[user_token, file_data, request.files], task_id=g.request_context.uuid).get(timeout=10)
-        return app_response(*async_result)
-
-    except Exception as e:
-        log.error(e)
-        return app_response({}, {'db': ['Internal Server Error']}, 504)
-
-    except TimeoutError as e:
-        log.error(e)
-        return app_response({}, {'db': ['Gateway Timeout']}, 504)
-
-
-
-
-    user_file = request.files.get('user_file', None)
-
-    if not user_file or not getattr(user_file, 'filename'):
-        return app_response({}, {'user_file': ['Where is the file?']}, 504)
-
-    file_ext = user_file.filename.rsplit('.', 1)[1].lower()
-
-    if file_ext not in app.config['USER_IMAGES_EXTENSIONS']:
-        return app_response({}, {'user_file': ['Extebsion is incorrect']}, 504)
-
-    file_name = os.path.join(app.config['USER_IMAGES_PATH'], str(uuid.uuid4()) + file_ext)
-    user_file.save(file_name)
-    file_size = os.path.getsize(file_name)
-    file_mime = user_file.mimetype
-    return app_response({}, {}, 200)
-"""
 
