@@ -28,7 +28,7 @@ def user_exists(**kwargs):
     return user is not None
 
 
-def user_insert(user_login, user_name, user_pass, user_role, user_meta):
+def user_insert(user_login, user_name, user_pass, user_role, user_meta=None):
     user = User(user_login, user_name, user_pass, user_role)
     db.session.add(user)
     db.session.flush()
@@ -60,12 +60,29 @@ def user_select(**kwargs):
 
 
 def user_update(user, **kwargs):
-    for key in kwargs:
+    for key in [x for x in kwargs if x != 'user_meta']:
         value = kwargs[key]
         setattr(user, key, value)
-
     db.session.add(user)
     db.session.flush()
+
+    if 'user_meta' in kwargs:
+        for meta_key in kwargs['user_meta']:
+            meta_value = kwargs['user_meta'][meta_key]
+
+            user_meta = UserMeta.query.filter_by(user_id=user.id, meta_key=meta_key).first()
+            if user_meta and meta_value:
+                user_meta.meta_value = meta_value
+                user_meta.deleted = 0
+
+            elif user_meta and not meta_value:
+                user_meta.delete()
+
+            else:
+                user_meta = UserMeta(user.id, meta_key, meta_value)
+
+            db.session.add(user_meta)
+        db.session.flush()
 
     cache.set('user.%s' % (user.id), user)
     return user

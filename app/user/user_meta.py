@@ -22,16 +22,6 @@ class UserMeta(BaseModel):
         self.meta_key = meta_key
         self.meta_value = meta_value
 
-    @classmethod
-    def set_meta(cls, user_id, meta_key, meta_value):
-        user_meta = cls.query.filter_by(user_id=user_id, meta_key=meta_key).first()
-        if user_meta:
-            user_meta.meta_value = meta_value
-            user_meta.deleted = 0
-        else:
-            user_meta = cls(user_id, meta_key, meta_value)
-        return user_meta
-
 
 @db.event.listens_for(UserMeta, 'before_insert')
 def before_insert_user_meta(mapper, connect, user_meta):

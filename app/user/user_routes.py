@@ -150,6 +150,8 @@ def user_put(user_id):
         if user_role and this_user.is_admin and this_user.id != user.id:
             user_data['user_role'] = user_role
 
+        user_data['user_meta'] = {'key_1': 'value 111', 'key_2': 'None', 'key_4': 'value 44'}
+
         user_update(user, **user_data)
         return {}, {}, 200
 
