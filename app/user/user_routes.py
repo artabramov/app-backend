@@ -12,10 +12,10 @@ from app.user.user import User
 import time
 
 
-# user register
-@app.route('/user/', methods=['POST'], endpoint='user_register')
+@app.route('/user/', methods=['POST'], endpoint='user_post')
 @app_response
-def user_register():
+def user_post():
+    """ User register """
     user_login = request.args.get('user_login', '')
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
@@ -35,10 +35,10 @@ def user_register():
     }, {}, 201
 
 
-# user signin
-@app.route('/token/', methods=['GET'], endpoint='user_signin')
+@app.route('/token/', methods=['GET'], endpoint='token_get')
 @app_response
-def user_signin():
+def token_get():
+    """ User signin """
     user_login = request.args.get('user_login', '')
     user_totp = request.args.get('user_totp', '')
 
@@ -60,10 +60,10 @@ def user_signin():
         return {}, {'user_totp': ['user_totp is incorrect'], }, 404
 
 
-# user signout
-@app.route('/token/', methods=['PUT'], endpoint='user_signout')
+@app.route('/token/', methods=['PUT'], endpoint='token_put')
 @app_response
-def user_signout():
+def token_put():
+    """ User signout """
     user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
@@ -106,27 +106,28 @@ def pass_get():
 @app.route('/user/<user_id>', methods=['GET'], endpoint='user_get')
 @app_response
 def user_get(user_id):
-        user_token = request.headers.get('user_token')
-        user_id = int(user_id)
+    """ User select """
+    user_token = request.headers.get('user_token')
+    user_id = int(user_id)
 
-        this_user = user_auth(user_token)
-        user = user_select(id=user_id)
+    this_user = user_auth(user_token)
+    user = user_select(id=user_id)
 
-        if user:
-            return {'user': {
-                'id': user.id,
-                'user_name': user.user_name,
-                'meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
-            }}, {}, 200
+    if user:
+        return {'user': {
+            'id': user.id,
+            'user_name': user.user_name,
+            'meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
+        }}, {}, 200
 
-        else:
-            return {}, {'user_id': ['user_id not found']}, 404
+    else:
+        return {}, {'user_id': ['user_id not found']}, 404
 
 
-# user update
 @app.route('/user/<user_id>', methods=['PUT'], endpoint='user_put')
 @app_response
 def user_put(user_id):
+    """ User update """
     user_token = request.headers.get('user_token')
     user_id = int(user_id)
     user_name = request.args.get('user_name', None)
@@ -150,23 +151,16 @@ def user_put(user_id):
         if user_role and this_user.is_admin and this_user.id != user.id:
             user_data['user_role'] = user_role
 
-        user_data['user_meta'] = {'key_1': 'value 111', 'key_2': 'None', 'key_4': 'value 44'}
-
+        user_data['user_meta'] = {
+            'key_1': 'value 111', 
+            'key_2': 'None', 
+            'key_4': 'value 44'}
         user_update(user, **user_data)
+
         return {}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id update forbidden'], }, 403
-
-    """
-    props_data = {}
-    if request.args.get('key_1', False): 
-        props_data['key_1'] = request.args.get('key_1')
-    if request.args.get('key_2', False): 
-        props_data['key_2'] = request.args.get('key_2')
-    """
-
-    #return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, props_data)
 
 
 
