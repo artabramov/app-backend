@@ -50,7 +50,7 @@ def token_get():
         return {}, {'user_totp': ['user_totp attempts are over'], }, 406
 
     elif user_totp == this_user.user_totp:
-        qrcode_remove(this_user.user_totp)
+        qrcode_remove(this_user.totp_key)
         user_update(this_user, totp_attempts=0)
         return {'user_token': this_user.user_token}, {}, 200
 
@@ -145,7 +145,7 @@ def user_put(user_id):
     if not user:
         return {}, {'user_id': ['user_id not found']}, 404
 
-    elif this_user.id == user.id or this_user.is_admin:
+    elif this_user.id == user.id or this_user.can_admin:
         user_data = {}
         if user_name:
             user_data['user_name'] = user_name
@@ -153,7 +153,7 @@ def user_put(user_id):
         if user_pass:
             user_data['user_pass'] = user_pass
 
-        if user_role and this_user.is_admin and this_user.id != user.id:
+        if user_role and this_user.can_admin and this_user.id != user.id:
             user_data['user_role'] = user_role
 
         user_data['user_meta'] = {
@@ -184,7 +184,7 @@ def user_del(user_id):
     if not user:
         return {}, {'user_id': ['user_id not found']}, 404
 
-    elif this_user.id != user.id and this_user.is_admin:
+    elif this_user.id != user.id and this_user.can_admin:
         user_delete(user)
         return {}, {}, 200
 

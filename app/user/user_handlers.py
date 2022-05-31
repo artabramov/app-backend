@@ -253,7 +253,7 @@ def _user_update(user_token, user_id, user_name=None, user_role=None, user_pass=
     if user_id == authed_user.id:
         user = authed_user
 
-    elif authed_user.is_admin:
+    elif authed_user.can_admin:
         user = cache.get('user.%s' % (user_id))
         if not user:
             user = User.query.filter_by(id=user_id, deleted=0).first()
@@ -274,7 +274,7 @@ def _user_update(user_token, user_id, user_name=None, user_role=None, user_pass=
     if user_pass:
         user_data['user_pass'] = user_pass
 
-    if user_role and authed_user.is_admin and authed_user.id != user_id:
+    if user_role and authed_user.can_admin and authed_user.id != user_id:
         user_data['user_role'] = user_role
 
     for k in user_data:
@@ -296,7 +296,7 @@ def _user_update(user_token, user_id, user_name=None, user_role=None, user_pass=
 @app_response
 def _user_delete(user_token, user_id):
     authed_user = user_auth(user_token)
-    if user_id == authed_user.id or not authed_user.is_admin:
+    if user_id == authed_user.id or not authed_user.can_admin:
         return {}, {'user_id': ['Forbidden'], }, 403
 
     else:

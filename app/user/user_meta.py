@@ -1,5 +1,5 @@
 from app import db
-from app.core.base_model import BaseModel
+from app.core.secondary_model import SecondaryModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
@@ -10,7 +10,7 @@ class UserMetaSchema(Schema):
     meta_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 
-class UserMeta(BaseModel):
+class UserMeta(SecondaryModel):
     __tablename__ = 'users_meta'
     __table_args__ = (db.UniqueConstraint('user_id', 'meta_key', name='users_meta_ukey'),)
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
@@ -36,7 +36,7 @@ def before_insert_user_meta(mapper, connect, user_meta):
 
 
 @db.event.listens_for(UserMeta, 'before_update')
-def before_update_user(mapper, connect, user_meta):
+def before_update_user_meta(mapper, connect, user_meta):
     UserMetaSchema().load({
         'user_id': user_meta.user_id,
         'meta_key': user_meta.meta_key,

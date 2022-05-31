@@ -1,6 +1,6 @@
 from enum import Enum
 from app import db
-from app.core.base_model import BaseModel
+from app.core.primary_model import PrimaryModel
 from app.core.meta_mixin import MetaMixin
 import random, string
 import json
@@ -38,7 +38,7 @@ class UserSchema(Schema):
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(BaseModel, MetaMixin):
+class User(PrimaryModel, MetaMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
@@ -123,15 +123,15 @@ class User(BaseModel, MetaMixin):
             raise ValidationError({'user_token': ['Incorrect.']})
 
     @property
-    def is_admin(self):
+    def can_admin(self):
         return self.user_role == UserRole.admin
 
     @property
-    def is_editor(self):
+    def can_edit(self):
         return self.user_role in [UserRole.admin, UserRole.editor]
 
     @property
-    def is_reader(self):
+    def can_read(self):
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
 
 
