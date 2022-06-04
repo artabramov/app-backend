@@ -72,14 +72,15 @@ def user_update(user, **kwargs):
             if user_meta and meta_value:
                 user_meta.meta_value = meta_value
                 user_meta.deleted = 0
+                db.session.add(user_meta)
 
             elif user_meta and not meta_value:
-                user_meta.delete()
+                db.session.delete(user_meta)
 
             else:
                 user_meta = UserMeta(user.id, meta_key, meta_value)
+                db.session.add(user_meta)
 
-            db.session.add(user_meta)
         db.session.flush()
 
     cache.set('user.%s' % (user.id), user)
