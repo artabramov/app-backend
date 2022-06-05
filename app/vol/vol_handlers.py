@@ -39,7 +39,7 @@ def vol_update(vol, **kwargs):
             elif vol_meta and not meta_value:
                 db.session.delete(vol_meta)
 
-            else:
+            elif not vol_meta and meta_value:
                 vol_meta = VolMeta(vol.id, meta_key, meta_value)
                 db.session.add(vol_meta)
 

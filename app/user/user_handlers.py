@@ -77,7 +77,7 @@ def user_update(user, **kwargs):
             elif user_meta and not meta_value:
                 db.session.delete(user_meta)
 
-            else:
+            elif not user_meta and meta_value:
                 user_meta = UserMeta(user.id, meta_key, meta_value)
                 db.session.add(user_meta)
 
