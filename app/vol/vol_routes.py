@@ -2,13 +2,13 @@ from flask import request
 from app import app
 from app.core.app_response import app_response
 from app.user.user_handlers import user_auth
-from app.vol.vol_handlers import vol_insert, vol_update, vol_select
+from app.vol.vol_handlers import vol_insert, vol_update, vol_select, vol_delete, vol_search
 
 
 @app.route('/vol/', methods=['POST'], endpoint='vol_post')
 @app_response
 def vol_post():
-    """ Vol insert """
+    """ Volume insert """
     user_token = request.headers.get('user_token')
     vol_title = request.args.get('vol_title', None)
 
@@ -33,7 +33,7 @@ def vol_post():
 @app.route('/vol/<vol_id>', methods=['PUT'], endpoint='vol_put')
 @app_response
 def vol_put(vol_id):
-    """ Vol update """
+    """ Volume update """
     if not vol_id.isnumeric():
         return {}, {'vol_id': ['vol_id is incorrect']}, 404
 
@@ -63,3 +63,76 @@ def vol_put(vol_id):
 
     else:
         return {}, {'vol_id': ['vol_id update forbidden'], }, 403
+
+
+@app.route('/vol/<vol_id>', methods=['GET'], endpoint='vol_get')
+@app_response
+def vol_get(vol_id):
+    """ Volume select """
+    if not vol_id.isnumeric():
+        return {}, {'vol_id': ['vol_id is incorrect']}, 404
+
+    vol_id = int(vol_id)
+    user_token = request.headers.get('user_token')
+
+    this_user = user_auth(user_token)
+    vol = vol_select(id=vol_id)
+
+    if vol:
+        return {'vol': {
+            'id': vol.id,
+            'is_deleted': vol.is_deleted,
+            'vol_title': vol.vol_title,
+            'meta': {meta.meta_key: meta.meta_value for meta in vol.meta}    
+        }}, {}, 200
+
+    else:
+        return {}, {'vol_id': ['vol_id not found']}, 404
+
+
+@app.route('/vol/<vol_id>', methods=['DELETE'], endpoint='vol_del')
+@app_response
+def vol_del(vol_id):
+    """ Volume delete """
+    if not vol_id.isnumeric():
+        return {}, {'vol_id': ['vol_id is incorrect']}, 404
+
+    vol_id = int(vol_id)
+    user_token = request.headers.get('user_token')
+
+    this_user = user_auth(user_token)
+    vol = vol_select(id=vol_id)
+
+    if not vol:
+        return {}, {'vol_id': ['vol_id not found']}, 404
+
+    elif this_user.can_edit:
+        vol_delete(vol)
+        return {}, {}, 200
+
+    else:
+        return {}, {'vol_id': ['vol_id delete forbidden'], }, 403
+
+
+@app.route('/vols/<offset>', methods=['GET'], endpoint='vol_list')
+@app_response
+def vol_list(offset):
+    """ Volumes list """
+
+    where = {
+        'user_id': 2,
+        'vol_title': ['VOL 4', 'VOL 3'],
+    }
+
+    extra = {
+        'order_by': 'id',
+        'order': 'desc',
+        'offset': 0,
+        'limit': 5
+    }
+
+    vols = vol_search(where)
+
+    return {}, {}, 200
+
+

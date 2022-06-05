@@ -1,6 +1,9 @@
 from app.vol.vol import Vol
 from app.vol.vol_meta import VolMeta
 from app import db, cache
+from sqlalchemy import asc, desc
+
+from app.core.primary_model import SELECT_LIMIT
 
 
 def vol_insert(user_id, vol_title, vol_meta=None):
@@ -62,3 +65,21 @@ def vol_select(**kwargs):
         cache.set('vol.%s' % (vol.id), vol)
 
     return vol
+
+
+def vol_delete(vol):
+    vol.delete()
+    db.session.add(vol)
+    db.session.flush()
+
+    cache.delete('vol.%s' % (vol.id))
+    return True
+
+
+def vol_search(where=None, extra=None):
+    vols = Vol.query.filter(*[
+        getattr(Vol, k).in_(v) if isinstance(v, list) else getattr(Vol, k) == v
+        for k, v in where.items()
+    ]).order_by(asc('id')).limit(2).offset(0).all()
+
+    return vols

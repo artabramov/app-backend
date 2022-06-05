@@ -118,6 +118,7 @@ def user_get(user_id):
     if user:
         return {'user': {
             'id': user.id,
+            'is_deleted': user.is_deleted,
             'user_name': user.user_name,
             'meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
         }}, {}, 200
@@ -191,7 +192,7 @@ def user_del(user_id):
     else:
         return {}, {'user_id': ['user_id delete forbidden'], }, 403
 
-    
+
 @app.route('/image/', methods=['POST'], endpoint='files_post')
 @app_response
 def files_post():
