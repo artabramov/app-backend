@@ -18,12 +18,16 @@ def vol_post():
         return {}, {'user_token': ['user_token have not permissions for vol edit'], }, 406
 
     vol_meta = {
-        'key_1': 'value 1',
-        'key_2': 'value 2',
-        'key_3': 'value 3',
+        'key_1': 'value 1!!!',
+        'key_2': 'value 2!!!',
+        'key_3': 'value 3!!!',
     }
 
-    vol = vol_insert(this_user.id, vol_title, vol_meta)
+    #vol = vol_insert(this_user.id, vol_title, vol_meta)
+    from app.core.primary_handlers import insert
+    from app.vol.vol import Vol
+    from app.vol.vol_meta import VolMeta
+    vol = insert(Vol, user_id=this_user.id, vol_title=vol_title, meta=vol_meta)
 
     return {
         'vol': str(vol)
@@ -42,7 +46,10 @@ def vol_put(vol_id):
     vol_title = request.args.get('vol_title', None)
 
     this_user = user_auth(user_token)
-    vol = vol_select(id=vol_id)
+
+    from app.core.primary_handlers import select
+    from app.vol.vol import Vol
+    vol = select(Vol, id=vol_id)
 
     if not vol:
         return {}, {'vol_id': ['vol_id not found']}, 404
@@ -52,13 +59,17 @@ def vol_put(vol_id):
         if vol_title:
             vol_data['vol_title'] = vol_title
 
-        vol_data['vol_meta'] = {
-            'key_1': 'value 222', 
-            'key_2': 'None2',
+        vol_data['meta'] = {
+            'key_1': 'value 222!', 
+            'key_2': 'None2!',
             'key_3': None,
-            'key_4': None}
+            'key_4': '2'}
 
-        vol_update(vol, **vol_data)
+        #vol_update(vol, **vol_data)
+        
+        from app.core.primary_handlers import update
+        vol = update(vol, **vol_data)
+        
         return {}, {}, 200
 
     else:
@@ -76,7 +87,11 @@ def vol_get(vol_id):
     user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
-    vol = vol_select(id=vol_id)
+    #vol = vol_select(id=vol_id)
+
+    from app.core.primary_handlers import select
+    from app.vol.vol import Vol
+    vol = select(Vol, id=vol_id)
 
     if vol:
         return {'vol': {
@@ -107,7 +122,8 @@ def vol_del(vol_id):
         return {}, {'vol_id': ['vol_id not found']}, 404
 
     elif this_user.can_edit:
-        vol_delete(vol)
+        from app.core.primary_handlers import delete
+        delete(vol)
         return {}, {}, 200
 
     else:
