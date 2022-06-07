@@ -75,3 +75,28 @@ def delete(obj):
 
     cache.delete('%s.%s' % (cls.__tablename__, obj.id))
     return True
+
+
+def search(cls, where=None, extra=None):
+    query = cls.query.filter(*[
+        getattr(cls, k).in_(v) if isinstance(v, list) else getattr(cls, k) == v
+        for k, v in where.items()
+    ])
+
+    if 'order_by' in extra and extra['order'] == 'asc':
+        query = query.order_by(asc(extra['order_by']))
+
+    elif 'order_by' in extra and extra['order'] == 'desc':
+        query = query.order_by(desc(extra['order_by']))
+
+    if 'limit' in extra:
+        query = query.limit(extra['limit'])
+
+    if 'offset' in extra:
+        query = query.offset(extra['offset'])
+    
+    objs = query.all()
+    for obj in objs:
+        cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
+
+    return objs

@@ -136,6 +136,7 @@ def vol_list(offset):
     """ Volumes list """
 
     where = {
+        'deleted': 0,
         'user_id': 2,
         'vol_title': ['VOL 4', 'VOL 3'],
     }
@@ -144,10 +145,14 @@ def vol_list(offset):
         'order_by': 'id',
         'order': 'desc',
         'offset': 0,
-        'limit': 5
+        'limit': 3
     }
 
-    vols = vol_search(where)
+    #vols = vol_search(where)
+    
+    from app.core.primary_handlers import search
+    from app.vol.vol import Vol
+    vols = search(Vol, where, extra)
 
     return {}, {}, 200
 
