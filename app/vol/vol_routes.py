@@ -2,7 +2,8 @@ from flask import request
 from app import app
 from app.core.app_response import app_response
 from app.user.user_handlers import user_auth
-from app.vol.vol_handlers import vol_insert, vol_update, vol_select, vol_delete, vol_search
+from app.core.primary_handlers import insert, update, delete, select, search
+from app.vol.vol import Vol
 
 
 @app.route('/vol/', methods=['POST'], endpoint='vol_post')
@@ -23,10 +24,6 @@ def vol_post():
         'key_3': 'value 3!!!',
     }
 
-    #vol = vol_insert(this_user.id, vol_title, vol_meta)
-    from app.core.primary_handlers import insert
-    from app.vol.vol import Vol
-    from app.vol.vol_meta import VolMeta
     vol = insert(Vol, user_id=this_user.id, vol_title=vol_title, meta=vol_meta)
 
     return {
@@ -46,9 +43,6 @@ def vol_put(vol_id):
     vol_title = request.args.get('vol_title', None)
 
     this_user = user_auth(user_token)
-
-    from app.core.primary_handlers import select
-    from app.vol.vol import Vol
     vol = select(Vol, id=vol_id)
 
     if not vol:
@@ -60,14 +54,11 @@ def vol_put(vol_id):
             vol_data['vol_title'] = vol_title
 
         vol_data['meta'] = {
-            'key_1': 'value 222!', 
-            'key_2': 'None2!',
+            'key_1': '444444444444444444444444444444444', 
+            'key_2': '222-222-333',
             'key_3': None,
-            'key_4': '2'}
+            'key_4': '444'}
 
-        #vol_update(vol, **vol_data)
-        
-        from app.core.primary_handlers import update
         vol = update(vol, **vol_data)
         
         return {}, {}, 200
@@ -87,10 +78,6 @@ def vol_get(vol_id):
     user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
-    #vol = vol_select(id=vol_id)
-
-    from app.core.primary_handlers import select
-    from app.vol.vol import Vol
     vol = select(Vol, id=vol_id)
 
     if vol:
@@ -116,13 +103,12 @@ def vol_del(vol_id):
     user_token = request.headers.get('user_token')
 
     this_user = user_auth(user_token)
-    vol = vol_select(id=vol_id)
+    vol = select(Vol, id=vol_id)
 
     if not vol:
         return {}, {'vol_id': ['vol_id not found']}, 404
 
     elif this_user.can_edit:
-        from app.core.primary_handlers import delete
         delete(vol)
         return {}, {}, 200
 
@@ -148,12 +134,6 @@ def vol_list(offset):
         'limit': 3
     }
 
-    #vols = vol_search(where)
-    
-    from app.core.primary_handlers import search
-    from app.vol.vol import Vol
     vols = search(Vol, where, extra)
 
     return {}, {}, 200
-
-

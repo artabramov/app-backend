@@ -7,7 +7,7 @@ from app.core.app_response import app_response
 from app.core.async_upload import async_upload
 from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete, user_auth
 from app.user.user_handlers import qrcode_create, qrcode_remove
-from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT
+from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
 
@@ -51,7 +51,8 @@ def token_get():
 
     elif user_totp == this_user.user_totp:
         qrcode_remove(this_user.totp_key)
-        user_update(this_user, totp_attempts=0)
+        token_expires = time.time() + TOKEN_EXPIRATION_TIME
+        user_update(this_user, totp_attempts=0, token_expires=token_expires)
         return {'user_token': this_user.user_token}, {}, 200
 
     else:
