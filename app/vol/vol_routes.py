@@ -10,8 +10,9 @@ from app.vol.vol import Vol
 @app_response
 def vol_post():
     """ Volume insert """
-    user_token = request.headers.get('user_token')
+    user_token = request.headers.get('user_token', None)
     vol_title = request.args.get('vol_title', None)
+    vol_currency = request.args.get('vol_currency', None)
 
     this_user = user_auth(user_token)
 
@@ -24,7 +25,7 @@ def vol_post():
         'key_3': 'value 3!!!',
     }
 
-    vol = insert(Vol, user_id=this_user.id, vol_title=vol_title, meta=vol_meta)
+    vol = insert(Vol, user_id=this_user.id, vol_title=vol_title, vol_currency=vol_currency, meta=vol_meta)
 
     return {
         'vol': str(vol)
@@ -41,6 +42,7 @@ def vol_put(vol_id):
     vol_id = int(vol_id)
     user_token = request.headers.get('user_token')
     vol_title = request.args.get('vol_title', None)
+    vol_currency = request.args.get('vol_currency', None)
 
     this_user = user_auth(user_token)
     vol = select(Vol, id=vol_id)
@@ -52,6 +54,8 @@ def vol_put(vol_id):
         vol_data = {}
         if vol_title:
             vol_data['vol_title'] = vol_title
+        if vol_currency:
+            vol_data['vol_currency'] = vol_currency
 
         vol_data['meta'] = {
             'key_1': '444444444444444444444444444444444', 
