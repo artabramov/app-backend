@@ -20,7 +20,7 @@ cache.init_app(app)
 def before_first_request():
     from app.user import user, user_meta
     from app.vol import vol, vol_meta
-    from app.post import post, post_meta
+    from app.post import post, post_meta, post_tag
     db.create_all()
 
 

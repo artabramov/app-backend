@@ -14,6 +14,12 @@ def insert(cls, **kwargs):
             db.session.add(meta)
         db.session.flush()
 
+    if 'tags' in kwargs:
+        for tag_value in kwargs['tags']:
+            tag = cls.tags.property.mapper.class_(obj.id, tag_value)
+            db.session.add(tag)
+        db.session.flush()
+
     cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
     return obj
 

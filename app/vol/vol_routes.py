@@ -1,23 +1,21 @@
-from flask import request
+from flask import g, request
 from app import app
 from app.core.app_response import app_response
-from app.user.user_handlers import user_auth
 from app.core.primary_handlers import insert, update, delete, select, search
 from app.vol.vol import Vol
+from app.core.user_auth import user_auth
 
 
 @app.route('/vol/', methods=['POST'], endpoint='vol_post')
 @app_response
+@user_auth
 def vol_post():
     """ Volume insert """
-    user_token = request.headers.get('user_token', None)
-    vol_title = request.args.get('vol_title', None)
-    vol_currency = request.args.get('vol_currency', None)
-
-    this_user = user_auth(user_token)
-
-    if not this_user.can_edit:
+    if not g.user.can_edit:
         return {}, {'user_token': ['user_token have not permissions for vol edit'], }, 406
+
+    vol_title = request.args.get('vol_title')
+    vol_currency = request.args.get('vol_currency')
 
     vol_meta = {
         'key_1': 'value 1!!!',
@@ -25,65 +23,52 @@ def vol_post():
         'key_3': 'value 3!!!',
     }
 
-    vol = insert(Vol, user_id=this_user.id, vol_title=vol_title, vol_currency=vol_currency, meta=vol_meta)
-
+    vol = insert(Vol, user_id=g.user.id, vol_title=vol_title, vol_currency=vol_currency, meta=vol_meta)
     return {
         'vol': str(vol)
     }, {}, 201
 
 
-@app.route('/vol/<vol_id>', methods=['PUT'], endpoint='vol_put')
+@app.route('/vol/<int:vol_id>', methods=['PUT'], endpoint='vol_put')
 @app_response
+@user_auth
 def vol_put(vol_id):
     """ Volume update """
-    if not vol_id.isnumeric():
-        return {}, {'vol_id': ['vol_id is incorrect']}, 404
+    if g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
 
-    vol_id = int(vol_id)
-    user_token = request.headers.get('user_token')
-    vol_title = request.args.get('vol_title', None)
-    vol_currency = request.args.get('vol_currency', None)
+    vol_title = request.args.get('vol_title')
+    vol_currency = request.args.get('vol_currency')
 
-    this_user = user_auth(user_token)
     vol = select(Vol, id=vol_id)
-
     if not vol:
         return {}, {'vol_id': ['vol_id not found']}, 404
 
-    elif this_user.can_edit:
-        vol_data = {}
-        if vol_title:
-            vol_data['vol_title'] = vol_title
-        if vol_currency:
-            vol_data['vol_currency'] = vol_currency
+    vol_data = {}
+    if vol_title:
+        vol_data['vol_title'] = vol_title
+    if vol_currency:
+        vol_data['vol_currency'] = vol_currency
 
-        vol_data['meta'] = {
-            'key_1': '444444444444444444444444444444444', 
-            'key_2': '222-222-333',
-            'key_3': None,
-            'key_4': '444'}
+    vol_data['meta'] = {
+        'key_1': '444444444444444444444444444444444', 
+        'key_2': '222-222-333',
+        'key_3': None,
+        'key_4': '444'}
 
-        vol = update(vol, **vol_data)
-        
-        return {}, {}, 200
-
-    else:
-        return {}, {'vol_id': ['vol_id update forbidden'], }, 403
+    vol = update(vol, **vol_data)
+    return {}, {}, 200
 
 
-@app.route('/vol/<vol_id>', methods=['GET'], endpoint='vol_get')
+@app.route('/vol/<int:vol_id>', methods=['GET'], endpoint='vol_get')
 @app_response
+@user_auth
 def vol_get(vol_id):
     """ Volume select """
-    if not vol_id.isnumeric():
-        return {}, {'vol_id': ['vol_id is incorrect']}, 404
+    if g.user.can_read:
+        return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
-    vol_id = int(vol_id)
-    user_token = request.headers.get('user_token')
-
-    this_user = user_auth(user_token)
     vol = select(Vol, id=vol_id)
-
     if vol:
         return {'vol': {
             'id': vol.id,
@@ -96,34 +81,29 @@ def vol_get(vol_id):
         return {}, {'vol_id': ['vol_id not found']}, 404
 
 
-@app.route('/vol/<vol_id>', methods=['DELETE'], endpoint='vol_del')
+@app.route('/vol/<int:vol_id>', methods=['DELETE'], endpoint='vol_del')
 @app_response
+@user_auth
 def vol_del(vol_id):
     """ Volume delete """
-    if not vol_id.isnumeric():
-        return {}, {'vol_id': ['vol_id is incorrect']}, 404
+    if g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
 
-    vol_id = int(vol_id)
-    user_token = request.headers.get('user_token')
-
-    this_user = user_auth(user_token)
     vol = select(Vol, id=vol_id)
-
     if not vol:
         return {}, {'vol_id': ['vol_id not found']}, 404
 
-    elif this_user.can_edit:
-        delete(vol)
-        return {}, {}, 200
-
-    else:
-        return {}, {'vol_id': ['vol_id delete forbidden'], }, 403
+    delete(vol)
+    return {}, {}, 200
 
 
-@app.route('/vols/<offset>', methods=['GET'], endpoint='vol_list')
+@app.route('/vols/<int:offset>', methods=['GET'], endpoint='vol_list')
 @app_response
+@user_auth
 def vol_list(offset):
     """ Volumes list """
+    if g.user.can_read:
+        return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
     where = {
         'deleted': 0,
@@ -131,13 +111,14 @@ def vol_list(offset):
         'vol_title': ['VOL 4', 'VOL 3'],
     }
 
+    results_on_page = 2
+
     extra = {
         'order_by': 'id',
         'order': 'desc',
-        'offset': 0,
+        'offset': offset * results_on_page,
         'limit': 3
     }
 
     vols = search(Vol, where, extra)
-
     return {}, {}, 200
