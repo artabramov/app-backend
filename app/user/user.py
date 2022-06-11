@@ -1,6 +1,6 @@
 from enum import Enum
 from app import db
-from app.core.primary_model import BasicModel
+from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 import random, string
 import json

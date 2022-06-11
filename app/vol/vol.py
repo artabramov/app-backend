@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import BasicModel
+from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 from marshmallow_enum import EnumField

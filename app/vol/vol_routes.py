@@ -1,7 +1,7 @@
 from flask import g, request
 from app import app
 from app.core.app_response import app_response
-from app.core.primary_handlers import insert, update, delete, select, search
+from app.core.basic_handlers import insert, update, delete, select, search
 from app.vol.vol import Vol
 from app.core.user_auth import user_auth
 

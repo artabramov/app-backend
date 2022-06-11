@@ -1,7 +1,7 @@
 import flask
 from flask import request
 from marshmallow import ValidationError
-from app.core.primary_handlers import select
+from app.core.basic_handlers import select
 from app.user.user import User
 import time
 

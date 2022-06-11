@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import BasicModel
+from app.core.basic_model import BasicModel
 from marshmallow import Schema, fields, validate, ValidationError
 
 
