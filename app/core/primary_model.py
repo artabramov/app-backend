@@ -1,11 +1,11 @@
 from app import db
-from app.core.secondary_model import SecondaryModel
+from app.core.secondary_model import MetaModel
 import time
 
 SELECT_LIMIT = 5
 
 
-class PrimaryModel(SecondaryModel):
+class PrimaryModel(MetaModel):
     __abstract__ = True
     deleted = db.Column(db.Integer(), nullable=False, default=0, index=True)
 

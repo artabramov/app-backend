@@ -1,5 +1,5 @@
 from app import db
-from app.core.secondary_model import SecondaryModel
+from app.core.secondary_model import MetaModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
@@ -10,7 +10,7 @@ class PostMetaSchema(Schema):
     meta_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 
-class PostMeta(SecondaryModel):
+class PostMeta(MetaModel):
     __tablename__ = 'posts_meta'
     __table_args__ = (db.UniqueConstraint('post_id', 'meta_key', name='posts_meta_ukey'),)
     post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
