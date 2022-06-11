@@ -1,4 +1,4 @@
-from app import db, cache
+from app import db
 import time
 
 
