@@ -5,7 +5,7 @@ import time
 SELECT_LIMIT = 5
 
 
-class PrimaryModel(MetaModel):
+class BasicModel(MetaModel):
     __abstract__ = True
     deleted = db.Column(db.Integer(), nullable=False, default=0, index=True)
 

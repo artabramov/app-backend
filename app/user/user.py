@@ -1,6 +1,6 @@
 from enum import Enum
 from app import db
-from app.core.primary_model import PrimaryModel
+from app.core.primary_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 import random, string
 import json
@@ -38,7 +38,7 @@ class UserSchema(Schema):
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(PrimaryModel, MetaMixin):
+class User(BasicModel, MetaMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)

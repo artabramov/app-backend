@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import PrimaryModel
+from app.core.primary_model import BasicModel
 from marshmallow import Schema, fields, validate
 
 
@@ -10,7 +10,7 @@ class CommentSchema(Schema):
     comment_sum = fields.Decimal()
 
 
-class Comment(PrimaryModel):
+class Comment(BasicModel):
     __tablename__ = 'comments'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)

@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import PrimaryModel
+from app.core.primary_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 from marshmallow_enum import EnumField
@@ -25,7 +25,7 @@ class VolSchema(Schema):
     posts_count = fields.Int(validate=validate.Range(min=0))
 
 
-class Vol(PrimaryModel, MetaMixin):
+class Vol(BasicModel, MetaMixin):
     __tablename__ = 'vols'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     vol_title = db.Column(db.String(80), nullable=False)

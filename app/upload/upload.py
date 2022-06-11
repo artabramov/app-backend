@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import PrimaryModel
+from app.core.primary_model import BasicModel
 from marshmallow import Schema, fields, validate, ValidationError
 
 
@@ -12,7 +12,7 @@ class UploadSchema(Schema):
     upload_size = fields.Int(validate=validate.Range(min=1))
 
 
-class Upload(PrimaryModel):
+class Upload(BasicModel):
     __tablename__ = 'uploads'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     comment_id = db.Column(db.BigInteger, db.ForeignKey('comments.id'), index=True)

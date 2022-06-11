@@ -1,5 +1,5 @@
 from app import db
-from app.core.primary_model import PrimaryModel
+from app.core.primary_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 
@@ -12,7 +12,7 @@ class PostSchema(Schema):
     comments_count = fields.Int(validate=validate.Range(min=0))
 
 
-class Post(PrimaryModel, MetaMixin):
+class Post(BasicModel, MetaMixin):
     __tablename__ = 'posts'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     vol_id = db.Column(db.BigInteger, db.ForeignKey('vols.id'), index=True)
