@@ -1,5 +1,5 @@
 from app import db
-from app.core.secondary_model import MetaModel
+from app.core.meta_model import MetaModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
