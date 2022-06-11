@@ -4,7 +4,7 @@ from app.user import user_handlers
 from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
-from app.core.async_upload import async_upload
+from app.core.upload_file import upload_file
 from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete, user_auth
 from app.user.user_handlers import qrcode_create, qrcode_remove
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
@@ -208,7 +208,7 @@ def files_post():
 
     jobs = []
     for user_file in user_files:
-        job = Process(target=async_upload, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
+        job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
         jobs.append(job)
         job.start()
     
@@ -289,7 +289,7 @@ def _image_post():
 
     jobs = []
     for user_file in user_files:
-        job = Process(target=async_upload, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
+        job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
         jobs.append(job)
         job.start()
     

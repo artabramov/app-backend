@@ -6,9 +6,9 @@ from marshmallow import Schema, fields, validate, ValidationError
 class UploadSchema(Schema):
     user_id = fields.Int(validate=validate.Range(min=1))
     comment_id = fields.Int(validate=validate.Range(min=1))
-    upload_name = db.Column(db.String(255), nullable=False, index=True)
-    upload_file = db.Column(db.String(255), nullable=False, index=True)
-    upload_mime = db.Column(db.String(255), nullable=False, index=True)
+    upload_name = fields.Str(validate=validate.Length(min=1, max=255))
+    upload_file = fields.Str(validate=validate.Length(min=1, max=255))
+    upload_mime = fields.Str(validate=validate.Length(min=1, max=255))
     upload_size = fields.Int(validate=validate.Range(min=1))
 
 

@@ -19,7 +19,7 @@ def user_auth(func):
 
         user = select(User, id=user_id)
         if not user:
-            raise ValidationError({'user_token': ['token_token not found']})
+            raise ValidationError({'user_token': ['user_token not found']})
 
         elif user.deleted > 0:
             raise ValidationError({'user_token': ['user_token deleted']})
