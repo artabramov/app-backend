@@ -20,6 +20,13 @@ def insert(cls, **kwargs):
             db.session.add(tag)
         db.session.flush()
 
+    if 'uploads' in kwargs:
+        for upload_dict in kwargs['uploads']:
+            upload = cls.uploads.property.mapper.class_(obj.id, **upload_dict)
+            db.session.add(upload)
+        db.session.flush()
+
+
     cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
     return obj
 

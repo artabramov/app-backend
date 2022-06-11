@@ -1,5 +1,5 @@
 from app import db
-from app.core.secondary_model import SecondaryModel
+from app.core.tag_model import TagModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
@@ -9,7 +9,7 @@ class PostTagSchema(Schema):
     tag_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 
-class PostTag(SecondaryModel):
+class PostTag(TagModel):
     __tablename__ = 'posts_tags'
     __table_args__ = (db.UniqueConstraint('post_id', 'tag_value', name='posts_tag_ukey'),)
     post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)

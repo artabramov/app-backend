@@ -21,6 +21,8 @@ def before_first_request():
     from app.user import user, user_meta
     from app.vol import vol, vol_meta
     from app.post import post, post_meta, post_tag
+    from app.comment import comment
+    from app.upload import upload
     db.create_all()
 
 

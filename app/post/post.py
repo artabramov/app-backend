@@ -20,8 +20,9 @@ class Post(PrimaryModel, MetaMixin):
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
     comments_count = db.Column(db.BigInteger, nullable=False, default=0)
 
-    meta = db.relationship('PostMeta', backref='posts', lazy='subquery')
-    tags = db.relationship('PostTag', backref='tags', lazy='subquery')
+    meta = db.relationship('PostMeta', backref='post', lazy='subquery')
+    tags = db.relationship('PostTag', backref='post', lazy='subquery')
+    comments = db.relationship('Comment', backref='post', lazy='noload')
 
     def __init__(self, user_id, vol_id, post_title):
         self.user_id = user_id
