@@ -1,20 +1,25 @@
 from flask import g, request
 from app import app
 from app.core.app_response import app_response
+from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, search
 from app.post.post import Post
-from app.core.user_auth import user_auth
+from app.vol.vol import Vol
 
 
-@app.route('/post/', methods=['POST'], endpoint='post_post')
+@app.route('/post/', methods=['POST'], endpoint='post_insert')
 @app_response
 @user_auth
-def post_post():
+def post_insert():
     """ Post insert """
     if not g.user.can_edit:
         return {}, {'user_token': ['user_token have not permissions for vol edit'], }, 406
 
     vol_id = request.args.get('vol_id')
+    vol = select(Vol, id=vol_id, deleted=0)
+    if not vol:
+        return {}, {'vol_id': ['vol not found or deleted'], }, 404
+
     post_title = request.args.get('post_title')
 
     post_meta = {
@@ -25,9 +30,8 @@ def post_post():
 
     post_tags = ['one', 'two', 'three']
 
-    post = insert(Post, user_id=g.user.id, vol_id=vol_id, post_title=post_title, meta=post_meta, tags=post_tags)
-
+    post = insert(Post, user_id=g.user.id, vol_id=vol.id, post_title=post_title, meta=post_meta, tags=post_tags)
     return {
-        'vol': str(post)
+        'post': str(post)
     }, {}, 201
 

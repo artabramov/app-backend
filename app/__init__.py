@@ -30,3 +30,4 @@ from app.hi import hi_routes
 from app.user import user_routes
 from app.vol import vol_routes
 from app.post import post_routes
+from app.comment import comment_routes
