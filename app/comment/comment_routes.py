@@ -14,7 +14,7 @@ def comment_insert():
     """
     Comment insert
     headers: user_token
-    params: post_id, comment_content
+    params: post_id, comment_content, comment_sum
     """
     if not g.user.can_edit:
         return {}, {'user_token': ['user have not permissions for edit'], }, 406
@@ -25,7 +25,8 @@ def comment_insert():
         return {}, {'post_id': ['post not found or deleted'], }, 404
 
     comment_content = request.args.get('comment_content')
-    comment = insert(Comment, user_id=g.user.id, post_id=post.id, comment_content=comment_content)
+    comment_sum = request.args.get('comment_sum') # TODO: make correct decimal number
+    comment = insert(Comment, user_id=g.user.id, post_id=post.id, comment_content=comment_content, comment_sum=comment_sum)
     return {
         'comment': str(comment)
     }, {}, 201

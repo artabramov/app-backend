@@ -23,9 +23,10 @@ def app_response(func):
             db.session.rollback()
             errors, http_code = {'db': ['Service Unavailable']}, 503
 
-        #except IOError as e:
-        #    log.error(e)
-        #    result = {}, {'error': ['No such file or directory']}, 404
+        except IOError as e:
+            log.error(e)
+            db.session.rollback()
+            result = {}, {'error': ['File IO error']}, 404
 
         except Exception as e:
             log.error(e)

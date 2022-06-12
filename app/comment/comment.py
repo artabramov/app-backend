@@ -19,11 +19,11 @@ class Comment(BasicModel):
 
     uploads = db.relationship('Upload', backref='uploads', lazy='subquery')
 
-    def __init__(self, user_id, post_id, comment_content):
+    def __init__(self, user_id, post_id, comment_content, comment_sum=0):
         self.user_id = user_id
         self.post_id = post_id
         self.comment_content = comment_content
-        self.comment_sum = 0
+        self.comment_sum = comment_sum
 
 
 @db.event.listens_for(Comment, 'before_insert')
