@@ -1,5 +1,6 @@
 from app import db, cache
 from sqlalchemy import asc, desc
+from sqlalchemy.sql import func
 
 
 def insert(cls, **kwargs):
@@ -97,6 +98,13 @@ def search(cls, where=None, extra=None):
         cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
 
     return objs
+
+
+def summarize(cls, field, **kwargs):
+    query = db.session.query(func.sum(getattr(cls, field)))
+    for key in kwargs:
+        query = query.filter(getattr(cls, key) == kwargs[key])
+    return query.one()[0]
 
 
 def reset_meta(obj, **kwargs):

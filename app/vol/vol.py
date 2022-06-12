@@ -22,7 +22,6 @@ class VolSchema(Schema):
     vol_title = fields.Str(validate=validate.Length(min=4, max=80))
     vol_currency = EnumField(VolCurrency, by_value=True)
     vol_sum = fields.Decimal()
-    posts_count = fields.Int(validate=validate.Range(min=0))
 
 
 class Vol(BasicModel, MetaMixin):
@@ -31,17 +30,15 @@ class Vol(BasicModel, MetaMixin):
     vol_title = db.Column(db.String(80), nullable=False)
     vol_currency = db.Column(db.Enum(VolCurrency), nullable=False, default='USD')
     vol_sum = db.Column(db.Numeric(), nullable=False, default=0)
-    #vol_sum = db.Column(db.Numeric(precision=8, scale=4), nullable=False, default=0)
-    posts_count = db.Column(db.BigInteger, nullable=False, default=0)
 
-    meta = db.relationship('VolMeta', backref='vols', lazy='subquery')
+    meta = db.relationship('VolMeta', backref='vol', lazy='subquery')
+    posts = db.relationship('Post', backref='vol', lazy='noload')
 
     def __init__(self, user_id, vol_title, vol_currency):
         self.user_id = user_id
         self.vol_title = vol_title
         self.vol_currency = vol_currency
         self.vol_sum = 0
-        self.posts_count = 0
 
 
 @db.event.listens_for(Vol, 'before_insert')

@@ -34,7 +34,7 @@ def vol_post():
 @user_auth
 def vol_put(vol_id):
     """ Volume update """
-    if g.user.can_edit:
+    if not g.user.can_edit:
         return {}, {'user_token': ['user_token must have edit permissions'], }, 406
 
     vol_title = request.args.get('vol_title')

@@ -1,6 +1,7 @@
 from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event, DDL
 from app.core.app_logger import create_logger
 from flask_caching import Cache
 

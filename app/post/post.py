@@ -9,7 +9,6 @@ class PostSchema(Schema):
     vol_id = fields.Int(validate=validate.Range(min=1))
     post_title = fields.Str(validate=validate.Length(min=4, max=255))
     post_sum = fields.Decimal()
-    comments_count = fields.Int(validate=validate.Range(min=0))
 
 
 class Post(BasicModel, MetaMixin):
@@ -18,7 +17,6 @@ class Post(BasicModel, MetaMixin):
     vol_id = db.Column(db.BigInteger, db.ForeignKey('vols.id'), index=True)
     post_title = db.Column(db.String(255), nullable=False, index=True)
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
-    comments_count = db.Column(db.BigInteger, nullable=False, default=0)
 
     meta = db.relationship('PostMeta', backref='post', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', lazy='subquery')
@@ -29,7 +27,6 @@ class Post(BasicModel, MetaMixin):
         self.vol_id = vol_id
         self.post_title = post_title
         self.post_sum = 0
-        self.comments_count = 0
 
 
 @db.event.listens_for(Post, 'before_insert')
