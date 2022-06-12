@@ -1,6 +1,8 @@
 from app import db
 from app.core.basic_model import BasicModel
 from marshmallow import Schema, fields, validate
+from decimal import Decimal
+import math
 
 
 class CommentSchema(Schema):
@@ -26,17 +28,25 @@ class Comment(BasicModel):
         self.comment_sum = comment_sum
 
 
+    def _round(self, value):
+        return math.trunc(Decimal(value) * 100) / 100
+
+
 @db.event.listens_for(Comment, 'before_insert')
 def before_insert_comment(mapper, connect, comment):
     CommentSchema().load({
         'user_id': comment.user_id,
         'post_id': comment.post_id,
         'comment_content': comment.comment_content,
+        'comment_sum': comment.comment_sum,
     })
+    comment.comment_sum = comment._round(comment.comment_sum)
 
 
 @db.event.listens_for(Comment, 'before_update')
 def before_update_comment(mapper, connect, comment):
     CommentSchema().load({
         'comment_content': comment.comment_content,
+        'comment_sum': comment.comment_sum,
     })
+    comment.comment_sum = comment._round(comment.comment_sum)

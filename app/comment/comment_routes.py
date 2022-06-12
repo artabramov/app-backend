@@ -25,7 +25,7 @@ def comment_insert():
         return {}, {'post_id': ['post not found or deleted'], }, 404
 
     comment_content = request.args.get('comment_content')
-    comment_sum = request.args.get('comment_sum') # TODO: make correct decimal number
+    comment_sum = request.args.get('comment_sum')
     comment = insert(Comment, user_id=g.user.id, post_id=post.id, comment_content=comment_content, comment_sum=comment_sum)
     return {
         'comment': str(comment)
