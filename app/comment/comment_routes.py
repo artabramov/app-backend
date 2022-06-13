@@ -111,20 +111,9 @@ def comments_list(post_id):
     if not g.user.can_read:
         return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
-    where = {
-        'deleted': 0,
-        'post_id': post_id,
-    }
-
     offset = int(request.args.get('offset', 0))
-    extra = {
-        'order_by': 'id',
-        'order': 'asc',
-        'offset': offset,
-        'limit': 10
-    }
-
-    comments = select_all(Comment, where, extra)
+    limit = 10
+    comments = select_all(Comment, post_id=post_id, deleted=0, offset=offset, limit=limit)
 
     return {'comments': 
         [{

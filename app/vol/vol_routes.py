@@ -102,23 +102,8 @@ def vol_del(vol_id):
 @user_auth
 def vol_list(offset):
     """ Volumes list """
-    if g.user.can_read:
+    if not g.user.can_read:
         return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
-    where = {
-        'deleted': 0,
-        'user_id': 2,
-        'vol_title': ['VOL 4', 'VOL 3'],
-    }
-
-    results_on_page = 2
-
-    extra = {
-        'order_by': 'id',
-        'order': 'desc',
-        'offset': offset * results_on_page,
-        'limit': 3
-    }
-
-    vols = select_all(Vol, where, extra)
+    vols = select_all(Vol, deleted=0)
     return {}, {}, 200
