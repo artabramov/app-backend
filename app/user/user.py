@@ -43,18 +43,19 @@ class User(BasicModel, MetaMixin):
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
     user_role = db.Column(db.Enum(UserRole), nullable=False, default='guest')
-
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
-
     totp_key = db.Column(db.String(32), nullable=False, index=True)
     totp_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
-
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
-    meta = db.relationship('UserMeta', backref='users', lazy='subquery')
+    meta = db.relationship('UserMeta', backref='user', lazy='subquery')
+    vols = db.relationship('Vol', backref='user', lazy='noload')
+    posts = db.relationship('Post', backref='user', lazy='noload')
+    comments = db.relationship('Comment', backref='user', lazy='noload')
+    uploads = db.relationship('Upload', backref='user', lazy='noload')
 
     def __init__(self, user_login, user_name, user_pass, user_role):
         self.user_login = user_login.lower()

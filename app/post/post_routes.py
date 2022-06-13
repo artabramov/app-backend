@@ -2,9 +2,10 @@ from flask import g, request
 from app import app
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
-from app.core.basic_handlers import insert, update, delete, select, search
+from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.post.post import Post
 from app.vol.vol import Vol
+from app.comment.comment import Comment
 
 
 @app.route('/post/', methods=['POST'], endpoint='post_insert')
@@ -23,15 +24,60 @@ def post_insert():
     post_title = request.args.get('post_title')
 
     post_meta = {
-        'key_1': 'value 1!!!',
-        'key_2': 'value 2!!!',
-        'key_3': 'value 3!!!',
+        'key_1': 'value 1+',
+        'key_2': 'value 2+',
+        'key_3': 'value 3+',
     }
 
-    post_tags = ['one', 'two', 'three']
+    post_tags = ['one+', 'two+', 'three+']
 
     post = insert(Post, user_id=g.user.id, vol_id=vol.id, post_title=post_title, meta=post_meta, tags=post_tags)
     return {
         'post': str(post)
     }, {}, 201
 
+
+@app.route('/post/<int:post_id>', methods=['PUT'], endpoint='post_update')
+@app_response
+@user_auth
+def post_update(post_id):
+    """ Post update """
+    if not g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+
+    post = select(Post, id=post_id, deleted=0)
+    if not post:
+        return {}, {'post_id': ['post not found or deleted']}, 404
+
+    post_title = request.args.get('post_title')
+
+    post_meta = {
+        'key_1': '+value 1!!!',
+        'key_2': 'None+',
+        'key_3': '+value 3!!!',
+    }
+
+    post_tags = ['!one+', '!two+', '!three+']
+
+    post = update(post, post_title=post_title, meta=post_meta, tags=post_tags)
+
+    return {}, {}, 200
+
+
+@app.route('/post/<int:post_id>', methods=['DELETE'], endpoint='post_delete')
+@app_response
+@user_auth
+def post_delete(post_id):
+    """ Post delete """
+    if not g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+
+    post = select(Post, id=post_id, deleted=0)
+    if not post:
+        return {}, {'comment_id': ['comment not found or deleted']}, 404
+
+    #delete(post)
+
+    comments = select_all(Comment, post_id=post.id, deleted=0)
+
+    return {}, {}, 200

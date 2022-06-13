@@ -2,7 +2,7 @@ from app import db
 from app.core.basic_model import BasicModel
 from marshmallow import Schema, fields, validate, ValidationError
 from decimal import Decimal
-import math
+from app.core.app_decimal import app_decimal
 
 
 class CommentSchema(Schema):
@@ -27,15 +27,6 @@ class Comment(BasicModel):
         self.comment_content = comment_content
         self.comment_sum = comment_sum
 
-    @classmethod
-    def trunc_sum(cls, comment_sum):
-        try:
-            comment_sum = str(comment_sum)
-            return Decimal(math.trunc(Decimal(comment_sum) * 100) / 100)
-        except:
-            raise ValidationError({'comment_sum': ['Incorrect.']})
-
-
 @db.event.listens_for(Comment, 'before_insert')
 def before_insert_comment(mapper, connect, comment):
     CommentSchema().load({
@@ -44,7 +35,7 @@ def before_insert_comment(mapper, connect, comment):
         'comment_content': comment.comment_content,
         'comment_sum': comment.comment_sum,
     })
-    #comment.comment_sum = comment._round(comment.comment_sum)
+    comment.comment_sum = app_decimal(comment.comment_sum)
 
 
 @db.event.listens_for(Comment, 'before_update')
@@ -53,4 +44,4 @@ def before_update_comment(mapper, connect, comment):
         'comment_content': comment.comment_content,
         'comment_sum': comment.comment_sum,
     })
-    #comment.comment_sum = comment._round(comment.comment_sum)
+    comment.comment_sum = app_decimal(comment.comment_sum)

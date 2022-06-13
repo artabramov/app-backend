@@ -1,7 +1,7 @@
 from flask import g, request
 from app import app
 from app.core.app_response import app_response
-from app.core.basic_handlers import insert, update, delete, select, search
+from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.vol.vol import Vol
 from app.core.user_auth import user_auth
 
@@ -86,7 +86,7 @@ def vol_get(vol_id):
 @user_auth
 def vol_del(vol_id):
     """ Volume delete """
-    if g.user.can_edit:
+    if not g.user.can_edit:
         return {}, {'user_token': ['user_token must have edit permissions'], }, 406
 
     vol = select(Vol, id=vol_id)
@@ -120,5 +120,5 @@ def vol_list(offset):
         'limit': 3
     }
 
-    vols = search(Vol, where, extra)
+    vols = select_all(Vol, where, extra)
     return {}, {}, 200

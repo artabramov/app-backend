@@ -57,8 +57,10 @@ def update(obj, **kwargs):
     db.session.flush()
 
     if 'meta' in kwargs:
-        reset_meta(obj, **kwargs)
-        #db.session.refresh(obj)
+        update_meta(obj, **kwargs)
+
+    if 'tags' in kwargs:
+        update_tags(obj, kwargs['tags'])
 
     cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
     return obj
@@ -75,23 +77,30 @@ def delete(obj):
     return True
 
 
-def search(cls, where=None, extra=None):
+def select_all(cls, **kwargs):
     query = cls.query.filter(*[
         getattr(cls, k).in_(v) if isinstance(v, list) else getattr(cls, k) == v
-        for k, v in where.items()
+        for k, v in kwargs.items() if k not in ['order_by', 'order', 'limit', 'offset']
     ])
 
-    if 'order_by' in extra and extra['order'] == 'asc':
-        query = query.order_by(asc(extra['order_by']))
+    if 'order_by' in kwargs and kwargs['order'] == 'asc':
+        query = query.order_by(asc(kwargs['order_by']))
 
-    elif 'order_by' in extra and extra['order'] == 'desc':
-        query = query.order_by(desc(extra['order_by']))
+    elif 'order_by' in kwargs and kwargs['order'] == 'desc':
+        query = query.order_by(desc(kwargs['order_by']))
 
-    if 'limit' in extra:
-        query = query.limit(extra['limit'])
+    else:
+        query = query.order_by(desc('id'))
 
-    if 'offset' in extra:
-        query = query.offset(extra['offset'])
+    if 'limit' in kwargs:
+        query = query.limit(kwargs['limit'])
+    else:
+        query = query.limit(None)
+
+    if 'offset' in kwargs:
+        query = query.offset(kwargs['offset'])
+    else:
+        query = query.offset(0)
     
     objs = query.all()
     for obj in objs:
@@ -100,14 +109,14 @@ def search(cls, where=None, extra=None):
     return objs
 
 
-def summarize(cls, field, **kwargs):
+def select_sum(cls, field, **kwargs):
     query = db.session.query(func.sum(getattr(cls, field)))
     for key in kwargs:
         query = query.filter(getattr(cls, key) == kwargs[key])
     return query.one()[0]
 
 
-def reset_meta(obj, **kwargs):
+def update_meta(obj, **kwargs):
     cls = obj.__class__
     Meta = cls.meta.property.mapper.class_
 
@@ -127,3 +136,21 @@ def reset_meta(obj, **kwargs):
             db.session.add(meta)
 
     db.session.flush()
+
+
+def update_tags(obj, tags_data):
+    cls = obj.__class__
+    Tag = cls.tags.property.mapper.class_
+
+    for tag in obj.tags:
+        db.session.delete(tag)
+
+    for tag_value in tags_data:
+        tag_value = tag_value.strip().lower()
+        tag = Tag.query.filter_by(**{Tag.parent: obj.id, 'tag_value': tag_value}).first()
+        if not tag and tag_value:
+            tag = Tag(obj.id, tag_value)
+            db.session.add(tag)
+
+    db.session.flush()
+    cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)

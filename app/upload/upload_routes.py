@@ -2,7 +2,7 @@ from flask import g, request
 from app import app
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
-from app.core.basic_handlers import insert, update, delete, select, search
+from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.core.upload_file import upload_file
 from app.comment.comment import Comment
 from app.upload.upload import Upload
@@ -54,3 +54,38 @@ def uploads_insert():
         'uploads': uploads,
         'files': files,
     }, {}, 200
+
+
+@app.route('/upload/<int:upload_id>', methods=['PUT'], endpoint='upload_update')
+@app_response
+@user_auth
+def upload_update(upload_id):
+    """ Upload update """
+    if not g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+
+    upload = select(Upload, id=upload_id, deleted=0)
+    if not upload:
+        return {}, {'upload_id': ['upload not found or deleted']}, 404
+
+    upload_name = request.args.get('upload_name')
+    if upload_name:
+        upload = update(upload, upload_name=upload_name)
+
+    return {}, {}, 200
+
+
+@app.route('/upload/<int:upload_id>', methods=['DELETE'], endpoint='upload_delete')
+@app_response
+@user_auth
+def upload_delete(upload_id):
+    """ Upload delete """
+    if not g.user.can_edit:
+        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+
+    upload = select(Upload, id=upload_id, deleted=0)
+    if not upload:
+        return {}, {'upload_id': ['upload not found']}, 404
+
+    delete(upload)
+    return {}, {}, 200

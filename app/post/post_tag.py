@@ -1,5 +1,5 @@
 from app import db
-from app.tag.tag_model import TagModel
+from app.core.tag_model import TagModel
 from marshmallow import ValidationError
 from marshmallow import Schema, fields, validate
 
