@@ -21,17 +21,18 @@ def post_insert():
     if not vol:
         return {}, {'vol_id': ['vol not found or deleted'], }, 404
 
+    post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
 
     post_meta = {
-        'key_1': 'value 1+',
-        'key_2': 'value 2+',
-        'key_3': 'value 3+',
+        'key_1': 'value 1',
+        'key_2': 'value 1',
+        'key_3': 'value 1',
     }
 
-    post_tags = ['one+', 'two+', 'three+']
+    post_tags = ['tag1', 'tag2', 'tag3']
 
-    post = insert(Post, user_id=g.user.id, vol_id=vol.id, post_title=post_title, meta=post_meta, tags=post_tags)
+    post = insert(Post, user_id=g.user.id, vol_id=vol.id, post_status=post_status, post_title=post_title, meta=post_meta, tags=post_tags)
     return {
         'post': str(post)
     }, {}, 201
@@ -49,18 +50,25 @@ def post_update(post_id):
     if not post:
         return {}, {'post_id': ['post not found or deleted']}, 404
 
-    post_title = request.args.get('post_title')
+    post_data = {}
 
-    post_meta = {
-        'key_1': '+value 1!!!',
-        'key_2': 'None+',
-        'key_3': '+value 3!!!',
+    post_status = request.args.get('post_status')
+    if post_status:
+        post_data['post_status'] = post_status
+
+    post_title = request.args.get('post_title')
+    if post_title:
+        post_data['post_title'] = post_title
+
+    post_data['meta'] = {
+        'key_1': 'value2',
+        'key_2': 'value2',
+        'key_3': None,
     }
 
-    post_tags = ['!one+', '!two+', '!three+']
+    post_data['tags'] = ['tag4', 'tag5', 'tag6']
 
-    post = update(post, post_title=post_title, meta=post_meta, tags=post_tags)
-
+    post = update(post, **post_data)
     return {}, {}, 200
 
 
