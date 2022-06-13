@@ -20,7 +20,7 @@ cache.init_app(app)
 @app.before_first_request
 def before_first_request():
     from app.user import user, user_meta
-    from app.vol import vol, vol_meta
+    from app.volume import volume, volume_meta
     from app.post import post, post_meta, post_tag
     from app.comment import comment
     from app.upload import upload
@@ -29,7 +29,7 @@ def before_first_request():
 
 from app.hi import hi_routes
 from app.user import user_routes
-from app.vol import vol_routes
+from app.volume import volume_routes
 from app.post import post_routes
 from app.comment import comment_routes
 from app.upload import upload_routes

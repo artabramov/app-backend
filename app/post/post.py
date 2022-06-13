@@ -19,7 +19,7 @@ class PostStatus(Enum):
 
 class PostSchema(Schema):
     user_id = fields.Int(validate=validate.Range(min=1))
-    vol_id = fields.Int(validate=validate.Range(min=1))
+    volume_id = fields.Int(validate=validate.Range(min=1))
     post_status = EnumField(PostStatus, by_value=True)
     post_title = fields.Str(validate=validate.Length(min=4, max=255))
     post_sum = fields.Decimal()
@@ -28,7 +28,7 @@ class PostSchema(Schema):
 class Post(BasicModel, MetaMixin):
     __tablename__ = 'posts'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
-    vol_id = db.Column(db.BigInteger, db.ForeignKey('vols.id'), index=True)
+    volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id'), index=True)
     post_status = db.Column(db.Enum(PostStatus), nullable=False, index=True)
     post_title = db.Column(db.String(255), nullable=False, index=True)
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
@@ -37,9 +37,9 @@ class Post(BasicModel, MetaMixin):
     tags = db.relationship('PostTag', backref='post', lazy='subquery')
     comments = db.relationship('Comment', backref='post', lazy='noload')
 
-    def __init__(self, user_id, vol_id, post_status, post_title):
+    def __init__(self, user_id, volume_id, post_status, post_title):
         self.user_id = user_id
-        self.vol_id = vol_id
+        self.volume_id = volume_id
         self.post_status = post_status
         self.post_title = post_title
         self.post_sum = 0
@@ -49,7 +49,7 @@ class Post(BasicModel, MetaMixin):
 def before_insert_post(mapper, connect, post):
     PostSchema().load({
         'user_id': post.user_id,
-        'vol_id': post.vol_id,
+        'volume_id': post.volume_id,
         'post_status': PostStatus.get_value(post.post_status),
         'post_title': post.post_title,
     })

@@ -52,7 +52,7 @@ class User(BasicModel, MetaMixin):
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     meta = db.relationship('UserMeta', backref='user', lazy='subquery')
-    vols = db.relationship('Vol', backref='user', lazy='noload')
+    volumes = db.relationship('Volume', backref='user', lazy='noload')
     posts = db.relationship('Post', backref='user', lazy='noload')
     comments = db.relationship('Comment', backref='user', lazy='noload')
     uploads = db.relationship('Upload', backref='user', lazy='noload')

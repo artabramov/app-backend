@@ -34,8 +34,8 @@ def comment_insert():
         post_sum = app_decimal(select_sum(Comment, 'comment_sum', post_id=comment.post_id, deleted=0))
         update(comment.post, post_sum=post_sum)
 
-        vol_sum = app_decimal(select_sum(Post, 'post_sum', vol_id=comment.post.vol_id, deleted=0))
-        update(comment.post.vol, vol_sum=vol_sum)
+        volume_sum = app_decimal(select_sum(Post, 'post_sum', volume_id=comment.post.volume_id, deleted=0))
+        update(comment.post.volume, volume_sum=volume_sum)
 
     return {
         'comment': str(comment)
@@ -70,8 +70,8 @@ def comment_update(comment_id):
         post_sum = app_decimal(select_sum(Comment, 'comment_sum', post_id=comment.post_id, deleted=0))
         update(comment.post, post_sum=post_sum)
 
-        vol_sum = app_decimal(select_sum(Post, 'post_sum', vol_id=comment.post.vol_id, deleted=0))
-        update(comment.post.vol, vol_sum=vol_sum)
+        volume_sum = app_decimal(select_sum(Post, 'post_sum', volume_id=comment.post.volume_id, deleted=0))
+        update(comment.post.volume, volume_sum=volume_sum)
 
     return {}, {}, 200
 
@@ -97,8 +97,8 @@ def comment_delete(comment_id):
         post_sum = app_decimal(select_sum(Comment, 'comment_sum', post_id=comment.post_id, deleted=0))
         update(comment.post, post_sum=post_sum)
 
-        vol_sum = app_decimal(select_sum(Post, 'post_sum', vol_id=comment.post.vol_id, deleted=0))
-        update(comment.post.vol, vol_sum=vol_sum)
+        volume_sum = app_decimal(select_sum(Post, 'post_sum', volume_id=comment.post.volume_id, deleted=0))
+        update(comment.post.volume, volume_sum=volume_sum)
 
     return {}, {}, 200
 

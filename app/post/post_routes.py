@@ -4,7 +4,7 @@ from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.post.post import Post
-from app.vol.vol import Vol
+from app.volume.volume import Volume
 from app.comment.comment import Comment
 
 
@@ -14,12 +14,12 @@ from app.comment.comment import Comment
 def post_insert():
     """ Post insert """
     if not g.user.can_edit:
-        return {}, {'user_token': ['user_token have not permissions for vol edit'], }, 406
+        return {}, {'user_token': ['user_token have not permissions for volume edit'], }, 406
 
-    vol_id = request.args.get('vol_id')
-    vol = select(Vol, id=vol_id, deleted=0)
-    if not vol:
-        return {}, {'vol_id': ['vol not found or deleted'], }, 404
+    volume_id = request.args.get('volume_id')
+    volume = select(Volume, id=volume_id, deleted=0)
+    if not volume:
+        return {}, {'volume_id': ['volume not found or deleted'], }, 404
 
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
@@ -32,7 +32,7 @@ def post_insert():
 
     post_tags = ['tag1', 'tag2', 'tag3']
 
-    post = insert(Post, user_id=g.user.id, vol_id=vol.id, post_status=post_status, post_title=post_title, meta=post_meta, tags=post_tags)
+    post = insert(Post, user_id=g.user.id, volume_id=volume.id, post_status=post_status, post_title=post_title, meta=post_meta, tags=post_tags)
     return {
         'post': str(post)
     }, {}, 201
