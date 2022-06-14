@@ -6,115 +6,106 @@ from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.upload_file import upload_file
 from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete, user_auth
-from app.user.user_handlers import qrcode_create, qrcode_remove
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
 
+from app.core.basic_handlers import insert, update, delete, select, select_all
+from app.core.user_auth import user_auth
+from app.core.qrcode_handlers import qrcode_make, qrcode_remove
+from flask import g
 
-@app.route('/user/', methods=['POST'], endpoint='user_post')
+QRCODE_URI = app.config['QRCODE_URI']
+
+
+@app.route('/user/', methods=['POST'], endpoint='user_register')
 @app_response
-def user_post():
-    """ User register """
-    user_login = request.args.get('user_login', '')
+def user_register():
+    user_login = request.args.get('user_login', '').lower()
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_role = 'guest' if user_exists(user_role='admin', deleted=0) else 'admin'
     user_meta = {
-        'key_1': 'value 1',
-        'key_2': 'value 2',
-        'key_3': 'value 3',
+        'remote_addr': request.remote_addr,
+        'user_agent': request.headers.get('User-Agent'),
     }
 
-    this_user = user_insert(user_login, user_name, user_pass, user_role, user_meta)
-    qrcode_create(this_user.totp_key, this_user.user_login)
+    user = insert(User, user_login=user_login, user_name=user_name, user_pass=user_pass, meta=user_meta)
+    qrcode_make(user.totp_key, user.user_login)
 
     return {
-        'totp_key': this_user.totp_key, 
-        'totp_qrcode': app.config['QRCODES_URI'] % this_user.totp_key
+        'totp_key': user.totp_key, 
+        'totp_qrcode': QRCODE_URI % user.totp_key
     }, {}, 201
 
 
-@app.route('/token/', methods=['GET'], endpoint='token_get')
+@app.route('/token/', methods=['GET'], endpoint='user_signin')
 @app_response
-def token_get():
-    """ User signin """
-    user_login = request.args.get('user_login', '')
+def user_signin():
+    user_login = request.args.get('user_login', '').lower()
     user_totp = request.args.get('user_totp', '')
 
-    this_user = user_select(user_login=user_login, deleted=0)
-    if not this_user:
-        return {}, {'user_login': ['user_login not found'], }, 404
+    user = select(User, user_login=user_login, deleted=0)
+    if not user:
+        return {}, {'user_login': ['user not found or deleted'], }, 404
 
-    elif this_user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
+    elif user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
         return {}, {'user_totp': ['user_totp attempts are over'], }, 406
 
-    elif user_totp == this_user.user_totp:
-        qrcode_remove(this_user.totp_key)
+    elif user_totp == user.user_totp:
+        qrcode_remove(user.totp_key)
         token_expires = time.time() + TOKEN_EXPIRATION_TIME
-        user_update(this_user, totp_attempts=0, token_expires=token_expires)
-        return {'user_token': this_user.user_token}, {}, 200
+        update(user, totp_attempts=0, token_expires=token_expires)
+        return {'user_token': user.user_token}, {}, 200
 
     else:
-        totp_attempts = this_user.totp_attempts + 1
-        user_update(this_user, totp_attempts=totp_attempts)
+        totp_attempts = user.totp_attempts + 1
+        update(user, totp_attempts=totp_attempts)
         return {}, {'user_totp': ['user_totp is incorrect'], }, 404
 
 
-@app.route('/token/', methods=['PUT'], endpoint='token_put')
+@app.route('/token/', methods=['PUT'], endpoint='user_signout')
 @app_response
-def token_put():
-    """ User signout """
-    user_token = request.headers.get('user_token')
-
-    this_user = user_auth(user_token)
-    token_signature = this_user.generate_token_signature()
-    user_update(this_user, token_signature=token_signature)
+@user_auth
+def user_signout():
+    token_signature = g.user.generate_token_signature()
+    update(g.user, token_signature=token_signature)
     return {}, {}, 200
 
 
-@app.route('/pass/', methods=['GET'], endpoint='pass_get')
+@app.route('/pass/', methods=['GET'], endpoint='user_restore')
 @app_response
-def pass_get():
-    """ User restore """
+def user_restore():
     user_login = request.args.get('user_login', '').lower()
     user_pass = request.args.get('user_pass', '')
     pass_hash = User.get_pass_hash(user_login + user_pass)
 
-    this_user = user_select(user_login=user_login, deleted=0)
-    if not this_user:
+    user = select(User, user_login=user_login, deleted=0)
+    if not user:
         return {}, {'user_login': ['user_login not found'], }, 404
 
-    elif this_user.pass_suspended > time.time():
+    elif user.pass_suspended > time.time():
         return {}, {'user_pass': ['user_pass temporarily suspended'], }, 406
 
-    elif this_user.pass_hash == pass_hash:
-        user_update(this_user, pass_attempts=0, pass_suspended=0, totp_attempts=0)
+    elif user.pass_hash == pass_hash:
+        update(user, pass_attempts=0, pass_suspended=0, totp_attempts=0)
         return {}, {}, 200
 
     else:
-        pass_attempts = this_user.pass_attempts + 1
+        pass_attempts = user.pass_attempts + 1
         pass_suspended = 0
         if pass_attempts >= PASS_ATTEMPTS_LIMIT:
             pass_attempts = 0
             pass_suspended = time.time() + PASS_SUSPEND_TIME
 
-        user_update(this_user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
+        update(user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
         return {}, {'user_pass': ['user_pass is incorrect'], }, 406
 
 
-@app.route('/user/<user_id>', methods=['GET'], endpoint='user_get')
+@app.route('/user/<int:user_id>', methods=['GET'], endpoint='user_select')
 @app_response
-def user_get(user_id):
-    """ User select """
-    if not user_id.isnumeric():
-        return {}, {'user_id': ['user_id is incorrect']}, 404
-
-    user_id = int(user_id)
-    user_token = request.headers.get('user_token')
-
-    this_user = user_auth(user_token)
-    user = user_select(id=user_id)
+@user_auth
+def user_select(user_id):
+    user = select(User, id=user_id)
 
     if user:
         return {'user': {
@@ -128,26 +119,20 @@ def user_get(user_id):
         return {}, {'user_id': ['user_id not found']}, 404
 
 
-@app.route('/user/<user_id>', methods=['PUT'], endpoint='user_put')
+@app.route('/user/<int:user_id>', methods=['PUT'], endpoint='user_update')
 @app_response
-def user_put(user_id):
-    """ User update """
-    if not user_id.isnumeric():
-        return {}, {'user_id': ['user_id is incorrect']}, 404
+@user_auth
+def user_update(user_id):
+    user_name = request.args.get('user_name', '')
+    user_role = request.args.get('user_role', '')
+    user_pass = request.args.get('user_pass', '')
 
-    user_id = int(user_id)
-    user_token = request.headers.get('user_token')
-    user_name = request.args.get('user_name', None)
-    user_role = request.args.get('user_role', None)
-    user_pass = request.args.get('user_pass', None)
-
-    this_user = user_auth(user_token)
-    user = user_select(id=user_id)
+    user = select(User, id=user_id)
 
     if not user:
         return {}, {'user_id': ['user_id not found']}, 404
 
-    elif this_user.id == user.id or this_user.can_admin:
+    elif g.user.id == user.id or g.user.can_admin:
         user_data = {}
         if user_name:
             user_data['user_name'] = user_name
@@ -155,153 +140,63 @@ def user_put(user_id):
         if user_pass:
             user_data['user_pass'] = user_pass
 
-        if user_role and this_user.can_admin and this_user.id != user.id:
+        if user_role and g.user.can_admin and g.user.id != user.id:
             user_data['user_role'] = user_role
 
-        user_data['user_meta'] = {
-            'key_1': 'value 111', 
-            'key_2': 'None', 
-            'key_4': 'value 44'}
-
-        user_update(user, **user_data)
+        update(user, **user_data)
         return {}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id update forbidden'], }, 403
 
 
-@app.route('/user/<user_id>', methods=['DELETE'], endpoint='user_del')
+@app.route('/user/<int:user_id>', methods=['DELETE'], endpoint='user_delete')
 @app_response
-def user_del(user_id):
-    """ User delete """
-    if not user_id.isnumeric():
-        return {}, {'user_id': ['user_id is incorrect']}, 404
-
-    user_id = int(user_id)
-    user_token = request.headers.get('user_token')
-
-    this_user = user_auth(user_token)
-    user = user_select(id=user_id)
+@user_auth
+def user_delete(user_id):
+    user = select(User, id=user_id)
 
     if not user:
         return {}, {'user_id': ['user_id not found']}, 404
 
-    elif this_user.id != user.id and this_user.can_admin:
-        user_delete(user)
+    elif g.user.id != user.id and g.user.can_admin:
+        delete(user)
         return {}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id delete forbidden'], }, 403
 
 
-@app.route('/image/', methods=['POST'], endpoint='files_post')
+@app.route('/image/', methods=['POST'], endpoint='user_image')
 @app_response
-def files_post():
-    """ Files upload """
-    user_token = request.headers.get('user_token', None)
-    user_files = request.files.getlist('user_files')
-
-    this_user = user_auth(user_token)
-
+@user_auth
+def user_image():
+    user_file = request.files.getlist('user_file')[0]
     manager = Manager()
-    uploaded_files = manager.list()
+    uploaded_files = manager.list() # do not rename this variable
 
     jobs = []
-    for user_file in user_files:
-        job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
-        jobs.append(job)
-        job.start()
+    job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
+    jobs.append(job)
+    job.start()
     
     for job in jobs:
         job.join()
 
-    return {}, {'files': list(uploaded_files), }, 200
-
-
-
-
-
-
-
-
-
-
-
-
-# user restore
-@app.route('/pass/', methods=['GET'])
-def _user_restore():
-    user_login = request.args.get('user_login', '')
-    user_pass = request.args.get('user_pass', '')
-    return user_handlers.user_restore(user_login, user_pass)
-
-
-# user select
-@app.route('/user/<user_id>', methods=['GET'])
-def _user_select(user_id):
-        user_token = request.headers.get('user_token')
-        return user_handlers.user_select(user_token, user_id)
-
-
-# user update
-@app.route('/user/<user_id>', methods=['PUT'])
-def _user_update(user_id):
-    user_token = request.headers.get('user_token', None)
-    user_id = int(user_id)
-    user_name = request.args.get('user_name', None)
-    user_role = request.args.get('user_role', None)
-    user_pass = request.args.get('user_pass', None)
-
-    props_data = {}
-    if request.args.get('key_1', False): 
-        props_data['key_1'] = request.args.get('key_1')
-    if request.args.get('key_2', False): 
-        props_data['key_2'] = request.args.get('key_2')
-
-    return user_handlers.user_update(user_token, user_id, user_name, user_role, user_pass, props_data)
-
-
-# user delete
-@app.route('/user/<user_id>', methods=['DELETE'])
-def _user_remove(user_id):
-    user_token = request.headers.get('user_token', None)
-    user_id = int(user_id)
-
-    return user_handlers.user_delete(user_token, user_id)
-
-
-# user image upload
-@app.route('/image/', methods=['POST'], endpoint='_image_post')
-@app_response
-def _image_post():
-    user_token = request.headers.get('user_token', None)
-    user_files = request.files.getlist('user_files')
-    uploaded_files = []
+    uploaded_file = uploaded_files[0]
+    user_meta = {'user_image': uploaded_file['file_path']}
+    update(g.user, meta=user_meta)
 
     """
-    for user_file in user_files:
-        uploaded_file = file_upload(user_file, '/app/images/', ['image/jpeg'])
-        uploaded_files.append(uploaded_file)
+    uploads, files = [], []
+    for uploaded_file in uploaded_files:
+        files.append({k:uploaded_file[k] for k in uploaded_file if k in ['file_name', 'file_mime', 'file_path', 'file_size', 'file_error']})
+        if not uploaded_file['file_error']:
+            upload = insert(Upload, user_id=g.user.id, comment_id=comment.id, upload_name=uploaded_file['file_name'], upload_file=uploaded_file['file_path'], upload_mime=uploaded_file['file_mime'], upload_size=uploaded_file['file_size'])
+            uploads.append({k:upload.__dict__[k] for k in upload.__dict__ if k in ['id', 'comment_id', 'created', 'upload_name', 'upload_file', 'upload_mime', 'upload_size']})
     """
 
-    manager = Manager()
-    uploaded_files = manager.list()
-
-    jobs = []
-    for user_file in user_files:
-        job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
-        jobs.append(job)
-        job.start()
-    
-    for job in jobs:
-        job.join()
-
-    return {}, {'files': list(uploaded_files), }, 200
-
-
-
-
-
-
-
-
+    return {
+        'uploads': 'uploads',
+        'files': 'files',
+    }, {}, 200

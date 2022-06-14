@@ -52,10 +52,10 @@ class User(BasicModel, MetaMixin):
     comments = db.relationship('Comment', backref='user', lazy='noload')
     uploads = db.relationship('Upload', backref='user', lazy='noload')
 
-    def __init__(self, user_login, user_name, user_pass, user_role):
-        self.user_login = user_login.lower()
+    def __init__(self, user_login, user_name, user_pass):
+        self.user_login = user_login
         self.user_name = user_name
-        self.user_role = user_role
+        self.user_role = 'guest'
         self.user_pass = user_pass
         self.pass_attempts = 0
         self.pass_suspended = 0

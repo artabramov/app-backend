@@ -3,25 +3,18 @@ from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 from marshmallow_enum import EnumField
-from enum import Enum
+from app.core.enum_mixin import EnumMixin
 
-
-class VolumeCurrency(Enum):
+class VolumeCurrency(EnumMixin):
     USD = 840
     EUR = 978
     GBP = 826
     CHF = 756
 
-    @classmethod
-    def get_value(cls, value):
-        return cls._member_map_[value] if value in cls._member_map_ else value
-
 
 class VolumeSchema(Schema):
-    user_id = fields.Int(validate=validate.Range(min=1))
     volume_title = fields.Str(validate=validate.Length(min=4, max=80))
     volume_currency = EnumField(VolumeCurrency, by_value=True)
-    volume_sum = fields.Decimal()
 
 
 class Volume(BasicModel, MetaMixin):
@@ -30,6 +23,7 @@ class Volume(BasicModel, MetaMixin):
     volume_title = db.Column(db.String(80), nullable=False)
     volume_currency = db.Column(db.Enum(VolumeCurrency), nullable=False, default='USD')
     volume_sum = db.Column(db.Numeric(), nullable=False, default=0)
+    posts_count = db.Column(db.BigInteger, nullable=False, default=0)
 
     meta = db.relationship('VolumeMeta', backref='volume', lazy='subquery')
     posts = db.relationship('Post', backref='volume', lazy='noload')
@@ -38,13 +32,11 @@ class Volume(BasicModel, MetaMixin):
         self.user_id = user_id
         self.volume_title = volume_title
         self.volume_currency = volume_currency
-        self.volume_sum = 0
 
 
 @db.event.listens_for(Volume, 'before_insert')
 def before_insert_volume(mapper, connect, volume):
     VolumeSchema().load({
-        'user_id': volume.user_id,
         'volume_title': volume.volume_title,
         'volume_currency': VolumeCurrency.get_value(volume.volume_currency),
     })
