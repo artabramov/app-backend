@@ -2,10 +2,12 @@ from flask import g, request
 from app import app
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
-from app.core.basic_handlers import insert, update, delete, select, select_sum, select_all
+from app.core.basic_handlers import insert, update, delete, select, select_all, select_sum, select_count
 from app.post.post import Post
 from app.comment.comment import Comment
 from app.core.app_decimal import app_decimal
+
+COMMENTS_LIMIT = 5
 
 
 @app.route('/comment/', methods=['POST'], endpoint='comment_insert')
@@ -112,8 +114,8 @@ def comments_list(post_id):
         return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
     offset = int(request.args.get('offset', 0))
-    limit = 10
-    comments = select_all(Comment, post_id=post_id, deleted=0, offset=offset, limit=limit)
+    comments = select_all(Comment, post_id=post_id, deleted=0, offset=offset, limit=COMMENTS_LIMIT)
+    comments_count = select_count(Comment, post_id=post_id, deleted=0)
 
     return {'comments': 
         [{
@@ -137,5 +139,6 @@ def comments_list(post_id):
                     'user_name': upload.user.user_name,
                 },
             } for upload in comment.uploads],
-        } for comment in comments]
+        } for comment in comments],
+        'comments_count': comments_count,
     }, {}, 200

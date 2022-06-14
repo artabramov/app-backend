@@ -116,6 +116,13 @@ def select_sum(cls, field, **kwargs):
     return query.one()[0]
 
 
+def select_count(cls, **kwargs):
+    query = db.session.query(func.count(getattr(cls, 'id')))
+    for key in kwargs:
+        query = query.filter(getattr(cls, key) == kwargs[key])
+    return query.one()[0]
+
+
 def update_meta(obj, **kwargs):
     cls = obj.__class__
     Meta = cls.meta.property.mapper.class_
