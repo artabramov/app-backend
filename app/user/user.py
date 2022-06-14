@@ -1,4 +1,3 @@
-from enum import Enum
 from app import db
 from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
@@ -7,7 +6,7 @@ import json
 import base64, hashlib, time, pyotp
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
-#from app.user.user_meta import UserMeta
+from app.core.enum_mixin import EnumMixin
 
 PASS_HASH_SALT = 'abcd'
 PASS_ATTEMPTS_LIMIT = 5
@@ -19,15 +18,11 @@ TOTP_ATTEMPTS_LIMIT = 5
 TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
 
-class UserRole(Enum):
+class UserRole(EnumMixin):
     guest = 0
     reader = 1
     editor = 2
     admin = 3
-
-    @classmethod
-    def get_role(cls, user_role):
-        return cls._member_map_[user_role] if user_role in cls._member_map_ else user_role
 
 
 class UserSchema(Schema):
@@ -143,7 +138,7 @@ def before_insert_user(mapper, connect, user):
         'user_login': user.user_login,
         'user_name': user.user_name,
         'user_pass': user.user_pass,
-        'user_role': UserRole.get_role(user.user_role),
+        'user_role': UserRole.get_value(user.user_role),
     })
 
     if User.query.filter_by(user_login=user.user_login).first():
@@ -154,7 +149,7 @@ def before_insert_user(mapper, connect, user):
 def before_update_user(mapper, connect, user):
     user_data = {
         'user_name': user.user_name,
-        'user_role': UserRole.get_role(user.user_role),
+        'user_role': UserRole.get_value(user.user_role),
     }
 
     if user.user_pass:

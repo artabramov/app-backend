@@ -3,18 +3,14 @@ from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 from marshmallow_enum import EnumField
-from enum import Enum
+from app.core.enum_mixin import EnumMixin
 
 
-class PostStatus(Enum):
+class PostStatus(EnumMixin):
     draft = 0
     todo = 1
     doing = 2
     done = 3
-
-    @classmethod
-    def get_value(cls, value):
-        return cls._member_map_[value] if value in cls._member_map_ else value
 
 
 class PostSchema(Schema):
