@@ -2,10 +2,9 @@ import os, uuid
 from app import app, log
 from datetime import date
 
-THUMBNAILS_PATH = app.config['THUMBNAILS_PATH']
+IMAGES_PATH = app.config['IMAGES_PATH']
 
 
-# TODO: make secure filename for DB!
 def upload_file(user_file, upload_path, allowed_mimes, uploaded_files):
 
     file_data = {
@@ -27,7 +26,7 @@ def upload_file(user_file, upload_path, allowed_mimes, uploaded_files):
         return
 
     try:
-        if upload_path == THUMBNAILS_PATH:
+        if upload_path == IMAGES_PATH:
             file_path = upload_path
 
         else:

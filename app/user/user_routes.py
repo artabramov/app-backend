@@ -18,10 +18,10 @@ from flask import g
 from PIL import Image
 
 QRCODE_URI = app.config['QRCODE_URI']
-THUMBNAILS_PATH = app.config['THUMBNAILS_PATH']
-THUMBNAILS_MIMES = app.config['THUMBNAILS_MIMES']
-THUMBNAILS_SIZE =  app.config['THUMBNAILS_SIZE']
-THUMBNAILS_QUALITY =  app.config['THUMBNAILS_QUALITY']
+IMAGES_PATH = app.config['IMAGES_PATH']
+IMAGES_MIMES = app.config['IMAGES_MIMES']
+IMAGES_SIZE =  app.config['IMAGES_SIZE']
+IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
 
 
 @app.route('/user/', methods=['POST'], endpoint='user_register')
@@ -185,7 +185,7 @@ def user_image():
     manager = Manager()
     uploaded_files = manager.list() # do not rename this variable
 
-    job = Process(target=upload_file, args=(user_file, THUMBNAILS_PATH, THUMBNAILS_MIMES, uploaded_files))
+    job = Process(target=upload_file, args=(user_file, IMAGES_PATH, IMAGES_MIMES, uploaded_files))
     job.start()
     job.join()
 
@@ -193,15 +193,14 @@ def user_image():
     if uploaded_file['file_error']:
         return {}, {'user_file': [uploaded_file['file_error']]}, 404
 
-    user_thumbnail = g.user.get_meta('user_thumbnail')
-    if user_thumbnail and os.path.isfile(user_thumbnail):
-        os.remove(user_thumbnail)
+    user_image = g.user.get_meta('user_image')
+    if user_image and os.path.isfile(user_image):
+        os.remove(user_image)
 
     image = Image.open(uploaded_file['file_path'])
-    image.thumbnail(THUMBNAILS_SIZE, Image.ANTIALIAS)
-    image.save(uploaded_file['file_path'], quality=THUMBNAILS_QUALITY)
+    image.thumbnail(IMAGES_SIZE, Image.ANTIALIAS)
+    image.save(uploaded_file['file_path'], quality=IMAGES_QUALITY)
 
-    user_meta = {'user_thumbnail': uploaded_file['file_path']}
+    user_meta = {'user_image': uploaded_file['file_path']}
     update(g.user, meta=user_meta)
     return {}, {}, 200
-
