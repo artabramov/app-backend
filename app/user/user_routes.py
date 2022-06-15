@@ -1,11 +1,9 @@
 from flask import request
 from app import app, log
-from app.user import user_handlers
 from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
 from app.core.upload_file import upload_file
-from app.user.user_handlers import user_exists, user_insert, user_select, user_update, user_delete, user_auth
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
@@ -17,8 +15,9 @@ from app.core.qrcode_handlers import qrcode_make, qrcode_remove
 from flask import g
 from PIL import Image
 
-QRCODE_URI = app.config['QRCODE_URI']
-IMAGES_PATH = app.config['IMAGES_PATH']
+QRCODES_BASE_URL = app.config['APP_BASE_URL'] + app.config['QRCODES_DIR']
+IMAGES_BASE_DIR = app.config['APP_BASE_DIR'] + app.config['IMAGES_DIR']
+IMAGES_BASE_URL = app.config['APP_BASE_URL'] + app.config['IMAGES_DIR']
 IMAGES_MIMES = app.config['IMAGES_MIMES']
 IMAGES_SIZE =  app.config['IMAGES_SIZE']
 IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
@@ -40,7 +39,7 @@ def user_register():
 
     return {
         'totp_key': user.totp_key, 
-        'totp_qrcode': QRCODE_URI % user.totp_key
+        'totp_qrcode': QRCODES_BASE_URL + user.totp_key + '.png'
     }, {}, 201
 
 
@@ -185,22 +184,28 @@ def user_image():
     manager = Manager()
     uploaded_files = manager.list() # do not rename this variable
 
-    job = Process(target=upload_file, args=(user_file, IMAGES_PATH, IMAGES_MIMES, uploaded_files))
+    job = Process(target=upload_file, args=(user_file, IMAGES_BASE_DIR, IMAGES_BASE_URL, IMAGES_MIMES, uploaded_files))
     job.start()
     job.join()
 
     uploaded_file = uploaded_files[0]
-    if uploaded_file['file_error']:
-        return {}, {'user_file': [uploaded_file['file_error']]}, 404
+    if uploaded_file['error']:
+        return {}, {'user_file': [uploaded_file['error']]}, 404
 
-    user_image = g.user.get_meta('user_image')
-    if user_image and os.path.isfile(user_image):
-        os.remove(user_image)
+    image_file = g.user.get_meta('image_file')
+    if image_file and os.path.isfile(image_file):
+        os.remove(image_file)
 
-    image = Image.open(uploaded_file['file_path'])
+    image = Image.open(uploaded_file['file'])
     image.thumbnail(IMAGES_SIZE, Image.ANTIALIAS)
-    image.save(uploaded_file['file_path'], quality=IMAGES_QUALITY)
+    image.save(uploaded_file['file'], quality=IMAGES_QUALITY)
 
-    user_meta = {'user_image': uploaded_file['file_path']}
+    user_meta = {
+        'image_file': uploaded_file['file'],
+        'image_url': uploaded_file['url'],
+    }
     update(g.user, meta=user_meta)
-    return {}, {}, 200
+    return {
+        'image_file': uploaded_file['file'],
+        'image_url': uploaded_file['url'],
+    }, {}, 200

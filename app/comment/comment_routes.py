@@ -131,7 +131,8 @@ def comments_list(post_id):
                 'id': upload.id,
                 'created': upload.created,
                 'upload_name': upload.upload_name,
-                'upload_file': upload.upload_file,
+                'upload_dir': upload.upload_dir,
+                'upload_url': upload.upload_url,
                 'upload_mime': upload.upload_mime,
                 'upload_size': upload.upload_size,
                 'user': {
