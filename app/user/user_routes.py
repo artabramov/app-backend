@@ -9,13 +9,19 @@ from app.user.user_handlers import user_exists, user_insert, user_select, user_u
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
+import os
 
 from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.core.user_auth import user_auth
 from app.core.qrcode_handlers import qrcode_make, qrcode_remove
 from flask import g
+from PIL import Image
 
 QRCODE_URI = app.config['QRCODE_URI']
+THUMBNAILS_PATH = app.config['THUMBNAILS_PATH']
+THUMBNAILS_MIMES = app.config['THUMBNAILS_MIMES']
+THUMBNAILS_SIZE =  app.config['THUMBNAILS_SIZE']
+THUMBNAILS_QUALITY =  app.config['THUMBNAILS_QUALITY']
 
 
 @app.route('/user/', methods=['POST'], endpoint='user_register')
@@ -171,32 +177,31 @@ def user_delete(user_id):
 @app_response
 @user_auth
 def user_image():
-    user_file = request.files.getlist('user_file')[0]
+    try:
+        user_file = request.files.getlist('user_file')[0]
+    except:
+        return {}, {'user_file': ['user_file not found']}, 404
+    
     manager = Manager()
     uploaded_files = manager.list() # do not rename this variable
 
-    jobs = []
-    job = Process(target=upload_file, args=(user_file, '/app/images/', ['image/jpeg'], uploaded_files))
-    jobs.append(job)
+    job = Process(target=upload_file, args=(user_file, THUMBNAILS_PATH, THUMBNAILS_MIMES, uploaded_files))
     job.start()
-    
-    for job in jobs:
-        job.join()
+    job.join()
 
     uploaded_file = uploaded_files[0]
-    user_meta = {'user_image': uploaded_file['file_path']}
+    if uploaded_file['file_error']:
+        return {}, {'user_file': [uploaded_file['file_error']]}, 404
+
+    user_thumbnail = g.user.get_meta('user_thumbnail')
+    if user_thumbnail and os.path.isfile(user_thumbnail):
+        os.remove(user_thumbnail)
+
+    image = Image.open(uploaded_file['file_path'])
+    image.thumbnail(THUMBNAILS_SIZE, Image.ANTIALIAS)
+    image.save(uploaded_file['file_path'], quality=THUMBNAILS_QUALITY)
+
+    user_meta = {'user_thumbnail': uploaded_file['file_path']}
     update(g.user, meta=user_meta)
+    return {}, {}, 200
 
-    """
-    uploads, files = [], []
-    for uploaded_file in uploaded_files:
-        files.append({k:uploaded_file[k] for k in uploaded_file if k in ['file_name', 'file_mime', 'file_path', 'file_size', 'file_error']})
-        if not uploaded_file['file_error']:
-            upload = insert(Upload, user_id=g.user.id, comment_id=comment.id, upload_name=uploaded_file['file_name'], upload_file=uploaded_file['file_path'], upload_mime=uploaded_file['file_mime'], upload_size=uploaded_file['file_size'])
-            uploads.append({k:upload.__dict__[k] for k in upload.__dict__ if k in ['id', 'comment_id', 'created', 'upload_name', 'upload_file', 'upload_mime', 'upload_size']})
-    """
-
-    return {
-        'uploads': 'uploads',
-        'files': 'files',
-    }, {}, 200

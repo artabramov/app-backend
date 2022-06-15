@@ -1,6 +1,8 @@
 import os, uuid
-from app import log
+from app import app, log
 from datetime import date
+
+THUMBNAILS_PATH = app.config['THUMBNAILS_PATH']
 
 
 # TODO: make secure filename for DB!
@@ -25,9 +27,13 @@ def upload_file(user_file, upload_path, allowed_mimes, uploaded_files):
         return
 
     try:
-        file_path = os.path.join(upload_path, '%s-%s-%s' % (date.today().year, date.today().month, date.today().day))
-        if not os.path.exists(file_path):
-            os.mkdir(file_path)
+        if upload_path == THUMBNAILS_PATH:
+            file_path = upload_path
+
+        else:
+            file_path = os.path.join(upload_path, '%s-%s-%s' % (date.today().year, date.today().month, date.today().day))
+            if not os.path.exists(file_path):
+                os.mkdir(file_path)
 
         file_ext = user_file.filename.rsplit('.', 1)[1].lower()
         file_name = os.path.join(file_path, str(uuid.uuid4()) + '.' + file_ext)

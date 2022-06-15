@@ -22,7 +22,9 @@ class Config:
     QRCODE_URI = 'http://localhost:8080/qrcodes/%s.png'
     QRCODE_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s' # QR_REF
 
-    USER_IMAGES_PATH = '/app/images/'
-    USER_IMAGES_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+    THUMBNAILS_PATH = '/app/images/'
+    THUMBNAILS_MIMES = ['image/jpeg']
+    THUMBNAILS_SIZE = (320, 240)
+    THUMBNAILS_QUALITY = 90
 
     #UPLOAD_DOCUMENTS_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
