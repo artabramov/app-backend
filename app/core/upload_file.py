@@ -2,7 +2,7 @@ import os, uuid
 from app import app, log
 from datetime import date
 
-IMAGES_BASE_DIR = app.config['APP_BASE_DIR'] + app.config['IMAGES_DIR']
+IMAGES_DIR = app.config['IMAGES_DIR']
 
 
 def upload_file(user_file, base_dir, base_url, allowed_mimes, uploaded_files):
@@ -27,7 +27,7 @@ def upload_file(user_file, base_dir, base_url, allowed_mimes, uploaded_files):
         return
 
     try:
-        if base_dir != IMAGES_BASE_DIR:
+        if base_dir != IMAGES_DIR:
             subdir = '%s-%s-%s' % (date.today().year, date.today().month, date.today().day)
             base_dir = os.path.join(base_dir, subdir)
             base_url = base_url + subdir + '/'

@@ -15,9 +15,9 @@ from app.core.qrcode_handlers import qrcode_make, qrcode_remove
 from flask import g
 from PIL import Image
 
-QRCODES_BASE_URL = app.config['APP_BASE_URL'] + app.config['QRCODES_DIR']
-IMAGES_BASE_DIR = app.config['APP_BASE_DIR'] + app.config['IMAGES_DIR']
-IMAGES_BASE_URL = app.config['APP_BASE_URL'] + app.config['IMAGES_DIR']
+QRCODES_URL = app.config['QRCODES_URL']
+IMAGES_DIR = app.config['IMAGES_DIR']
+IMAGES_URL = app.config['IMAGES_URL']
 IMAGES_MIMES = app.config['IMAGES_MIMES']
 IMAGES_SIZE =  app.config['IMAGES_SIZE']
 IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
@@ -39,7 +39,7 @@ def user_register():
 
     return {
         'totp_key': user.totp_key, 
-        'totp_qrcode': QRCODES_BASE_URL + user.totp_key + '.png'
+        'totp_qrcode': QRCODES_URL + user.totp_key + '.png'
     }, {}, 201
 
 
@@ -184,7 +184,7 @@ def user_image():
     manager = Manager()
     uploaded_files = manager.list() # do not rename this variable
 
-    job = Process(target=upload_file, args=(user_file, IMAGES_BASE_DIR, IMAGES_BASE_URL, IMAGES_MIMES, uploaded_files))
+    job = Process(target=upload_file, args=(user_file, IMAGES_DIR, IMAGES_URL, IMAGES_MIMES, uploaded_files))
     job.start()
     job.join()
 

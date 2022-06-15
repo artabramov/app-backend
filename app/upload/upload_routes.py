@@ -8,8 +8,8 @@ from app.comment.comment import Comment
 from app.upload.upload import Upload
 from multiprocessing import Process, Manager
 
-UPLOADS_BASE_DIR = app.config['APP_BASE_DIR'] + app.config['UPLOADS_DIR']
-UPLOADS_BASE_URL = app.config['APP_BASE_URL'] + app.config['UPLOADS_DIR']
+UPLOADS_DIR = app.config['UPLOADS_DIR']
+UPLOADS_URL = app.config['UPLOADS_URL']
 UPLOADS_MIMES = app.config['UPLOADS_MIMES']
 
 
@@ -37,7 +37,7 @@ def uploads_insert():
 
     jobs = []
     for user_file in user_files:
-        job = Process(target=upload_file, args=(user_file, UPLOADS_BASE_DIR, UPLOADS_BASE_URL, UPLOADS_MIMES, uploaded_files))
+        job = Process(target=upload_file, args=(user_file, UPLOADS_DIR, UPLOADS_URL, UPLOADS_MIMES, uploaded_files))
         jobs.append(job)
         job.start()
     

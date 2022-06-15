@@ -15,16 +15,19 @@ class Config:
     CACHE_REDIS_PORT = 6379
     CACHE_REDIS_PASSWORD = ''
 
-    APP_BASE_DIR = '/app/'
-    APP_BASE_URL = 'http://localhost:8080/'
+    APP_DIR = '/app/'
+    APP_URL = 'http://localhost:8080/'
 
-    UPLOADS_DIR = 'uploads/'
+    UPLOADS_DIR = APP_DIR + 'uploads/'
+    UPLOADS_URL = APP_URL + 'uploads/'
     UPLOADS_MIMES = ['image/jpeg']
 
-    QRCODES_DIR = 'qrcodes/'
+    QRCODES_DIR = APP_DIR + 'qrcodes/'
+    QRCODES_URL = APP_URL + 'qrcodes/'
     QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
 
-    IMAGES_DIR = 'images/'
+    IMAGES_DIR = APP_DIR + 'images/'
+    IMAGES_URL = APP_URL + 'images/'
     IMAGES_MIMES = ['image/jpeg']
     IMAGES_SIZE = (320, 240)
     IMAGES_QUALITY = 90
