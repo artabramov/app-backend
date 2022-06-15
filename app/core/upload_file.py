@@ -2,16 +2,17 @@ import os, uuid
 from app import app, log
 from datetime import date
 
+APP_DIR = app.config['APP_DIR']
+APP_URL = app.config['APP_URL']
 IMAGES_DIR = app.config['IMAGES_DIR']
 
 
-def upload_file(user_file, base_dir, base_url, allowed_mimes, uploaded_files):
+def upload_file(user_file, upload_dir, allowed_mimes, uploaded_files):
 
     file_data = {
         'name': user_file.filename,
         'mime': user_file.mimetype,
         'file': '',
-        'url': '',
         'size': 0,
         'error': '',
     }
@@ -27,22 +28,19 @@ def upload_file(user_file, base_dir, base_url, allowed_mimes, uploaded_files):
         return
 
     try:
-        if base_dir != IMAGES_DIR:
-            subdir = '%s-%s-%s' % (date.today().year, date.today().month, date.today().day)
-            base_dir = os.path.join(base_dir, subdir)
-            base_url = base_url + subdir + '/'
-            if not os.path.exists(base_dir):
-                os.mkdir(base_dir)
+        if upload_dir != IMAGES_DIR:
+            file_dir = '%s-%s-%s' % (date.today().year, date.today().month, date.today().day)
+            upload_dir = os.path.join(upload_dir, file_dir)
+            if not os.path.exists(upload_dir):
+                os.mkdir(upload_dir)
 
         file_ext = user_file.filename.rsplit('.', 1)[1].lower()
         file_name = str(uuid.uuid4()) + '.' + file_ext
         
-        upload_file = os.path.join(base_dir, file_name)
-        upload_url = os.path.join(base_url, file_name)
+        upload_file = os.path.join(upload_dir, file_name)
 
         user_file.save(upload_file)
-        file_data['file'] = upload_file
-        file_data['url'] = upload_url
+        file_data['file'] = os.path.join(file_dir, file_name)
         file_data['size'] = os.path.getsize(upload_file)
 
     except IOError as e:

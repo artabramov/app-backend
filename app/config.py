@@ -18,8 +18,7 @@ class Config:
     APP_DIR = '/app/'
     APP_URL = 'http://localhost:8080/'
 
-    UPLOADS_DIR = APP_DIR + 'uploads/'
-    UPLOADS_URL = APP_URL + 'uploads/'
+    UPLOADS_DIR = 'uploads/'
     UPLOADS_MIMES = ['image/jpeg']
 
     QRCODES_DIR = APP_DIR + 'qrcodes/'

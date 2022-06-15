@@ -8,7 +8,6 @@ class UploadSchema(Schema):
     comment_id = fields.Int(validate=validate.Range(min=1))
     upload_name = fields.Str(validate=validate.Length(min=1, max=255))
     upload_file = fields.Str(validate=validate.Length(min=1, max=255))
-    upload_url = fields.Str(validate=validate.Length(min=1, max=255))
     upload_mime = fields.Str(validate=validate.Length(min=1, max=255))
     upload_size = fields.Int(validate=validate.Range(min=1))
 
@@ -19,16 +18,14 @@ class Upload(BasicModel):
     comment_id = db.Column(db.BigInteger, db.ForeignKey('comments.id'), index=True)
     upload_name = db.Column(db.String(255), nullable=False, index=True)
     upload_file = db.Column(db.String(255), nullable=False, index=True, unique=True)
-    upload_url = db.Column(db.String(255), nullable=False, index=True, unique=True)
     upload_mime = db.Column(db.String(255), nullable=False, index=True)
     upload_size = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, user_id, comment_id, upload_name, upload_file, upload_url, upload_mime, upload_size):
+    def __init__(self, user_id, comment_id, upload_name, upload_file, upload_mime, upload_size):
         self.user_id = user_id
         self.comment_id = comment_id
         self.upload_name = upload_name
         self.upload_file = upload_file
-        self.upload_url = upload_url
         self.upload_mime = upload_mime
         self.upload_size = upload_size
 
@@ -40,7 +37,6 @@ def before_insert_upload(mapper, connect, upload):
         'comment_id': upload.comment_id,
         'upload_name': upload.upload_name,
         'upload_file': upload.upload_file,
-        'upload_url': upload.upload_url,
         'upload_mime': upload.upload_mime,
         'upload_size': upload.upload_size,
     })
