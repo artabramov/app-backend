@@ -3,7 +3,7 @@ from app import app, log
 from multiprocessing import Process
 from multiprocessing import Manager
 from app.core.app_response import app_response
-from app.core.upload_file import upload_file
+from app.upload.upload_async import upload_async
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
@@ -184,7 +184,7 @@ def user_image():
     manager = Manager()
     uploaded_files = manager.list() # do not rename this variable
 
-    job = Process(target=upload_file, args=(user_file, IMAGES_DIR, IMAGES_URL, IMAGES_MIMES, uploaded_files))
+    job = Process(target=upload_async, args=(user_file, IMAGES_DIR, IMAGES_URL, IMAGES_MIMES, uploaded_files))
     job.start()
     job.join()
 
