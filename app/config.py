@@ -22,14 +22,16 @@ class Config:
     UPLOADS_LINK = 'http://localhost:8080/uploads/'
     UPLOADS_MIMES = ['image/jpeg']
 
-    QRCODES_DIR = 'qrcodes/'
-    QRCODES_URL = 'qrcodes/'
-    QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
-
-    IMAGES_DIR = 'images/'
-    IMAGES_URL = 'images/'
+    IMAGES_PATH = '/app/images/'
+    IMAGES_LINK = 'http://localhost:8080/images/'
     IMAGES_MIMES = ['image/jpeg']
     IMAGES_SIZE = (320, 240)
     IMAGES_QUALITY = 90
+
+    QRCODES_PATH = '/app/qrcodes/'
+    QRCODES_LINK = 'http://localhost:8080/qrcodes/'
+    QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
+
+
 
     #UPLOAD_DOCUMENTS_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])

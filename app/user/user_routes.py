@@ -1,13 +1,10 @@
 from flask import request
 from app import app, log
-from multiprocessing import Process
-from multiprocessing import Manager
 from app.core.app_response import app_response
-from app.upload.upload_async import upload_async
 from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
 from app.user.user import User
 import time
-import os
+import os, uuid
 
 from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.core.user_auth import user_auth
@@ -15,9 +12,10 @@ from app.core.qrcode_handlers import qrcode_make, qrcode_remove
 from flask import g
 from PIL import Image
 
-QRCODES_URL = app.config['QRCODES_URL']
-IMAGES_DIR = app.config['IMAGES_DIR']
-IMAGES_URL = app.config['IMAGES_URL']
+QRCODES_LINK = app.config['QRCODES_LINK']
+
+IMAGES_PATH = app.config['IMAGES_PATH']
+IMAGES_LINK = app.config['IMAGES_LINK']
 IMAGES_MIMES = app.config['IMAGES_MIMES']
 IMAGES_SIZE =  app.config['IMAGES_SIZE']
 IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
@@ -39,7 +37,7 @@ def user_register():
 
     return {
         'totp_key': user.totp_key, 
-        'totp_qrcode': QRCODES_URL + user.totp_key + '.png'
+        'totp_qrcode': QRCODES_LINK + user.totp_key + '.png'
     }, {}, 201
 
 
@@ -180,32 +178,33 @@ def user_image():
         user_file = request.files.getlist('user_file')[0]
     except:
         return {}, {'user_file': ['user_file not found']}, 404
-    
-    manager = Manager()
-    uploaded_files = manager.list() # do not rename this variable
 
-    job = Process(target=upload_async, args=(user_file, IMAGES_DIR, IMAGES_URL, IMAGES_MIMES, uploaded_files))
-    job.start()
-    job.join()
+    if not user_file or not user_file.filename:
+        return {}, {'user_file': ['user_file not found'], }, 404
 
-    uploaded_file = uploaded_files[0]
-    if uploaded_file['error']:
-        return {}, {'user_file': [uploaded_file['error']]}, 404
+    if user_file.mimetype not in IMAGES_MIMES:
+        return {}, {'user_file': ['File mimetype is incorrect'], }, 404
 
-    image_file = g.user.get_meta('image_file')
-    if image_file and os.path.isfile(image_file):
-        os.remove(image_file)
+    file_ext = user_file.filename.rsplit('.', 1)[1].lower()
+    file_name = str(uuid.uuid4()) + '.' + file_ext
+    file_path = os.path.join(IMAGES_PATH, file_name)
+    file_link = IMAGES_LINK + file_name
+    user_file.save(file_path)
 
-    image = Image.open(uploaded_file['file'])
+    image_path = g.user.get_meta('image_path')
+    if image_path and os.path.isfile(image_path):
+        os.remove(image_path)
+
+    image = Image.open(file_path)
     image.thumbnail(IMAGES_SIZE, Image.ANTIALIAS)
-    image.save(uploaded_file['file'], quality=IMAGES_QUALITY)
+    image.save(file_path, quality=IMAGES_QUALITY)
 
     user_meta = {
-        'image_file': uploaded_file['file'],
-        'image_url': uploaded_file['url'],
+        'image_path': file_path,
+        'image_link': file_link,
     }
     update(g.user, meta=user_meta)
+
     return {
-        'image_file': uploaded_file['file'],
-        'image_url': uploaded_file['url'],
-    }, {}, 200
+        'image_link': file_link,
+    }, {}, 200    

@@ -28,37 +28,40 @@ def uploads_insert():
         return {}, {'comment_id': ['comment not found or deleted'], }, 404
 
     user_files = request.files.getlist('user_files')
-    """
-    manager = Manager()
-    uploaded_files = manager.list() # do not rename variable "uploaded_files"
 
-    jobs = []
-    for user_file in user_files:
-        job = Process(target=upload_async, args=(user_file, uploaded_files))
-        jobs.append(job)
-        job.start()
-    
-    for job in jobs:
-        job.join()
-
-    uploads, files = [], []
-    for uploaded_file in uploaded_files:
-        files.append({k:uploaded_file[k] for k in uploaded_file if k in ['name', 'mime', 'path', 'link', 'size', 'error']})
-        if not uploaded_file['error']:
-            upload = insert(Upload, user_id=g.user.id, comment_id=comment.id, upload_name=uploaded_file['name'], upload_path=uploaded_file['path'], upload_link=uploaded_file['link'], upload_mime=uploaded_file['mime'], upload_size=uploaded_file['size'])
-            uploads.append({k:upload.__dict__[k] for k in upload.__dict__ if k in ['id', 'comment_id', 'created', 'upload_name', 'upload_path', 'upload_link', 'upload_mime', 'upload_size']})
-    """
 
     uploaded_files = upload_files(user_files)
-    files = []
+    uploads, errors = [], {}
     for uploaded_file in uploaded_files:
-        files.append({k:uploaded_file[k] for k in uploaded_file if k in ['name', 'mime', 'path', 'link', 'size', 'error']})
         if not uploaded_file['error']:
-            upload = insert(Upload, user_id=g.user.id, comment_id=comment.id, upload_name=uploaded_file['name'], upload_path=uploaded_file['path'], upload_link=uploaded_file['link'], upload_mime=uploaded_file['mime'], upload_size=uploaded_file['size'])
+            upload = insert(
+                Upload, 
+                user_id=g.user.id, 
+                comment_id=comment.id, 
+                upload_name=uploaded_file['name'], 
+                upload_path=uploaded_file['path'], 
+                upload_link=uploaded_file['link'], 
+                upload_mime=uploaded_file['mime'], 
+                upload_size=uploaded_file['size'],
+            )
+
+            uploads.append({k:upload.__dict__[k] for k in upload.__dict__ if k in [
+                'id', 
+                'comment_id', 
+                'created', 
+                'upload_name', 
+                'upload_path', 
+                'upload_link', 
+                'upload_mime', 
+                'upload_size',
+            ]})
+        
+        else:
+            errors[uploaded_file['name']] = [uploaded_file['error']]
 
     return {
-        'files': files,
-    }, {}, 200
+        'uploads': uploads,
+    }, errors, 200
 
 
 @app.route('/upload/<int:upload_id>', methods=['PUT'], endpoint='upload_update')
