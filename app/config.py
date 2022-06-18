@@ -15,8 +15,8 @@ class Config:
     CACHE_REDIS_PORT = 6379
     CACHE_REDIS_PASSWORD = ''
 
-    #APP_PATH = '/app/'
-    #APP_LINK = 'http://localhost:8080/'
+    APP_PATH = '/app/'
+    APP_LINK = 'http://localhost:8080/'
 
     UPLOADS_PATH = '/app/uploads/'
     UPLOADS_LINK = 'http://localhost:8080/uploads/'
@@ -32,6 +32,11 @@ class Config:
     QRCODES_LINK = 'http://localhost:8080/qrcodes/'
     QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
 
+    USER_PASS_HASH_SALT = 'abcd'
+    USER_PASS_ATTEMPTS_LIMIT = 5
+    USER_PASS_SUSPEND_TIME = 30
+    USER_TOTP_ATTEMPTS_LIMIT = 5
+    USER_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
 
 
-    #UPLOAD_DOCUMENTS_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+

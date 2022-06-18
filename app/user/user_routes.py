@@ -1,16 +1,17 @@
-from flask import request
-from app import app, log
+import time, os, uuid
+from flask import request, g
+from PIL import Image
+from app import app
 from app.core.app_response import app_response
-from app.user.user import PASS_ATTEMPTS_LIMIT, PASS_SUSPEND_TIME, TOTP_ATTEMPTS_LIMIT, TOKEN_EXPIRATION_TIME
-from app.user.user import User
-import time
-import os, uuid
-
 from app.core.basic_handlers import insert, update, delete, select, select_all
 from app.core.user_auth import user_auth
 from app.core.qrcode_handlers import qrcode_make, qrcode_remove
-from flask import g
-from PIL import Image
+from app.user.user import User, UserRole
+
+USER_PASS_ATTEMPTS_LIMIT = app.config['USER_PASS_ATTEMPTS_LIMIT']
+USER_PASS_SUSPEND_TIME = app.config['USER_PASS_SUSPEND_TIME']
+USER_TOTP_ATTEMPTS_LIMIT = app.config['USER_TOTP_ATTEMPTS_LIMIT']
+USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
 
 QRCODES_LINK = app.config['QRCODES_LINK']
 
@@ -27,12 +28,8 @@ def user_register():
     user_login = request.args.get('user_login', '').lower()
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_meta = {
-        'remote_addr': request.remote_addr,
-        'user_agent': request.headers.get('User-Agent'),
-    }
 
-    user = insert(User, user_login=user_login, user_name=user_name, user_pass=user_pass, meta=user_meta)
+    user = insert(User, user_login=user_login, user_name=user_name, user_pass=user_pass)
     qrcode_make(user.totp_key, user.user_login)
 
     return {
@@ -51,12 +48,12 @@ def user_signin():
     if not user:
         return {}, {'user_login': ['user not found or deleted'], }, 404
 
-    elif user.totp_attempts >= TOTP_ATTEMPTS_LIMIT:
+    elif user.totp_attempts >= USER_TOTP_ATTEMPTS_LIMIT:
         return {}, {'user_totp': ['user_totp attempts are over'], }, 406
 
     elif user_totp == user.user_totp:
         qrcode_remove(user.totp_key)
-        token_expires = time.time() + TOKEN_EXPIRATION_TIME
+        token_expires = time.time() + USER_TOKEN_EXPIRATION_TIME
         update(user, totp_attempts=0, token_expires=token_expires)
         return {'user_token': user.user_token}, {}, 200
 
@@ -96,9 +93,9 @@ def user_restore():
     else:
         pass_attempts = user.pass_attempts + 1
         pass_suspended = 0
-        if pass_attempts >= PASS_ATTEMPTS_LIMIT:
+        if pass_attempts >= USER_PASS_ATTEMPTS_LIMIT:
             pass_attempts = 0
-            pass_suspended = time.time() + PASS_SUSPEND_TIME
+            pass_suspended = time.time() + USER_PASS_SUSPEND_TIME
 
         update(user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
         return {}, {'user_pass': ['user_pass is incorrect'], }, 406
@@ -113,9 +110,12 @@ def user_select(user_id):
     if user:
         return {'user': {
             'id': user.id,
-            'is_deleted': user.is_deleted,
+            'created': user.created,
+            #'deleted': user.deleted,
+            'user_role': user.user_role.name,
             'user_name': user.user_name,
-            'meta': {meta.meta_key: meta.meta_value for meta in user.meta}    
+            #'user_image': user.get_meta('image_link') if user.has_meta('image_link') else '',
+            'meta': {meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
         }}, {}, 200
 
     else:
@@ -208,3 +208,24 @@ def user_image():
     return {
         'image_link': file_link,
     }, {}, 200    
+
+
+@app.route('/users/<int:offset>', methods=['GET'], endpoint='users_list')
+@app_response
+@user_auth
+def users_list(offset):
+    """ Users list """
+    if not g.user.can_read:
+        return {}, {'user_token': ['user_token must have read permissions'], }, 406
+
+    users = select_all(User, deleted=0)
+
+    return {'users': 
+        [{
+            'id': user.id,
+            'created': user.created,
+            'user_role': user.user_role.name,
+            'user_name': user.user_name,
+            'meta': {meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
+        } for user in users]
+    }, {}, 200

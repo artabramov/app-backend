@@ -1,4 +1,4 @@
-from app import db
+from app import app, db
 from app.core.basic_model import BasicModel
 from app.core.meta_mixin import MetaMixin
 import random, string
@@ -8,14 +8,8 @@ from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
 from app.core.enum_mixin import EnumMixin
 
-PASS_HASH_SALT = 'abcd'
-PASS_ATTEMPTS_LIMIT = 5
-PASS_SUSPEND_TIME = 30
-
-TOTP_KEY_LENGTH = 16
-TOTP_ATTEMPTS_LIMIT = 5
-
-TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 7
+USER_PASS_HASH_SALT = app.config['USER_PASS_HASH_SALT']
+USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
 
 
 class UserRole(EnumMixin):
@@ -62,7 +56,7 @@ class User(BasicModel, MetaMixin):
         self.totp_key = self.generate_totp_key()
         self.totp_attempts = 0
         self.token_signature = self.generate_token_signature()
-        self.token_expires = time.time() + TOKEN_EXPIRATION_TIME
+        self.token_expires = time.time() + USER_TOKEN_EXPIRATION_TIME
 
     @property
     def user_pass(self):
@@ -75,7 +69,7 @@ class User(BasicModel, MetaMixin):
 
     @staticmethod
     def get_pass_hash(value):
-        encoded_value = (value + PASS_HASH_SALT).encode()
+        encoded_value = (value + USER_PASS_HASH_SALT).encode()
         hash_obj = hashlib.sha512(encoded_value)
         return hash_obj.hexdigest()
 
