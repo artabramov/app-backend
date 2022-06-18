@@ -21,7 +21,7 @@ class Volume(BasicModel, MetaMixin):
     __tablename__ = 'volumes'
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     volume_title = db.Column(db.String(80), nullable=False)
-    volume_currency = db.Column(db.Enum(VolumeCurrency), nullable=False, default='USD')
+    volume_currency = db.Column(db.Enum(VolumeCurrency), nullable=False)
     volume_sum = db.Column(db.Numeric(), nullable=False, default=0)
     posts_count = db.Column(db.BigInteger, nullable=False, default=0)
 
@@ -33,12 +33,18 @@ class Volume(BasicModel, MetaMixin):
         self.volume_title = volume_title
         self.volume_currency = volume_currency
 
+    def __setattr__(self, name, value):
+        if name == 'volume_currency':
+            super().__setattr__('volume_currency', VolumeCurrency.get_obj(volume_currency=value))
+        else:
+            super().__setattr__(name, value)
+
 
 @db.event.listens_for(Volume, 'before_insert')
 def before_insert_volume(mapper, connect, volume):
     VolumeSchema().load({
         'volume_title': volume.volume_title,
-        'volume_currency': VolumeCurrency.get_value(volume.volume_currency),
+        'volume_currency': volume.volume_currency,
     })
 
 
@@ -46,5 +52,5 @@ def before_insert_volume(mapper, connect, volume):
 def before_update_volume(mapper, connect, volume):
     VolumeSchema().load({
         'volume_title': volume.volume_title,
-        'volume_currency': VolumeCurrency.get_value(volume.volume_currency),
+        'volume_currency': volume.volume_currency,
     })

@@ -3,7 +3,7 @@ from flask import request, g
 from PIL import Image
 from app import app
 from app.core.app_response import app_response
-from app.core.basic_handlers import insert, update, delete, select, select_all
+from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.core.user_auth import user_auth
 from app.core.qrcode_handlers import qrcode_make, qrcode_remove
 from app.user.user import User, UserRole
@@ -12,6 +12,7 @@ USER_PASS_ATTEMPTS_LIMIT = app.config['USER_PASS_ATTEMPTS_LIMIT']
 USER_PASS_SUSPEND_TIME = app.config['USER_PASS_SUSPEND_TIME']
 USER_TOTP_ATTEMPTS_LIMIT = app.config['USER_TOTP_ATTEMPTS_LIMIT']
 USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
+USER_SELECT_LIMIT = app.config['USER_SELECT_LIMIT']
 
 QRCODES_LINK = app.config['QRCODES_LINK']
 
@@ -111,10 +112,8 @@ def user_select(user_id):
         return {'user': {
             'id': user.id,
             'created': user.created,
-            #'deleted': user.deleted,
             'user_role': user.user_role.name,
             'user_name': user.user_name,
-            #'user_image': user.get_meta('image_link') if user.has_meta('image_link') else '',
             'meta': {meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
         }}, {}, 200
 
@@ -218,14 +217,17 @@ def users_list(offset):
     if not g.user.can_read:
         return {}, {'user_token': ['user_token must have read permissions'], }, 406
 
-    users = select_all(User, deleted=0)
+    users = select_all(User, deleted=0, offset=offset, limit=USER_SELECT_LIMIT)
+    users_count = select_count(User, deleted=0)
 
-    return {'users': 
-        [{
+    return {
+        'users': [{
             'id': user.id,
             'created': user.created,
             'user_role': user.user_role.name,
             'user_name': user.user_name,
-            'meta': {meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
-        } for user in users]
+            'meta': {
+                meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
+        } for user in users],
+        'users_count': users_count,
     }, {}, 200

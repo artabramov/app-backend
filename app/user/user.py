@@ -60,7 +60,7 @@ class User(BasicModel, MetaMixin):
 
     @property
     def user_pass(self):
-        return self._user_pass if hasattr(self, '_user_pass') else None
+        return self._user_pass if hasattr(self, '_user_pass') else None # TODO: WTF???
 
     @user_pass.setter
     def user_pass(self, value):
@@ -123,7 +123,6 @@ class User(BasicModel, MetaMixin):
     @property
     def can_read(self):
         return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
-
 
 
 @db.event.listens_for(User, 'before_insert')
