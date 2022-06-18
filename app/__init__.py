@@ -1,8 +1,8 @@
 from .config import Config
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import event, DDL
 from app.core.app_logger import create_logger
+from app.core.app_errors import create_errors
 from flask_caching import Cache
 
 
@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 log = create_logger(app)
+err = create_errors()
 
 db = SQLAlchemy(app)
 

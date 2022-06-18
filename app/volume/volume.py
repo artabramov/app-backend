@@ -23,7 +23,6 @@ class Volume(BasicModel, MetaMixin):
     volume_title = db.Column(db.String(80), nullable=False)
     volume_currency = db.Column(db.Enum(VolumeCurrency), nullable=False)
     volume_sum = db.Column(db.Numeric(), nullable=False, default=0)
-    posts_count = db.Column(db.BigInteger, nullable=False, default=0)
 
     meta = db.relationship('VolumeMeta', backref='volume', lazy='subquery')
     posts = db.relationship('Post', backref='volume', lazy='noload')

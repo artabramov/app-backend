@@ -1,7 +1,7 @@
 import time, os, uuid
 from flask import request, g
 from PIL import Image
-from app import app
+from app import app, err
 from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.core.user_auth import user_auth
@@ -47,10 +47,10 @@ def user_signin():
 
     user = select(User, user_login=user_login, deleted=0)
     if not user:
-        return {}, {'user_login': ['user not found or deleted'], }, 404
+        return {}, {'user_login': [err.NOT_FOUND], }, 400
 
     elif user.totp_attempts >= USER_TOTP_ATTEMPTS_LIMIT:
-        return {}, {'user_totp': ['user_totp attempts are over'], }, 406
+        return {}, {'user_totp': [err.NOT_LEFT], }, 400
 
     elif user_totp == user.user_totp:
         qrcode_remove(user.totp_key)
@@ -61,7 +61,7 @@ def user_signin():
     else:
         totp_attempts = user.totp_attempts + 1
         update(user, totp_attempts=totp_attempts)
-        return {}, {'user_totp': ['user_totp is incorrect'], }, 404
+        return {}, {'user_totp': [err.IS_INCORRECT], }, 400
 
 
 @app.route('/token/', methods=['PUT'], endpoint='user_signout')
@@ -82,10 +82,10 @@ def user_restore():
 
     user = select(User, user_login=user_login, deleted=0)
     if not user:
-        return {}, {'user_login': ['user_login not found'], }, 404
+        return {}, {'user_login': [err.NOT_FOUND], }, 400
 
     elif user.pass_suspended > time.time():
-        return {}, {'user_pass': ['user_pass temporarily suspended'], }, 406
+        return {}, {'user_pass': [err.IS_SUSPENDED], }, 400
 
     elif user.pass_hash == pass_hash:
         update(user, pass_attempts=0, pass_suspended=0, totp_attempts=0)
@@ -99,7 +99,7 @@ def user_restore():
             pass_suspended = time.time() + USER_PASS_SUSPEND_TIME
 
         update(user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
-        return {}, {'user_pass': ['user_pass is incorrect'], }, 406
+        return {}, {'user_pass': [err.IS_INCORRECT], }, 400
 
 
 @app.route('/user/<int:user_id>', methods=['GET'], endpoint='user_select')
@@ -112,71 +112,77 @@ def user_select(user_id):
         return {'user': user.to_dict()}, {}, 200
 
     else:
-        return {}, {'user_id': ['user_id not found']}, 404
+        return {}, {'user_id': [err.NOT_FOUND]}, 404
 
 
 @app.route('/user/<int:user_id>', methods=['PUT'], endpoint='user_update')
 @app_response
 @user_auth
 def user_update(user_id):
-    user_name = request.args.get('user_name', '')
-    user_role = request.args.get('user_role', '')
-    user_pass = request.args.get('user_pass', '')
+    if not g.user.can_read:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     user = select(User, id=user_id)
-
     if not user:
-        return {}, {'user_id': ['user_id not found']}, 404
+        return {}, {'user_id': [err.NOT_FOUND]}, 404
 
-    elif g.user.id == user.id or g.user.can_admin:
-        user_data = {}
-        if user_name:
-            user_data['user_name'] = user_name
+    elif user.id != g.user.id and not g.user.can_admin:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-        if user_pass:
-            user_data['user_pass'] = user_pass
+    user_name = request.args.get('user_name', '')
+    user_pass = request.args.get('user_pass', '')
+    user_role = request.args.get('user_role', '')
 
-        if user_role and g.user.can_admin and g.user.id != user.id:
+    user_data = {}
+    if user_name:
+        user_data['user_name'] = user_name
+
+    if user_pass:
+        user_data['user_pass'] = user_pass
+
+    if user_role:
+        if not g.user.can_admin or g.user.id == user.id:
+            return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
+        else:
             user_data['user_role'] = user_role
 
-        update(user, **user_data)
-        return {'user': user.to_dict()}, {}, 200
-
-    else:
-        return {}, {'user_id': ['user_id update forbidden'], }, 403
+    update(user, **user_data)
+    return {'user': user.to_dict()}, {}, 200
 
 
 @app.route('/user/<int:user_id>', methods=['DELETE'], endpoint='user_delete')
 @app_response
 @user_auth
 def user_delete(user_id):
+    if not g.user.can_admin:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
     user = select(User, id=user_id)
-
     if not user:
-        return {}, {'user_id': ['user_id not found']}, 404
+        return {}, {'user_id': [err.NOT_FOUND]}, 404
 
-    elif g.user.id != user.id and g.user.can_admin:
-        delete(user)
-        return {}, {}, 200
-
-    else:
-        return {}, {'user_id': ['user_id delete forbidden'], }, 403
+    delete(user)
+    return {}, {}, 200
 
 
 @app.route('/image/', methods=['POST'], endpoint='user_image')
 @app_response
 @user_auth
 def user_image():
+    if not g.user.can_read:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
     try:
         user_file = request.files.getlist('user_file')[0]
     except:
-        return {}, {'user_file': ['user_file not found']}, 404
+        return {}, {'user_file': [err.NOT_FOUND]}, 400
 
     if not user_file or not user_file.filename:
-        return {}, {'user_file': ['user_file not found'], }, 404
+        return {}, {'user_file': [err.NOT_FOUND], }, 400
 
     if user_file.mimetype not in IMAGES_MIMES:
-        return {}, {'user_file': ['File mimetype is incorrect'], }, 404
+        return {}, {'user_file': [err.IS_INCORRECT], }, 400
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
     file_name = str(uuid.uuid4()) + '.' + file_ext
@@ -200,16 +206,15 @@ def user_image():
 
     return {
         'image_link': file_link,
-    }, {}, 200    
+    }, {}, 201
 
 
 @app.route('/users/<int:offset>', methods=['GET'], endpoint='users_list')
 @app_response
 @user_auth
 def users_list(offset):
-    """ Users list """
     if not g.user.can_read:
-        return {}, {'user_token': ['user_token must have read permissions'], }, 406
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     users = select_all(User, deleted=0, offset=offset, limit=USER_SELECT_LIMIT)
     users_count = select_count(User, deleted=0)
