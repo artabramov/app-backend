@@ -4,10 +4,6 @@ from marshmallow import ValidationError
 
 class EnumMixin(Enum):
     @classmethod
-    def get_value(cls, value):
-        return cls._member_map_[value] if value in cls._member_map_ else value
-
-    @classmethod
     def get_obj(cls, **kwargs):
         key = list(kwargs.keys())[0]
         value = kwargs[key]

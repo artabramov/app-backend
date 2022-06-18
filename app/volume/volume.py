@@ -39,6 +39,15 @@ class Volume(BasicModel, MetaMixin):
         else:
             super().__setattr__(name, value)
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'created': self.created,
+            'volume_currency': self.volume_currency.name,
+            'volume_title': self.volume_title,
+            'volume_sum': self.volume_sum,
+        }
+
 
 @db.event.listens_for(Volume, 'before_insert')
 def before_insert_volume(mapper, connect, volume):

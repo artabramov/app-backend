@@ -58,6 +58,23 @@ class User(BasicModel, MetaMixin):
         self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + USER_TOKEN_EXPIRATION_TIME
 
+    def __setattr__(self, name, value):
+        if name == 'user_role':
+            super().__setattr__('user_role', UserRole.get_obj(user_role=value))
+        else:
+            super().__setattr__(name, value)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'created': self.created,
+            'user_role': self.user_role.name,
+            'user_name': self.user_name,
+            'meta': {
+                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
+            } 
+        }
+
     @property
     def user_pass(self):
         return self._user_pass if hasattr(self, '_user_pass') else None # TODO: WTF???
@@ -131,7 +148,7 @@ def before_insert_user(mapper, connect, user):
         'user_login': user.user_login,
         'user_name': user.user_name,
         'user_pass': user.user_pass,
-        'user_role': UserRole.get_value(user.user_role),
+        'user_role': user.user_role,
     })
 
     if User.query.filter_by(user_login=user.user_login).first():
@@ -142,7 +159,7 @@ def before_insert_user(mapper, connect, user):
 def before_update_user(mapper, connect, user):
     user_data = {
         'user_name': user.user_name,
-        'user_role': UserRole.get_value(user.user_role),
+        'user_role': user.user_role,
     }
 
     if user.user_pass:

@@ -109,13 +109,7 @@ def user_select(user_id):
     user = select(User, id=user_id)
 
     if user:
-        return {'user': {
-            'id': user.id,
-            'created': user.created,
-            'user_role': user.user_role.name,
-            'user_name': user.user_name,
-            'meta': {meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
-        }}, {}, 200
+        return {'user': user.to_dict()}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id not found']}, 404
@@ -146,7 +140,7 @@ def user_update(user_id):
             user_data['user_role'] = user_role
 
         update(user, **user_data)
-        return {}, {}, 200
+        return {'user': user.to_dict()}, {}, 200
 
     else:
         return {}, {'user_id': ['user_id update forbidden'], }, 403
@@ -221,13 +215,6 @@ def users_list(offset):
     users_count = select_count(User, deleted=0)
 
     return {
-        'users': [{
-            'id': user.id,
-            'created': user.created,
-            'user_role': user.user_role.name,
-            'user_name': user.user_name,
-            'meta': {
-                meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']} 
-        } for user in users],
+        'users': [user.to_dict() for user in users],
         'users_count': users_count,
     }, {}, 200

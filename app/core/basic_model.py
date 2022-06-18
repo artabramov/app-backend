@@ -15,3 +15,5 @@ class BasicModel(MetaModel):
     @property
     def is_deleted(self):
         return self.deleted > 0
+
+    # TODO: make ABC method to_dict()

@@ -19,13 +19,7 @@ def volume_insert():
     volume_currency = request.args.get('volume_currency')
 
     volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency)
-    return {'volume': {
-        'id': volume.id,
-        'created': volume.created,
-        'volume_currency': volume.volume_currency.name,
-        'volume_title': volume.volume_title,
-        'volume_sum': volume.volume_sum,
-    }}, {}, 200
+    return {'volume': volume.to_dict()}, {}, 200
 
 
 @app.route('/volume/<int:volume_id>', methods=['PUT'], endpoint='volume_update')
@@ -50,13 +44,7 @@ def volume_update(volume_id):
         volume_data['volume_currency'] = volume_currency
 
     volume = update(volume, **volume_data)
-    return {'volume': {
-        'id': volume.id,
-        'created': volume.created,
-        'volume_currency': volume.volume_currency.name,
-        'volume_title': volume.volume_title,
-        'volume_sum': volume.volume_sum,
-    }}, {}, 200
+    return {'volume': volume.to_dict()}, {}, 200
 
 
 @app.route('/volume/<int:volume_id>', methods=['GET'], endpoint='volume_select')
@@ -68,13 +56,7 @@ def volume_select(volume_id):
 
     volume = select(Volume, id=volume_id)
     if volume:
-        return {'volume': {
-            'id': volume.id,
-            'created': volume.created,
-            'volume_currency': volume.volume_currency.name,
-            'volume_title': volume.volume_title,
-            'volume_sum': volume.volume_sum,
-        }}, {}, 200
+        return {'volume': volume.to_dict()}, {}, 200
 
     else:
         return {}, {'volume_id': ['volume_id not found']}, 404
@@ -106,12 +88,6 @@ def volumes_list(offset):
     volumes_count = select_count(Volume, deleted=0)
 
     return {
-        'volumes': [{
-            'id': volume.id,
-            'created': volume.created,
-            'volume_currency': volume.volume_currency.name,
-            'volume_title': volume.volume_title,
-            'volume_sum': volume.volume_sum,
-        } for volume in volumes],
+        'volumes': [volume.to_dict() for volume in volumes],
         'volumes_count': volumes_count,
     }, {}, 200
