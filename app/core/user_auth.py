@@ -2,7 +2,7 @@ import flask
 from flask import request
 from marshmallow import ValidationError
 from app.core.basic_handlers import select
-from app.user.user import User
+from app.models.user import User
 from app import err
 import time
 
@@ -25,7 +25,7 @@ def user_auth(func):
         if not user:
             raise ValidationError({'user_token': [err.NOT_FOUND]})
 
-        elif user.deleted > 0:
+        elif user.user_status == 'trash':
             raise ValidationError({'user_token': [err.NOT_FOUND]})
             
         elif user.token_signature != token_signature:

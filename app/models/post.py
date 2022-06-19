@@ -1,9 +1,9 @@
 from app import db
-from app.core.basic_model import BasicModel
-from app.mixins.meta_mixin import MetaMixin
 from marshmallow import Schema, fields, validate
 from marshmallow_enum import EnumField
+from app.mixins.meta_mixin import MetaMixin
 from app.mixins.enum_mixin import EnumMixin
+import time
 
 
 class PostStatus(EnumMixin):
@@ -18,8 +18,11 @@ class PostSchema(Schema):
     post_title = fields.Str(validate=validate.Length(min=2, max=255))
 
 
-class Post(BasicModel, MetaMixin):
+class Post(db.Model, MetaMixin):
     __tablename__ = 'posts'
+    id = db.Column(db.BigInteger, primary_key=True)
+    created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
+    updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id'), index=True)
     post_status = db.Column(db.Enum(PostStatus), nullable=False, index=True)
@@ -28,7 +31,7 @@ class Post(BasicModel, MetaMixin):
 
     meta = db.relationship('PostMeta', backref='post', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', lazy='subquery')
-    comments = db.relationship('Comment', backref='post', lazy='noload')
+    #comments = db.relationship('Comment', backref='post', lazy='noload')
 
     def __init__(self, user_id, volume_id, post_status, post_title):
         self.user_id = user_id

@@ -6,7 +6,7 @@ from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.core.user_auth import user_auth
 from app.core.qrcode_handlers import qrcode_make, qrcode_remove
-from app.user.user import User, UserRole
+from app.models.user import User
 
 USER_PASS_ATTEMPTS_LIMIT = app.config['USER_PASS_ATTEMPTS_LIMIT']
 USER_PASS_SUSPEND_TIME = app.config['USER_PASS_SUSPEND_TIME']
@@ -45,7 +45,7 @@ def user_signin():
     user_login = request.args.get('user_login', '').lower()
     user_totp = request.args.get('user_totp', '')
 
-    user = select(User, user_login=user_login, deleted=0)
+    user = select(User, user_login=user_login, user_status=['draft', 'reader', 'editor', 'admin'])
     if not user:
         return {}, {'user_login': [err.NOT_FOUND], }, 400
 
@@ -80,7 +80,7 @@ def user_restore():
     user_pass = request.args.get('user_pass', '')
     pass_hash = User.get_pass_hash(user_login + user_pass)
 
-    user = select(User, user_login=user_login, deleted=0)
+    user = select(User, user_login=user_login, user_status=['draft', 'reader', 'editor', 'admin'])
     if not user:
         return {}, {'user_login': [err.NOT_FOUND], }, 400
 
@@ -131,7 +131,7 @@ def user_update(user_id):
 
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
-    user_role = request.args.get('user_role', '')
+    user_status = request.args.get('user_status', '')
 
     user_data = {}
     if user_name:
@@ -140,29 +140,14 @@ def user_update(user_id):
     if user_pass:
         user_data['user_pass'] = user_pass
 
-    if user_role:
+    if user_status:
         if not g.user.can_admin or g.user.id == user.id:
             return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
         else:
-            user_data['user_role'] = user_role
+            user_data['user_status'] = user_status
 
     update(user, **user_data)
-    return {}, {}, 200
-
-
-@app.route('/user/<int:user_id>', methods=['DELETE'], endpoint='user_delete')
-@app_response
-@user_auth
-def user_delete(user_id):
-    if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
-
-    user = select(User, id=user_id)
-    if not user:
-        return {}, {'user_id': [err.NOT_FOUND]}, 404
-
-    delete(user)
     return {}, {}, 200
 
 
@@ -190,9 +175,10 @@ def user_image():
     file_link = IMAGES_LINK + file_name
     user_file.save(file_path)
 
-    image_path = g.user.get_meta('image_path')
-    if image_path and os.path.isfile(image_path):
-        os.remove(image_path)
+    if g.user.has_meta_key('image_path'):
+        image_path = g.user.get_meta_value('image_path')
+        if os.path.isfile(image_path):
+            os.remove(image_path)
 
     image = Image.open(file_path)
     image.thumbnail(IMAGES_SIZE, Image.ANTIALIAS)
@@ -216,8 +202,8 @@ def users_list(offset):
     if not g.user.can_read:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    users = select_all(User, deleted=0, offset=offset, limit=USER_SELECT_LIMIT)
-    users_count = select_count(User, deleted=0)
+    users = select_all(User, offset=offset, limit=USER_SELECT_LIMIT)
+    users_count = select_count(User)
 
     return {
         'users': [user.to_dict() for user in users],

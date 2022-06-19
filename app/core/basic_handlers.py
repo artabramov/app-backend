@@ -1,5 +1,5 @@
 from app import db, cache
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, inspect
 from sqlalchemy.sql import func
 
 
@@ -21,13 +21,6 @@ def insert(cls, **kwargs):
             db.session.add(tag)
         db.session.flush()
 
-    #if 'uploads' in kwargs:
-    #    for upload_dict in kwargs['uploads']:
-    #        upload = cls.uploads.property.mapper.class_(obj.id, **upload_dict)
-    #        db.session.add(upload)
-    #    db.session.flush()
-
-    #cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
     return obj
 
 
@@ -38,7 +31,8 @@ def select(cls, **kwargs):
         obj = cache.get('%s.%s' % (cls.__tablename__, kwargs['id']))
 
     if not obj:
-        obj = cls.query.filter_by(**kwargs).first()
+        #obj = cls.query.filter_by(**kwargs).first()
+        obj = cls.query.filter(*[getattr(cls, k).in_(v) if isinstance(v, list) else getattr(cls, k) == v for k, v in kwargs.items()]).first()
 
     if obj:
         cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
@@ -52,7 +46,8 @@ def update(obj, **kwargs):
     for key in [x for x in kwargs if x not in ['meta', 'tags']]:
         value = kwargs[key]
         setattr(obj, key, value)
-    db.session.add(obj)
+
+    db.session.merge(obj)
     db.session.flush()
 
     if 'meta' in kwargs:
@@ -69,7 +64,7 @@ def delete(obj):
     cls = obj.__class__
 
     obj.delete()
-    db.session.add(obj)
+    db.session.merge(obj)
     db.session.flush()
 
     cache.delete('%s.%s' % (cls.__tablename__, obj.id))
@@ -128,7 +123,7 @@ def update_meta(obj, meta_data):
 
     for meta_key in meta_data:
         meta_value = meta_data[meta_key]
-        meta = Meta.query.filter_by(**{Meta.parent: obj.id, 'meta_key': meta_key}).first()
+        meta = Meta.query.filter_by(**{Meta._parent: obj.id, 'meta_key': meta_key}).first()
         if meta and meta_value:
             meta.meta_value = meta_value
             meta.deleted = 0
@@ -153,7 +148,7 @@ def update_tags(obj, tags_data):
 
     for tag_value in tags_data:
         tag_value = tag_value.strip().lower()
-        tag = Tag.query.filter_by(**{Tag.parent: obj.id, 'tag_value': tag_value}).first()
+        tag = Tag.query.filter_by(**{Tag._parent: obj.id, 'tag_value': tag_value}).first()
         if tag_value:
             tag = Tag(obj.id, tag_value)
             db.session.add(tag)

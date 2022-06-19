@@ -1,7 +1,6 @@
 from app import db
-from app.core.meta_model import MetaModel
-from marshmallow import ValidationError
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, ValidationError
+import time
 
 
 class UserMetaSchema(Schema):
@@ -10,9 +9,13 @@ class UserMetaSchema(Schema):
     meta_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 
-class UserMeta(MetaModel):
+class UserMeta(db.Model):
     __tablename__ = 'users_meta'
     __table_args__ = (db.UniqueConstraint('user_id', 'meta_key', name='users_meta_ukey'),)
+    _parent = 'user_id'
+    id = db.Column(db.BigInteger, primary_key=True)
+    created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
+    updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     meta_key = db.Column(db.String(40), index=True, nullable=False)
     meta_value = db.Column(db.String(255), nullable=True)
@@ -42,3 +45,4 @@ def before_update_user_meta(mapper, connect, user_meta):
         'meta_key': user_meta.meta_key,
         'meta_value': user_meta.meta_value,
     })
+

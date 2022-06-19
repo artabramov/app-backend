@@ -1,38 +1,41 @@
+from flask import g
 from app import app, db
-from app.core.basic_model import BasicModel
-from app.core.meta_mixin import MetaMixin
-import random, string
-import json
-import base64, hashlib, time, pyotp
+from app.mixins.meta_mixin import MetaMixin
+from app.mixins.enum_mixin import EnumMixin
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
-from app.core.enum_mixin import EnumMixin
-from flask import g
+import random, string, json
+import base64, hashlib, time, pyotp
+
 
 USER_PASS_HASH_SALT = app.config['USER_PASS_HASH_SALT']
 USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
 
 
-class UserRole(EnumMixin):
-    guest = 0
-    reader = 1
-    editor = 2
-    admin = 3
+class UserStatus(EnumMixin):
+    trash = 0
+    draft = 1
+    reader = 2
+    editor = 3
+    admin = 4
 
 
 class UserSchema(Schema):
     user_login = fields.Str(validate=[validate.Length(min=4, max=40), lambda x: x.isalnum()])
-    user_name = fields.Str(validate=validate.Length(min=4, max=80))
-    user_role = EnumField(UserRole, by_value=True)
+    user_name = fields.Str(validate=validate.Length(min=2, max=128))
+    user_status = EnumField(UserStatus, by_value=True)
     user_pass = fields.Str(validate=validate.Length(min=4))
     user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
-class User(BasicModel, MetaMixin):
+class User(db.Model, MetaMixin):
     __tablename__ = 'users'
+    id = db.Column(db.BigInteger, primary_key=True)
+    created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
+    updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_login = db.Column(db.String(40), nullable=False, unique=True)
-    user_name = db.Column(db.String(80), nullable=False)
-    user_role = db.Column(db.Enum(UserRole), nullable=False)
+    user_name = db.Column(db.String(128), nullable=False)
+    user_status = db.Column(db.Enum(UserStatus), nullable=False)
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
@@ -50,7 +53,7 @@ class User(BasicModel, MetaMixin):
     def __init__(self, user_login, user_name, user_pass):
         self.user_login = user_login
         self.user_name = user_name
-        self.user_role = 'guest'
+        self.user_status = 'draft'
         self.user_pass = user_pass
         self.pass_attempts = 0
         self.pass_suspended = 0
@@ -60,8 +63,8 @@ class User(BasicModel, MetaMixin):
         self.token_expires = time.time() + USER_TOKEN_EXPIRATION_TIME
 
     def __setattr__(self, name, value):
-        if name == 'user_role':
-            super().__setattr__('user_role', UserRole.get_obj(user_role=value))
+        if name == 'user_status':
+            super().__setattr__('user_status', UserStatus.get_enum(user_status=value))
         else:
             super().__setattr__(name, value)
 
@@ -69,7 +72,7 @@ class User(BasicModel, MetaMixin):
         user_data = {
             'id': self.id,
             'created': self.created,
-            'user_role': self.user_role.name,
+            'user_status': self.user_status.name,
             'user_name': self.user_name,
             'meta': {
                 meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
@@ -136,15 +139,15 @@ class User(BasicModel, MetaMixin):
 
     @property
     def can_admin(self):
-        return self.user_role == UserRole.admin
+        return self.user_status == UserStatus.admin
 
     @property
     def can_edit(self):
-        return self.user_role in [UserRole.admin, UserRole.editor]
+        return self.user_status in [UserStatus.admin, UserStatus.editor]
 
     @property
     def can_read(self):
-        return self.user_role in [UserRole.admin, UserRole.editor, UserRole.reader]
+        return self.user_status in [UserStatus.admin, UserStatus.editor, UserStatus.reader]
 
 
 @db.event.listens_for(User, 'before_insert')
@@ -153,7 +156,7 @@ def before_insert_user(mapper, connect, user):
         'user_login': user.user_login,
         'user_name': user.user_name,
         'user_pass': user.user_pass,
-        'user_role': user.user_role,
+        'user_status': user.user_status,
     })
 
     if User.query.filter_by(user_login=user.user_login).first():
@@ -164,10 +167,11 @@ def before_insert_user(mapper, connect, user):
 def before_update_user(mapper, connect, user):
     user_data = {
         'user_name': user.user_name,
-        'user_role': user.user_role,
+        'user_status': user.user_status,
     }
 
     if user.user_pass:
         user_data['user_pass'] = user.user_pass
 
     UserSchema().load(user_data)
+
