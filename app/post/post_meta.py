@@ -5,7 +5,6 @@ from marshmallow import Schema, fields, validate
 
 
 class PostMetaSchema(Schema):
-    post_id = fields.Int(validate=validate.Range(min=1))
     meta_key = fields.Str(validate=[validate.Length(min=2, max=40), lambda x: x.replace('_', '').isalnum()])
     meta_value = fields.Str(validate=validate.Length(min=1, max=255))
 
@@ -26,7 +25,6 @@ class PostMeta(MetaModel):
 @db.event.listens_for(PostMeta, 'before_insert')
 def before_insert_post_meta(mapper, connect, post_meta):
     PostMetaSchema().load({
-        'post_id': post_meta.post_id,
         'meta_key': post_meta.meta_key,
         'meta_value': post_meta.meta_value,
     })
@@ -38,7 +36,6 @@ def before_insert_post_meta(mapper, connect, post_meta):
 @db.event.listens_for(PostMeta, 'before_update')
 def before_update_post_meta(mapper, connect, post_meta):
     PostMetaSchema().load({
-        'post_id': post_meta.post_id,
         'meta_key': post_meta.meta_key,
         'meta_value': post_meta.meta_value,
     })

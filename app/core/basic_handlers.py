@@ -8,27 +8,26 @@ def insert(cls, **kwargs):
     db.session.add(obj)
     db.session.flush()
 
-    if 'meta' in kwargs:
+    if 'meta' in kwargs and kwargs['meta']:
         for meta_key in kwargs['meta']:
             meta_value = kwargs['meta'][meta_key]
             meta = cls.meta.property.mapper.class_(obj.id, meta_key, meta_value)
             db.session.add(meta)
         db.session.flush()
 
-    if 'tags' in kwargs:
+    if 'tags' in kwargs and kwargs['tags']:
         for tag_value in kwargs['tags']:
             tag = cls.tags.property.mapper.class_(obj.id, tag_value)
             db.session.add(tag)
         db.session.flush()
 
-    if 'uploads' in kwargs:
-        for upload_dict in kwargs['uploads']:
-            upload = cls.uploads.property.mapper.class_(obj.id, **upload_dict)
-            db.session.add(upload)
-        db.session.flush()
+    #if 'uploads' in kwargs:
+    #    for upload_dict in kwargs['uploads']:
+    #        upload = cls.uploads.property.mapper.class_(obj.id, **upload_dict)
+    #        db.session.add(upload)
+    #    db.session.flush()
 
-
-    cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
+    #cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
     return obj
 
 
@@ -57,12 +56,12 @@ def update(obj, **kwargs):
     db.session.flush()
 
     if 'meta' in kwargs:
-        update_meta(obj, **kwargs)
+        update_meta(obj, kwargs['meta'])
 
     if 'tags' in kwargs:
         update_tags(obj, kwargs['tags'])
 
-    cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
+    cache.delete('%s.%s' % (cls.__tablename__, obj.id))
     return obj
 
 
@@ -123,12 +122,12 @@ def select_count(cls, **kwargs):
     return query.one()[0]
 
 
-def update_meta(obj, **kwargs):
+def update_meta(obj, meta_data):
     cls = obj.__class__
     Meta = cls.meta.property.mapper.class_
 
-    for meta_key in kwargs['meta']:
-        meta_value = kwargs['meta'][meta_key]
+    for meta_key in meta_data:
+        meta_value = meta_data[meta_key]
         meta = Meta.query.filter_by(**{Meta.parent: obj.id, 'meta_key': meta_key}).first()
         if meta and meta_value:
             meta.meta_value = meta_value
@@ -155,9 +154,8 @@ def update_tags(obj, tags_data):
     for tag_value in tags_data:
         tag_value = tag_value.strip().lower()
         tag = Tag.query.filter_by(**{Tag.parent: obj.id, 'tag_value': tag_value}).first()
-        if not tag and tag_value:
+        if tag_value:
             tag = Tag(obj.id, tag_value)
             db.session.add(tag)
 
     db.session.flush()
-    cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)

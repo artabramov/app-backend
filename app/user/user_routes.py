@@ -148,7 +148,7 @@ def user_update(user_id):
             user_data['user_role'] = user_role
 
     update(user, **user_data)
-    return {'user': user.to_dict()}, {}, 200
+    return {}, {}, 200
 
 
 @app.route('/user/<int:user_id>', methods=['DELETE'], endpoint='user_delete')

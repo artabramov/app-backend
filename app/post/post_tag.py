@@ -5,7 +5,6 @@ from marshmallow import Schema, fields, validate
 
 
 class PostTagSchema(Schema):
-    post_id = fields.Int(validate=validate.Range(min=1))
     tag_value = fields.Str(validate=validate.Length(min=1, max=255))
 
 
@@ -19,11 +18,16 @@ class PostTag(TagModel):
         self.post_id = post_id
         self.tag_value = tag_value
 
+    @staticmethod
+    def crop(value):
+        post_tags = value.split(',')
+        post_tags = map(lambda x: x.strip().lower(), post_tags)
+        return post_tags
+
 
 @db.event.listens_for(PostTag, 'before_insert')
 def before_insert_post_tag(mapper, connect, post_tag):
     PostTagSchema().load({
-        'post_id': post_tag.post_id,
         'tag_value': post_tag.tag_value,
     })
 
@@ -34,6 +38,5 @@ def before_insert_post_tag(mapper, connect, post_tag):
 @db.event.listens_for(PostTag, 'before_update')
 def before_update_post_tag(mapper, connect, post_tag):
     PostTagSchema().load({
-        'post_id': post_tag.post_id,
         'tag_value': post_tag.tag_value,
     })

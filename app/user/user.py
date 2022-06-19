@@ -7,6 +7,7 @@ import base64, hashlib, time, pyotp
 from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
 from app.core.enum_mixin import EnumMixin
+from flask import g
 
 USER_PASS_HASH_SALT = app.config['USER_PASS_HASH_SALT']
 USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
@@ -31,7 +32,7 @@ class User(BasicModel, MetaMixin):
     __tablename__ = 'users'
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(80), nullable=False)
-    user_role = db.Column(db.Enum(UserRole), nullable=False, default='guest')
+    user_role = db.Column(db.Enum(UserRole), nullable=False)
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
@@ -65,7 +66,7 @@ class User(BasicModel, MetaMixin):
             super().__setattr__(name, value)
 
     def to_dict(self):
-        return {
+        user_data = {
             'id': self.id,
             'created': self.created,
             'user_role': self.user_role.name,
@@ -74,6 +75,10 @@ class User(BasicModel, MetaMixin):
                 meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
             } 
         }
+        if g.user.can_admin or g.user.id == self.id:
+            user_data['user_login'] = self.user_login
+            
+        return user_data
 
     @property
     def user_pass(self):

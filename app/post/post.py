@@ -14,11 +14,8 @@ class PostStatus(EnumMixin):
 
 
 class PostSchema(Schema):
-    user_id = fields.Int(validate=validate.Range(min=1))
-    volume_id = fields.Int(validate=validate.Range(min=1))
     post_status = EnumField(PostStatus, by_value=True)
-    post_title = fields.Str(validate=validate.Length(min=4, max=255))
-    post_sum = fields.Decimal()
+    post_title = fields.Str(validate=validate.Length(min=2, max=255))
 
 
 class Post(BasicModel, MetaMixin):
@@ -40,13 +37,29 @@ class Post(BasicModel, MetaMixin):
         self.post_title = post_title
         self.post_sum = 0
 
+    def __setattr__(self, name, value):
+        if name == 'post_status':
+            super().__setattr__('post_status', PostStatus.get_obj(post_status=value))
+        else:
+            super().__setattr__(name, value)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'created': self.created,
+            'user_id': self.user_id,
+            'volume_id': self.volume_id,
+            'post_status': self.post_status.name,
+            'post_title': self.post_title,
+            'post_sum': self.post_sum,
+            'tags': [tag.tag_value for tag in self.tags]
+        }
+
 
 @db.event.listens_for(Post, 'before_insert')
 def before_insert_post(mapper, connect, post):
     PostSchema().load({
-        'user_id': post.user_id,
-        'volume_id': post.volume_id,
-        'post_status': PostStatus.get_value(post.post_status),
+        'post_status': post.post_status,
         'post_title': post.post_title,
     })
 
@@ -54,6 +67,6 @@ def before_insert_post(mapper, connect, post):
 @db.event.listens_for(Post, 'before_update')
 def before_update_post(mapper, connect, post):
     PostSchema().load({
-        'post_status': PostStatus.get_value(post.post_status),
+        'post_status': post.post_status,
         'post_title': post.post_title,
     })
