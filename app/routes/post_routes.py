@@ -3,11 +3,10 @@ from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
-from app.models.post import Post, PostStatus, PostSchema
+from app.models.post import Post, PostStatus
 from app.models.post_tag import PostTag
 from app.models.volume import Volume
 from marshmallow import ValidationError
-#from app.comment.comment import Comment
 
 POST_SELECT_LIMIT = app.config['POST_SELECT_LIMIT']
 
@@ -100,10 +99,6 @@ def posts_list(offset):
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     post_status = request.args.get('post_status')
-    #PostSchema().load({
-    #    'post_status': post_status,
-    #})
-
     if post_status not in PostStatus.__members__:
         raise ValidationError({'volume_status': [err.IS_INCORRECT]})
 
