@@ -6,7 +6,7 @@ from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.core.user_auth import user_auth
 from app.core.qrcode_handlers import qrcode_make, qrcode_remove
-from app.models.user import User
+from app.models.user import User, UserSchema
 
 USER_PASS_ATTEMPTS_LIMIT = app.config['USER_PASS_ATTEMPTS_LIMIT']
 USER_PASS_SUSPEND_TIME = app.config['USER_PASS_SUSPEND_TIME']
@@ -45,9 +45,12 @@ def user_signin():
     user_login = request.args.get('user_login', '').lower()
     user_totp = request.args.get('user_totp', '')
 
-    user = select(User, user_login=user_login, user_status=['draft', 'reader', 'editor', 'admin'])
+    user = select(User, user_login=user_login)
     if not user:
         return {}, {'user_login': [err.NOT_FOUND], }, 400
+
+    elif user.user_status.name == 'blank':
+        return {}, {'user_login': [err.NOT_ALLOWED], }, 400
 
     elif user.totp_attempts >= USER_TOTP_ATTEMPTS_LIMIT:
         return {}, {'user_totp': [err.NOT_LEFT], }, 400
@@ -80,9 +83,12 @@ def user_restore():
     user_pass = request.args.get('user_pass', '')
     pass_hash = User.get_pass_hash(user_login + user_pass)
 
-    user = select(User, user_login=user_login, user_status=['draft', 'reader', 'editor', 'admin'])
+    user = select(User, user_login=user_login)
     if not user:
         return {}, {'user_login': [err.NOT_FOUND], }, 400
+
+    elif user.user_status.name == 'blank':
+        return {}, {'user_login': [err.NOT_ALLOWED], }, 400
 
     elif user.pass_suspended > time.time():
         return {}, {'user_pass': [err.IS_SUSPENDED], }, 400

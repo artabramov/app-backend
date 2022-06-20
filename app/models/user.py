@@ -13,11 +13,10 @@ USER_TOKEN_EXPIRATION_TIME = app.config['USER_TOKEN_EXPIRATION_TIME']
 
 
 class UserStatus(EnumMixin):
-    trash = 0
-    draft = 1
-    reader = 2
-    editor = 3
-    admin = 4
+    blank = 0
+    reader = 1
+    editor = 2
+    admin = 3
 
 
 class UserSchema(Schema):
@@ -25,7 +24,6 @@ class UserSchema(Schema):
     user_name = fields.Str(validate=validate.Length(min=2, max=128))
     user_status = EnumField(UserStatus, by_value=True)
     user_pass = fields.Str(validate=validate.Length(min=4))
-    user_code = fields.Int(validate=validate.Range(min=0, max=999999))
 
 
 class User(db.Model, MetaMixin):
@@ -53,7 +51,7 @@ class User(db.Model, MetaMixin):
     def __init__(self, user_login, user_name, user_pass):
         self.user_login = user_login
         self.user_name = user_name
-        self.user_status = 'draft'
+        self.user_status = 'blank'
         self.user_pass = user_pass
         self.pass_attempts = 0
         self.pass_suspended = 0

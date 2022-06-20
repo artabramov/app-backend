@@ -25,7 +25,7 @@ def before_first_request():
 
 
 from app.hi import hi_routes
-from app.routes import user_routes, volume_routes
+from app.routes import user_routes, volume_routes, post_routes
 #from app.volume import volume_routes
 #from app.post import post_routes
 #from app.comment import comment_routes

@@ -47,3 +47,8 @@ def before_update_upload(mapper, connect, upload):
     UploadSchema().load({
         'upload_name': upload.upload_name,
     })
+
+
+@db.event.listens_for(Upload, 'before_delete')
+def before_delete_upload(mapper, connect, upload):
+    pass

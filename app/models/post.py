@@ -29,9 +29,9 @@ class Post(db.Model, MetaMixin):
     post_title = db.Column(db.String(255), nullable=False, index=True)
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
 
-    meta = db.relationship('PostMeta', backref='post', lazy='subquery')
-    tags = db.relationship('PostTag', backref='post', lazy='subquery')
-    #comments = db.relationship('Comment', backref='post', lazy='noload')
+    meta = db.relationship('PostMeta', backref='post', cascade='all,delete', lazy='subquery')
+    tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
+    comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
 
     def __init__(self, user_id, volume_id, post_status, post_title):
         self.user_id = user_id
@@ -42,7 +42,7 @@ class Post(db.Model, MetaMixin):
 
     def __setattr__(self, name, value):
         if name == 'post_status':
-            super().__setattr__('post_status', PostStatus.get_obj(post_status=value))
+            super().__setattr__('post_status', PostStatus.get_enum(post_status=value))
         else:
             super().__setattr__(name, value)
 

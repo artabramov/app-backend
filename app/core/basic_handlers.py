@@ -61,13 +61,9 @@ def update(obj, **kwargs):
 
 
 def delete(obj):
-    cls = obj.__class__
-
-    obj.delete()
-    db.session.merge(obj)
+    db.session.delete(obj)
     db.session.flush()
-
-    cache.delete('%s.%s' % (cls.__tablename__, obj.id))
+    cache.clear()
     return True
 
 

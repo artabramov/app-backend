@@ -41,5 +41,7 @@ class Config:
 
     VOLUME_SELECT_LIMIT = 2
 
+    POST_SELECT_LIMIT = 2
+
 
 

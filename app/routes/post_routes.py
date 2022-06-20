@@ -2,11 +2,14 @@ from flask import g, request
 from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
-from app.core.basic_handlers import insert, update, delete, select, select_all
-from app.post.post import Post
-from app.post.post_tag import PostTag
-from app.volume.volume import Volume
-from app.comment.comment import Comment
+from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
+from app.models.post import Post, PostStatus, PostSchema
+from app.models.post_tag import PostTag
+from app.models.volume import Volume
+from marshmallow import ValidationError
+#from app.comment.comment import Comment
+
+POST_SELECT_LIMIT = app.config['POST_SELECT_LIMIT']
 
 
 @app.route('/post/', methods=['POST'], endpoint='post_insert')
@@ -17,13 +20,14 @@ def post_insert():
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     volume_id = request.args.get('volume_id')
-    volume = select(Volume, id=volume_id, deleted=0)
-    if not volume:
-        return {}, {'volume_id': [err.NOT_FOUND], }, 400
-
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
     post_tags = PostTag.crop(request.args.get('post_tags'))
+
+    volume = select(Volume, id=volume_id)
+    if not volume:
+        return {}, {'volume_id': [err.NOT_FOUND], }, 400
+
     post = insert(Post, user_id=g.user.id, volume_id=volume.id, post_status=post_status, post_title=post_title, tags=post_tags)
     return {'post_id': post.id}, {}, 201
 
@@ -35,7 +39,7 @@ def post_update(post_id):
     if not g.user.can_edit:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    post = select(Post, id=post_id, deleted=0)
+    post = select(Post, id=post_id)
     if not post:
         return {}, {'post_id': [err.NOT_FOUND]}, 404
 
@@ -77,15 +81,37 @@ def post_select(post_id):
 @user_auth
 def post_delete(post_id):
     """ Post delete """
-    if not g.user.can_edit:
-        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+    if not g.user.can_admin:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 406
 
-    post = select(Post, id=post_id, deleted=0)
+    post = select(Post, id=post_id)
     if not post:
-        return {}, {'comment_id': ['comment not found or deleted']}, 404
+        return {}, {'comment_id': [err.NOT_FOUND]}, 404
 
-    #delete(post)
-
-    comments = select_all(Comment, post_id=post.id, deleted=0)
-
+    delete(post)
     return {}, {}, 200
+
+
+@app.route('/posts/<int:offset>', methods=['GET'], endpoint='posts_list')
+@app_response
+@user_auth
+def posts_list(offset):
+    if not g.user.can_read:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
+    post_status = request.args.get('post_status')
+    #PostSchema().load({
+    #    'post_status': post_status,
+    #})
+
+    if post_status not in PostStatus.__members__:
+        raise ValidationError({'volume_status': [err.IS_INCORRECT]})
+
+    posts = select_all(Post, post_status=post_status, offset=offset, limit=POST_SELECT_LIMIT)
+    posts_count = select_count(Post, post_status=post_status)
+
+    return {
+        'posts': [post.to_dict() for post in posts],
+        'posts_count': posts_count,
+    }, {}, 200
+

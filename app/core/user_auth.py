@@ -25,8 +25,8 @@ def user_auth(func):
         if not user:
             raise ValidationError({'user_token': [err.NOT_FOUND]})
 
-        elif user.user_status == 'trash':
-            raise ValidationError({'user_token': [err.NOT_FOUND]})
+        elif user.user_status.name == 'blank':
+            raise ValidationError({'user_token': [err.NOT_ALLOWED]})
             
         elif user.token_signature != token_signature:
             raise ValidationError({'user_token': [err.IS_INCORRECT]})

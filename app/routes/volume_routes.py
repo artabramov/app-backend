@@ -2,10 +2,8 @@ from flask import g, request
 from app import app, err
 from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
-from app.models.volume import Volume, VolumeCurrency
+from app.models.volume import Volume #, VolumeCurrency
 from app.core.user_auth import user_auth
-from app.models.volume import VolumeStatus
-from marshmallow import ValidationError
 
 VOLUME_SELECT_LIMIT = app.config['VOLUME_SELECT_LIMIT']
 
@@ -17,11 +15,10 @@ def volume_insert():
     if not g.user.can_admin:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    volume_status = request.args.get('volume_status')
     volume_title = request.args.get('volume_title')
     volume_currency = request.args.get('volume_currency')
 
-    volume = insert(Volume, user_id=g.user.id, volume_status=volume_status, volume_title=volume_title, volume_currency=volume_currency)
+    volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency)
     return {'volume_id': volume.id}, {}, 200
 
 
@@ -32,7 +29,6 @@ def volume_update(volume_id):
     if not g.user.can_admin:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    volume_status = request.args.get('volume_status', '')
     volume_title = request.args.get('volume_title', '')
     volume_currency = request.args.get('volume_currency', '')
 
@@ -41,9 +37,6 @@ def volume_update(volume_id):
         return {}, {'volume_id': [err.NOT_FOUND]}, 404
 
     volume_data = {}
-    if volume_status:
-        volume_data['volume_status'] = volume_status
-
     if volume_title:
         volume_data['volume_title'] = volume_title
 
@@ -76,11 +69,11 @@ def volume_delete(volume_id):
     if not g.user.can_admin:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    volume = select(Volume, id=volume_id, volume_status='trash')
+    volume = select(Volume, id=volume_id)
     if not volume:
         return {}, {'volume_id': [err.NOT_FOUND]}, 404
 
-    # TODO: delete the volume
+    delete(volume)
     return {}, {}, 200
 
 
@@ -91,12 +84,8 @@ def volumes_list(offset):
     if not g.user.can_read:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    volume_status = request.args.get('volume_status')
-    if volume_status not in VolumeStatus.__members__:
-        raise ValidationError({'volume_status': [err.IS_INCORRECT]})
-
-    volumes = select_all(Volume, volume_status=volume_status, offset=offset, limit=VOLUME_SELECT_LIMIT)
-    volumes_count = select_count(Volume, volume_status=volume_status)
+    volumes = select_all(Volume, offset=offset, limit=VOLUME_SELECT_LIMIT)
+    volumes_count = select_count(Volume)
 
     return {
         'volumes': [volume.to_dict() for volume in volumes],
