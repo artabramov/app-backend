@@ -29,6 +29,19 @@ class Comment(db.Model):
         self.comment_content = comment_content
         self.comment_sum = comment_sum
 
+    def to_dict(self):
+        return {
+            'id': self.id, 
+            'created': self.created, 
+            'comment_content': self.comment_content,
+            'comment_sum': self.comment_sum,
+            'user': {
+                'id': self.user_id,
+                'user_name': self.user.user_name,
+            }
+        }
+
+
 @db.event.listens_for(Comment, 'before_insert')
 def before_insert_comment(mapper, connect, comment):
     CommentSchema().load({

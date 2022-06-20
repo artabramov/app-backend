@@ -43,5 +43,7 @@ class Config:
 
     POST_SELECT_LIMIT = 2
 
+    COMMENT_SELECT_LIMIT = 2
+
 
 

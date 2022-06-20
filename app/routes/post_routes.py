@@ -79,7 +79,6 @@ def post_select(post_id):
 @app_response
 @user_auth
 def post_delete(post_id):
-    """ Post delete """
     if not g.user.can_admin:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 406
 
@@ -91,10 +90,10 @@ def post_delete(post_id):
     return {}, {}, 200
 
 
-@app.route('/posts/<int:offset>', methods=['GET'], endpoint='posts_list')
+@app.route('/volume/<int:volume_id>/posts/<int:offset>/', methods=['GET'], endpoint='posts_list')
 @app_response
 @user_auth
-def posts_list(offset):
+def posts_list(volume_id, offset):
     if not g.user.can_read:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
@@ -102,8 +101,8 @@ def posts_list(offset):
     if post_status not in PostStatus.__members__:
         raise ValidationError({'volume_status': [err.IS_INCORRECT]})
 
-    posts = select_all(Post, post_status=post_status, offset=offset, limit=POST_SELECT_LIMIT)
-    posts_count = select_count(Post, post_status=post_status)
+    posts = select_all(Post, volume_id=volume_id, post_status=post_status, offset=offset, limit=POST_SELECT_LIMIT)
+    posts_count = select_count(Post, volume_id=volume_id, post_status=post_status)
 
     return {
         'posts': [post.to_dict() for post in posts],

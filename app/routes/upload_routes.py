@@ -1,34 +1,29 @@
 from flask import g, request
-from app import app
+from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all
-from app.upload.upload_async import upload_async
-from app.comment.comment import Comment
-from app.upload.upload import Upload
+from app.models.comment import Comment
+from app.models.upload import Upload
 from multiprocessing import Process, Manager
-from app.upload.upload_files import upload_files
+from app.core.upload_async import upload_async
+from app.core.upload_files import upload_files
+from app.core.file_delete import file_delete
+
 
 @app.route('/uploads/', methods=['POST'], endpoint='uploads_insert')
 @app_response
 @user_auth
 def uploads_insert():
-    """
-    Uploads insert
-    headers: user_token
-    params: comment_id
-    body: user_files
-    """
     if not g.user.can_edit:
-        return {}, {'user_token': ['user have not permissions for edit'], }, 406
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     comment_id = request.args.get('comment_id')
-    comment = select(Comment, id=comment_id, deleted=0)
-    if not comment:
-        return {}, {'comment_id': ['comment not found or deleted'], }, 404
-
     user_files = request.files.getlist('user_files')
 
+    comment = select(Comment, id=comment_id)
+    if not comment:
+        return {}, {'comment_id': [err.NOT_FOUND], }, 400
 
     uploaded_files = upload_files(user_files)
     uploads, errors = [], {}
@@ -61,39 +56,37 @@ def uploads_insert():
 
     return {
         'uploads': uploads,
-    }, errors, 200
+    }, errors, 201
 
 
 @app.route('/upload/<int:upload_id>', methods=['PUT'], endpoint='upload_update')
 @app_response
 @user_auth
 def upload_update(upload_id):
-    """ Upload update """
     if not g.user.can_edit:
-        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
-
-    upload = select(Upload, id=upload_id, deleted=0)
-    if not upload:
-        return {}, {'upload_id': ['upload not found or deleted']}, 404
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     upload_name = request.args.get('upload_name')
-    if upload_name:
-        upload = update(upload, upload_name=upload_name)
 
+    upload = select(Upload, id=upload_id)
+    if not upload:
+        return {}, {'upload_id': [err.NOT_FOUND]}, 400
+    
+    upload = update(upload, upload_name=upload_name)
     return {}, {}, 200
 
 
-@app.route('/upload/<int:upload_id>', methods=['DELETE'], endpoint='upload_delete')
+@app.route('/upload/<int:upload_id>/', methods=['DELETE'], endpoint='upload_delete')
 @app_response
 @user_auth
 def upload_delete(upload_id):
-    """ Upload delete """
-    if not g.user.can_edit:
-        return {}, {'user_token': ['user_token must have edit permissions'], }, 406
+    if not g.user.can_admin:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    upload = select(Upload, id=upload_id, deleted=0)
+    upload = select(Upload, id=upload_id)
     if not upload:
-        return {}, {'upload_id': ['upload not found']}, 404
+        return {}, {'upload_id': [err.NOT_FOUND]}, 400
 
+    file_delete(upload.upload_path)
     delete(upload)
     return {}, {}, 200
