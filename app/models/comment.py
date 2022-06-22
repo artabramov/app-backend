@@ -21,7 +21,7 @@ class Comment(db.Model):
     comment_content = db.Column(db.Text(), nullable=False)
     comment_sum = db.Column(db.Numeric(), nullable=False, default=0)
 
-    uploads = db.relationship('Upload', backref='comment', lazy='subquery')
+    uploads = db.relationship('Upload', backref='comment', lazy='select')
 
     def __init__(self, user_id, post_id, comment_content, comment_sum=0):
         self.user_id = user_id

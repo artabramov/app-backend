@@ -26,6 +26,7 @@ def uploads_insert():
         return {}, {'comment_id': [err.NOT_FOUND], }, 400
 
     uploaded_files = upload_files(user_files)
+
     uploads, errors = [], {}
     for uploaded_file in uploaded_files:
         if not uploaded_file['error']:
@@ -87,6 +88,9 @@ def upload_delete(upload_id):
     if not upload:
         return {}, {'upload_id': [err.NOT_FOUND]}, 400
 
-    file_delete(upload.upload_path)
-    delete(upload)
+    #file_delete(upload.upload_path)
+    #delete(upload)
+    from app.core.recount import recount_uploads2
+    comment = select(Comment, id=upload.comment_id)
+    recount_uploads2(comment)
     return {}, {}, 200

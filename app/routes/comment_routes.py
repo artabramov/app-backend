@@ -36,7 +36,7 @@ def comment_insert():
     return {'comment_id': comment.id}, {}, 201
 
 
-@app.route('/comment/<int:comment_id>', methods=['PUT'], endpoint='comment_update')
+@app.route('/comment/<int:comment_id>/', methods=['PUT'], endpoint='comment_update')
 @app_response
 @user_auth
 def comment_update(comment_id):
@@ -58,6 +58,7 @@ def comment_update(comment_id):
         comment_data['comment_sum'] = comment_sum
 
     comment = update(comment, **comment_data)
+
 
     #if comment_sum:
     #    post_sum = app_decimal(select_sum(Comment, 'comment_sum', post_id=comment.post_id, deleted=0))
