@@ -9,7 +9,7 @@ from multiprocessing import Process, Manager
 from app.core.upload_async import upload_async
 from app.core.upload_files import upload_files
 from app.core.file_delete import file_delete
-from app.core.recount import recount
+#from app.core.recount import recount
 
 
 @app.route('/uploads/', methods=['POST'], endpoint='uploads_insert')
@@ -56,7 +56,7 @@ def uploads_insert():
         else:
             errors[uploaded_file['name']] = [uploaded_file['error']]
 
-    recount(Comment, comment.id)
+    #recount(Comment, comment.id)
     return {
         'uploads': uploads,
     }, errors, 201
@@ -90,15 +90,6 @@ def upload_delete(upload_id):
     if not upload:
         return {}, {'upload_id': [err.NOT_FOUND]}, 400
 
-    #file_delete(upload.upload_path)
-    #delete(upload)
-
-    #from app.core.recount import recount_uploads2
-    #comment = select(Comment, id=upload.comment_id)
-    #recount_uploads2(comment)
-    
-    
-    comment = select(Comment, id=upload.comment_id)
-    recount(Upload, upload.id)
-
+    file_delete(upload.upload_path)
+    delete(upload)
     return {}, {}, 200
