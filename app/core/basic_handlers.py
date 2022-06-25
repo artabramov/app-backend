@@ -82,11 +82,32 @@ def delete(obj):
     return True
 
 
+def _add_query_condition(cls, k, v):
+    if isinstance(v, list):
+        return getattr(cls, k).in_(v)
+    elif str(v).startswith('%') and str(v).endswith('%'):
+        return getattr(cls, k).like(v)
+    else:
+        return getattr(cls, k) == v
+
+
+def _add_tag_subquery(query, cls, tag_value):
+    Tag = cls.tags.property.mapper.class_
+    parent = Tag._parent
+    objs_ids = db.session.query(column(getattr(Tag, '_parent'))).filter(Tag.tag_value==tag_value).subquery()
+    query = query.filter(cls.id.in_(objs_ids))
+    return query
+
+
 def select_all(cls, **kwargs):
     query = cls.query.filter(*[
-        getattr(cls, k).in_(v) if isinstance(v, list) else getattr(cls, k) == v
-        for k, v in kwargs.items() if k not in ['order_by', 'order', 'limit', 'offset']
+        #getattr(cls, k).in_(v) if isinstance(v, list) else getattr(cls, k) == v
+        _add_query_condition(cls, k, v)
+        for k, v in kwargs.items() if k not in ['tag_value', 'order_by', 'order', 'limit', 'offset']
     ])
+
+    if 'tag_value' in kwargs:
+        query = _add_tag_subquery(query, cls, kwargs['tag_value'])
 
     if 'order_by' in kwargs and kwargs['order'] == 'asc':
         query = query.order_by(asc(kwargs['order_by']))
@@ -122,49 +143,20 @@ def select_sum(cls, field, **kwargs):
 
 
 def select_count(cls, **kwargs):
+    """
     query = db.session.query(func.count(getattr(cls, 'id')))
     for key in kwargs:
         query = query.filter(getattr(cls, key) == kwargs[key])
     return query.one()[0]
+    """
+    query = db.session.query(func.count(getattr(cls, 'id')))
+    query = query.filter(*[
+        _add_query_condition(cls, k, v) for k, v in kwargs.items() if k != 'tag_value'
+    ])
 
+    if 'tag_value' in kwargs:
+        query = _add_tag_subquery(query, cls, kwargs['tag_value'])
 
-def select_by_tag(cls, tag_value, **kwargs):
-    Tag = cls.tags.property.mapper.class_
-    parent = Tag._parent
-    objs_ids = db.session.query(column(getattr(Tag, '_parent'))).filter(Tag.tag_value==tag_value).subquery()
-    
-    query = cls.query.filter(cls.id.in_(objs_ids))
-
-    if 'order_by' in kwargs and kwargs['order'] == 'asc':
-        query = query.order_by(asc(kwargs['order_by']))
-
-    elif 'order_by' in kwargs and kwargs['order'] == 'desc':
-        query = query.order_by(desc(kwargs['order_by']))
-
-    else:
-        query = query.order_by(desc('id'))
-
-    if 'limit' in kwargs:
-        query = query.limit(kwargs['limit'])
-    else:
-        query = query.limit(None)
-
-    if 'offset' in kwargs:
-        query = query.offset(kwargs['offset'])
-    else:
-        query = query.offset(0)
-
-    objs = query.all()
-    for obj in objs:
-        cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
-
-    return objs
-
-
-def select_count_by_tag(cls, tag_value, **kwargs):
-    Tag = cls.tags.property.mapper.class_
-    parent = Tag._parent
-    query = db.session.query(func.count(Tag.id)).filter(Tag.tag_value==tag_value)
     return query.one()[0]
 
 

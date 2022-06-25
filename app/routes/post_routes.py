@@ -90,35 +90,33 @@ def post_delete(post_id):
     return {}, {}, 200
 
 
-@app.route('/volume/<int:volume_id>/posts/<int:offset>/', methods=['GET'], endpoint='posts_list')
+@app.route('/posts/<int:offset>/', methods=['GET'], endpoint='posts_list')
 @app_response
 @user_auth
-def posts_list(volume_id, offset):
+def posts_list(offset):
     if not g.user.can_read:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
+    volume_id = request.args.get('volume_id')
     post_status = request.args.get('post_status')
-    if post_status not in PostStatus.__members__:
-        raise ValidationError({'volume_status': [err.IS_INCORRECT]})
+    post_title = request.args.get('post_title')
+    post_tag = request.args.get('post_tag')
 
-    posts = select_all(Post, volume_id=volume_id, post_status=post_status, offset=offset, limit=POST_SELECT_LIMIT)
-    posts_count = select_count(Post, volume_id=volume_id, post_status=post_status)
+    posts, posts_count = [], 0
+    if post_status and volume_id:
+        if post_status not in PostStatus.__members__:
+            raise ValidationError({'post_status': [err.IS_INCORRECT]})
+            
+        posts = select_all(Post, volume_id=volume_id, post_status=post_status, offset=offset, limit=POST_SELECT_LIMIT)
+        posts_count = select_count(Post, volume_id=volume_id, post_status=post_status)
 
-    return {
-        'posts': [post.to_dict() for post in posts],
-        'posts_count': posts_count,
-    }, {}, 200
+    elif post_title:
+        posts = select_all(Post, post_title='%{}%'.format(post_title), offset=offset, limit=POST_SELECT_LIMIT)
+        posts_count = select_count(Post, post_title='%{}%'.format(post_title))
 
-
-@app.route('/tag/<tag_value>/posts/<int:offset>/', methods=['GET'], endpoint='posts_by_tag')
-@app_response
-@user_auth
-def posts_by_tag(tag_value, offset):
-    if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
-
-    posts = select_by_tag(Post, tag_value, offset=offset, limit=POST_SELECT_LIMIT)
-    posts_count = select_count_by_tag(Post, tag_value)
+    elif post_tag:
+        posts = select_all(Post, tag_value=post_tag, offset=offset, limit=POST_SELECT_LIMIT)
+        posts_count = select_count(Post, tag_value=post_tag)
 
     return {
         'posts': [post.to_dict() for post in posts],
