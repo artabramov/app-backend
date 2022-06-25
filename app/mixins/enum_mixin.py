@@ -1,3 +1,4 @@
+from app import err
 from enum import Enum
 from marshmallow import ValidationError
 
@@ -10,4 +11,4 @@ class EnumMixin(Enum):
         if value in cls._member_map_:
              return cls._member_map_[value]
         else:
-            raise ValidationError({key: ['incorrect value for enum.']})
+            raise ValidationError({key: [err.IS_INCORRECT]})
