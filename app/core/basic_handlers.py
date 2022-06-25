@@ -1,7 +1,7 @@
 from flask import g
 
 from app import db, cache
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, column
 from sqlalchemy.sql import func
 
 from app.models.upload import Upload
@@ -128,6 +128,46 @@ def select_count(cls, **kwargs):
     return query.one()[0]
 
 
+def select_by_tag(cls, tag_value, **kwargs):
+    Tag = cls.tags.property.mapper.class_
+    parent = Tag._parent
+    objs_ids = db.session.query(column(getattr(Tag, '_parent'))).filter(Tag.tag_value==tag_value).subquery()
+    
+    query = cls.query.filter(cls.id.in_(objs_ids))
+
+    if 'order_by' in kwargs and kwargs['order'] == 'asc':
+        query = query.order_by(asc(kwargs['order_by']))
+
+    elif 'order_by' in kwargs and kwargs['order'] == 'desc':
+        query = query.order_by(desc(kwargs['order_by']))
+
+    else:
+        query = query.order_by(desc('id'))
+
+    if 'limit' in kwargs:
+        query = query.limit(kwargs['limit'])
+    else:
+        query = query.limit(None)
+
+    if 'offset' in kwargs:
+        query = query.offset(kwargs['offset'])
+    else:
+        query = query.offset(0)
+
+    objs = query.all()
+    for obj in objs:
+        cache.set('%s.%s' % (cls.__tablename__, obj.id), obj)
+
+    return objs
+
+
+def select_count_by_tag(cls, tag_value, **kwargs):
+    Tag = cls.tags.property.mapper.class_
+    parent = Tag._parent
+    query = db.session.query(func.count(Tag.id)).filter(Tag.tag_value==tag_value)
+    return query.one()[0]
+
+
 def update_meta(obj, meta_data):
     cls = obj.__class__
     Meta = cls.meta.property.mapper.class_
@@ -167,7 +207,7 @@ def update_tags(obj, tags_data):
     db.session.flush()
 
 
-def _get_parent(obj):
+def _get_parent_data(obj):
     if obj.__class__ == Upload:
         return Comment, obj.comment_id
 
@@ -179,7 +219,7 @@ def _get_parent(obj):
 
 
 def recount(obj):
-    parent_cls, parent_id = _get_parent(obj)
+    parent_cls, parent_id = _get_parent_data(obj)
 
     # comment
     if parent_cls == Comment:

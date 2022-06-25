@@ -2,7 +2,7 @@ from flask import g, request
 from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
-from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
+from app.core.basic_handlers import insert, update, delete, select, select_all, select_count, select_by_tag, select_count_by_tag
 from app.models.post import Post, PostStatus
 from app.models.post_tag import PostTag
 from app.models.volume import Volume
@@ -109,3 +109,18 @@ def posts_list(volume_id, offset):
         'posts_count': posts_count,
     }, {}, 200
 
+
+@app.route('/tag/<tag_value>/posts/<int:offset>/', methods=['GET'], endpoint='posts_by_tag')
+@app_response
+@user_auth
+def posts_by_tag(tag_value, offset):
+    if not g.user.can_read:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
+    posts = select_by_tag(Post, tag_value, offset=offset, limit=POST_SELECT_LIMIT)
+    posts_count = select_count_by_tag(Post, tag_value)
+
+    return {
+        'posts': [post.to_dict() for post in posts],
+        'posts_count': posts_count,
+    }, {}, 200
