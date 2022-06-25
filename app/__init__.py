@@ -4,9 +4,10 @@ from flask_sqlalchemy import SQLAlchemy
 from app.core.app_logger import create_logger
 from app.core.app_errors import create_errors
 from flask_caching import Cache
+import os
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 app.config.from_object(Config)
 
 log = create_logger(app)
