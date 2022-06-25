@@ -7,7 +7,8 @@ from flask_caching import Cache
 import os
 
 
-app = Flask(__name__, static_url_path='')
+#app = Flask(__name__, static_url_path='/app/static')
+app = Flask(__name__, static_url_path='', static_folder='')
 app.config.from_object(Config)
 
 log = create_logger(app)
