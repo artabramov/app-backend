@@ -7,8 +7,7 @@ from flask_caching import Cache
 import os
 
 
-#app = Flask(__name__, static_url_path='/app/static')
-app = Flask(__name__, static_url_path='', static_folder='')
+app = Flask(__name__)
 app.config.from_object(Config)
 
 log = create_logger(app)
@@ -26,8 +25,7 @@ def before_first_request():
     db.create_all()
 
 
-from app.hi import hi_routes
-from app.routes import user_routes, volume_routes, post_routes, comment_routes, upload_routes, app_routes
+from app.routes import user_routes, volume_routes, post_routes, comment_routes, upload_routes, hi_routes
 
 
 
