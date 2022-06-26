@@ -2,7 +2,7 @@ from app.core.app_response import app_response
 from app import app
 
 
-@app.route('/hi')
+@app.route('/api/hi')
 @app_response
 def hi():
     return {
