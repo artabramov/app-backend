@@ -21,11 +21,11 @@ cache.init_app(app)
 
 @app.before_first_request
 def before_first_request():
-    from app.models import user, user_meta, volume, volume_meta, post, post_meta, post_tag, comment, upload
+    from app.models import user, user_meta, volume, volume_meta, category, post, post_meta, post_tag, comment, upload
     db.create_all()
 
 
-from app.routes import user_routes, volume_routes, post_routes, comment_routes, upload_routes, hi_routes
+from app.routes import user_routes, volume_routes, category_routes, post_routes, comment_routes, upload_routes, hi_routes
 
 
 

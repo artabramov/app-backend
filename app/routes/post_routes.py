@@ -6,6 +6,7 @@ from app.core.basic_handlers import insert, update, delete, select, select_all, 
 from app.models.post import Post, PostStatus
 from app.models.post_tag import PostTag
 from app.models.volume import Volume
+from app.models.category import Category
 from marshmallow import ValidationError
 
 POST_SELECT_LIMIT = app.config['POST_SELECT_LIMIT']
@@ -18,7 +19,9 @@ def post_insert():
     if not g.user.can_edit:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
+    # TODO: check all ..._id integer items accepted from request
     volume_id = request.args.get('volume_id')
+    category_id = request.args.get('category_id')
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
     post_tags = PostTag.crop(request.args.get('post_tags'))
@@ -27,7 +30,11 @@ def post_insert():
     if not volume:
         return {}, {'volume_id': [err.NOT_FOUND], }, 400
 
-    post = insert(Post, user_id=g.user.id, volume_id=volume.id, post_status=post_status, post_title=post_title, tags=post_tags)
+    category = select(Category, id=category_id)
+    if not volume:
+        return {}, {'category_id': [err.NOT_FOUND], }, 400
+
+    post = insert(Post, user_id=g.user.id, volume_id=volume.id, category_id=category.id, post_status=post_status, post_title=post_title, tags=post_tags)
     return {'post_id': post.id}, {}, 201
 
 

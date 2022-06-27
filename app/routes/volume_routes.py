@@ -19,7 +19,7 @@ def volume_insert():
     volume_currency = request.args.get('volume_currency')
 
     volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency)
-    return {'volume_id': volume.id}, {}, 200
+    return {'volume_id': volume.id}, {}, 201
 
 
 @app.route('/volume/<int:volume_id>', methods=['PUT'], endpoint='volume_update')

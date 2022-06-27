@@ -25,6 +25,7 @@ class Post(db.Model, MetaMixin):
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
     volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id'), index=True)
+    category_id = db.Column(db.BigInteger, db.ForeignKey('categories.id', ondelete='SET NULL'), index=True)
     post_status = db.Column(db.Enum(PostStatus), nullable=False, index=True)
     post_title = db.Column(db.String(255), nullable=False, index=True)
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
@@ -33,9 +34,10 @@ class Post(db.Model, MetaMixin):
     tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
     comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
 
-    def __init__(self, user_id, volume_id, post_status, post_title):
+    def __init__(self, user_id, volume_id, category_id, post_status, post_title):
         self.user_id = user_id
         self.volume_id = volume_id
+        self.category_id = category_id
         self.post_status = post_status
         self.post_title = post_title
         self.post_sum = 0
@@ -52,6 +54,7 @@ class Post(db.Model, MetaMixin):
             'created': self.created,
             'user_id': self.user_id,
             'volume_id': self.volume_id,
+            'category_id': self.category_id,
             'post_status': self.post_status.name,
             'post_title': self.post_title,
             'post_sum': self.post_sum,

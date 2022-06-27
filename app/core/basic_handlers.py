@@ -209,6 +209,9 @@ def _get_parent_data(obj):
     elif obj.__class__ == Post:
         return Volume, obj.volume_id
 
+    else:
+        return None, None
+
 
 def recount(obj):
     parent_cls, parent_id = _get_parent_data(obj)
