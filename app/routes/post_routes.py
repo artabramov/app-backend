@@ -24,6 +24,7 @@ def post_insert():
     category_id = request.args.get('category_id')
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
+    post_content = request.args.get('post_content')
     post_tags = PostTag.crop(request.args.get('post_tags'))
 
     volume = select(Volume, id=volume_id)
@@ -34,7 +35,7 @@ def post_insert():
     if not volume:
         return {}, {'category_id': [err.NOT_FOUND], }, 400
 
-    post = insert(Post, user_id=g.user.id, volume_id=volume.id, category_id=category.id, post_status=post_status, post_title=post_title, tags=post_tags)
+    post = insert(Post, user_id=g.user.id, volume_id=volume.id, category_id=category.id, post_status=post_status, post_title=post_title, post_content=post_content, tags=post_tags)
     return {'post_id': post.id}, {}, 201
 
 
@@ -51,6 +52,7 @@ def post_update(post_id):
 
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
+    post_content = request.args.get('post_content')
     post_tags = PostTag.crop(request.args.get('post_tags'))
 
     post_data = {}
@@ -59,6 +61,9 @@ def post_update(post_id):
     
     if post_title:
         post_data['post_title'] = post_title
+
+    if post_title:
+        post_data['post_content'] = post_content
 
     if post_tags:
         post_data['tags'] = post_tags

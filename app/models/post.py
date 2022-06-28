@@ -16,6 +16,7 @@ class PostStatus(EnumMixin):
 class PostSchema(Schema):
     post_status = EnumField(PostStatus, by_value=True)
     post_title = fields.Str(validate=validate.Length(min=2, max=255))
+    post_content = fields.Str(validate=validate.Length(min=2))
 
 
 class Post(db.Model, MetaMixin):
@@ -28,18 +29,20 @@ class Post(db.Model, MetaMixin):
     category_id = db.Column(db.BigInteger, db.ForeignKey('categories.id', ondelete='SET NULL'), index=True)
     post_status = db.Column(db.Enum(PostStatus), nullable=False, index=True)
     post_title = db.Column(db.String(255), nullable=False, index=True)
+    post_content = db.Column(db.Text(), nullable=False)
     post_sum = db.Column(db.Numeric(), nullable=False, default=0)
 
     meta = db.relationship('PostMeta', backref='post', cascade='all,delete', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
     comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
 
-    def __init__(self, user_id, volume_id, category_id, post_status, post_title):
+    def __init__(self, user_id, volume_id, category_id, post_status, post_title, post_content):
         self.user_id = user_id
         self.volume_id = volume_id
         self.category_id = category_id
         self.post_status = post_status
         self.post_title = post_title
+        self.post_content = post_content
         self.post_sum = 0
 
     def __setattr__(self, name, value):
@@ -57,6 +60,7 @@ class Post(db.Model, MetaMixin):
             'category_id': self.category_id,
             'post_status': self.post_status.name,
             'post_title': self.post_title,
+            'post_content': self.post_content,
             'post_sum': self.post_sum,
             'tags': [tag.tag_value for tag in self.tags]
         }
@@ -67,6 +71,7 @@ def before_insert_post(mapper, connect, post):
     PostSchema().load({
         'post_status': post.post_status,
         'post_title': post.post_title,
+        'post_content': post.post_content,
     })
 
 
@@ -75,4 +80,5 @@ def before_update_post(mapper, connect, post):
     PostSchema().load({
         'post_status': post.post_status,
         'post_title': post.post_title,
+        'post_content': post.post_content,
     })
