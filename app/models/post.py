@@ -4,6 +4,7 @@ from marshmallow_enum import EnumField
 from app.mixins.meta_mixin import MetaMixin
 from app.mixins.enum_mixin import EnumMixin
 import time
+from app.core.app_decimal import app_decimal
 
 
 class PostStatus(EnumMixin):
@@ -75,6 +76,7 @@ def before_insert_post(mapper, connect, post):
         'post_content': post.post_content,
         'post_sum': post.post_sum,
     })
+    post.post_sum = app_decimal(post.post_sum)
 
 
 @db.event.listens_for(Post, 'before_update')
@@ -85,3 +87,4 @@ def before_update_post(mapper, connect, post):
         'post_content': post.post_content,
         'post_sum': post.post_sum,
     })
+    post.post_sum = app_decimal(post.post_sum)

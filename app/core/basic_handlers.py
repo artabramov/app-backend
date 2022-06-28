@@ -233,12 +233,11 @@ def recount(obj):
 
             # ...
             post_comments_count = db.session.query(func.count(Comment.id)).filter(Comment.post_id==post.id).scalar()
-            post_comments_sum = db.session.query(func.sum(Comment.comment_sum)).filter(Comment.post_id==post.id).scalar() or 0
             post_uploads_count = db.session.query(func.count(Upload.id)).filter(Upload.comment_id.in_(post_comments_ids)).scalar()
             post_uploads_size = db.session.query(func.sum(Upload.upload_size)).filter(Upload.comment_id.in_(post_comments_ids)).scalar() or 0
 
             # ...
-            update(post, is_recounted=True, post_sum=post_comments_sum, meta={
+            update(post, is_recounted=True, meta={
                 'comments_count': str(post_comments_count),
                 'uploads_count': str(post_uploads_count),
                 'uploads_size': str(post_uploads_size),
