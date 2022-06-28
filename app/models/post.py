@@ -37,6 +37,7 @@ class Post(db.Model, MetaMixin):
     meta = db.relationship('PostMeta', backref='post', cascade='all,delete', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
     comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
+    uploads = db.relationship('Upload', backref='comment', lazy='select')
 
     def __init__(self, user_id, volume_id, category_id, post_status, post_title, post_content, post_sum):
         self.user_id = user_id

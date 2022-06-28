@@ -12,16 +12,16 @@ class Upload(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
-    comment_id = db.Column(db.BigInteger, db.ForeignKey('comments.id'), index=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
     upload_name = db.Column(db.String(255), nullable=False, index=True)
     upload_path = db.Column(db.String(255), nullable=False, index=True, unique=True)
     upload_link = db.Column(db.String(255), nullable=False, index=True, unique=True)
     upload_mime = db.Column(db.String(255), nullable=False)
     upload_size = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, user_id, comment_id, upload_name, upload_path, upload_link, upload_mime, upload_size):
+    def __init__(self, user_id, post_id, upload_name, upload_path, upload_link, upload_mime, upload_size):
         self.user_id = user_id
-        self.comment_id = comment_id
+        self.post_id = post_id
         self.upload_name = upload_name
         self.upload_path = upload_path
         self.upload_link = upload_link

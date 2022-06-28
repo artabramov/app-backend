@@ -201,7 +201,7 @@ def update_tags(obj, tags_data):
 
 def _get_parent_data(obj):
     if obj.__class__ == Upload:
-        return Comment, obj.comment_id
+        return Post, obj.post_id
 
     elif obj.__class__ == Comment:
         return Post, obj.post_id
@@ -217,24 +217,24 @@ def recount(obj):
     parent_cls, parent_id = _get_parent_data(obj)
 
     # comment
-    if parent_cls == Comment:
-        comment_id = parent_id
-        comment = Comment.query.filter(Comment.id==comment_id).first()
+    #if parent_cls == Comment:
+    #    comment_id = parent_id
+    #    comment = Comment.query.filter(Comment.id==comment_id).first()
 
     # post
-    if parent_cls in [Comment, Post]:
-        post_id = parent_id if parent_cls == Post else comment.post_id
+    if parent_cls == Post:
+        post_id = parent_id
         post = Post.query.filter(Post.id==post_id).first()
 
         if post:
             # ...
-            post_comments_ids = db.session.query(Comment.id).filter(Comment.post_id==post.id).subquery()
-            post_comments = Comment.query.filter(Comment.id.in_(post_comments_ids)).all()
+            #post_comments_ids = db.session.query(Comment.id).filter(Comment.post_id==post.id).subquery()
+            #post_comments = Comment.query.filter(Comment.id.in_(post_comments_ids)).all()
 
             # ...
             post_comments_count = db.session.query(func.count(Comment.id)).filter(Comment.post_id==post.id).scalar()
-            post_uploads_count = db.session.query(func.count(Upload.id)).filter(Upload.comment_id.in_(post_comments_ids)).scalar()
-            post_uploads_size = db.session.query(func.sum(Upload.upload_size)).filter(Upload.comment_id.in_(post_comments_ids)).scalar() or 0
+            post_uploads_count = db.session.query(func.count(Upload.id)).filter(Upload.post_id==post.id).scalar()
+            post_uploads_size = db.session.query(func.sum(Upload.upload_size)).filter(Upload.post_id==post.id).scalar() or 0
 
             # ...
             update(post, is_recounted=True, meta={
@@ -244,20 +244,20 @@ def recount(obj):
             })
 
     # volume
-    if parent_cls in [Comment, Post, Volume]:
+    if parent_cls in [Post, Volume]:
         volume_id = parent_id if parent_cls == Volume else post.volume_id
         volume = Volume.query.filter(Volume.id==volume_id).first()
 
         if volume:
             # ...
             volume_posts_ids = db.session.query(Post.id).filter(Post.volume_id==volume_id).subquery()
-            volume_posts_comments_ids = db.session.query(Comment.id).filter(Comment.post_id.in_(volume_posts_ids)).subquery()
+            #volume_posts_comments_ids = db.session.query(Comment.id).filter(Comment.post_id.in_(volume_posts_ids)).subquery()
 
             # ...
             volume_posts_count = db.session.query(func.count(Post.id)).filter(Post.volume_id==volume.id).scalar()
             volume_posts_sum = db.session.query(func.sum(Post.post_sum)).filter(Post.volume_id==volume.id).filter(Post.post_status=='done').scalar() or 0
-            volume_uploads_count = db.session.query(func.count(Upload.id)).filter(Upload.comment_id.in_(volume_posts_comments_ids)).scalar()
-            volume_uploads_size = db.session.query(func.sum(Upload.upload_size)).filter(Upload.comment_id.in_(volume_posts_comments_ids)).scalar() or 0
+            volume_uploads_count = db.session.query(func.count(Upload.id)).filter(Upload.post_id.in_(volume_posts_ids)).scalar()
+            volume_uploads_size = db.session.query(func.sum(Upload.upload_size)).filter(Upload.post_id.in_(volume_posts_ids)).scalar() or 0
 
             # ...
             update(volume, is_recounted=True, volume_sum=volume_posts_sum, meta={

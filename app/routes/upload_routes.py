@@ -3,7 +3,7 @@ from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all
-from app.models.comment import Comment
+from app.models.post import Post
 from app.models.upload import Upload
 from multiprocessing import Process, Manager
 from app.core.upload_async import upload_async
@@ -19,12 +19,12 @@ def uploads_insert():
     if not g.user.can_edit:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    comment_id = request.args.get('comment_id')
+    post_id = request.args.get('post_id')
     user_files = request.files.getlist('user_files')
 
-    comment = select(Comment, id=comment_id)
-    if not comment:
-        return {}, {'comment_id': [err.NOT_FOUND], }, 400
+    post = select(Post, id=post_id)
+    if not post:
+        return {}, {'post_id': [err.NOT_FOUND], }, 400
 
     uploaded_files = upload_files(user_files)
 
@@ -34,7 +34,7 @@ def uploads_insert():
             upload = insert(
                 Upload, 
                 user_id=g.user.id, 
-                comment_id=comment.id, 
+                post_id=post.id, 
                 upload_name=uploaded_file['name'], 
                 upload_path=uploaded_file['path'], 
                 upload_link=uploaded_file['link'], 
@@ -44,7 +44,7 @@ def uploads_insert():
 
             uploads.append({k:upload.__dict__[k] for k in upload.__dict__ if k in [
                 'id', 
-                'comment_id', 
+                'post_id', 
                 'created', 
                 'upload_name', 
                 'upload_path', 
@@ -56,7 +56,6 @@ def uploads_insert():
         else:
             errors[uploaded_file['name']] = [uploaded_file['error']]
 
-    #recount(Comment, comment.id)
     return {
         'uploads': uploads,
     }, errors, 201

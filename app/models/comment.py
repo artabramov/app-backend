@@ -17,8 +17,6 @@ class Comment(db.Model):
     post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
     comment_content = db.Column(db.Text(), nullable=False)
 
-    uploads = db.relationship('Upload', backref='comment', lazy='select')
-
     def __init__(self, user_id, post_id, comment_content):
         self.user_id = user_id
         self.post_id = post_id
