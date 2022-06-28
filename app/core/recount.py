@@ -32,7 +32,6 @@ def recount(cls, obj_id):
         comments = Comment.query.filter(Comment.id.in_(comments_ids)).all()
         # comments data (post_meta)
         post_comments_count = db.session.query(func.count(getattr(Comment, 'id'))).filter(Comment.id.in_(comments_ids)).one()[0]
-        post_comments_sum = db.session.query(func.sum(getattr(Comment, 'comment_sum'))).filter(Comment.id.in_(comments_ids)).one()[0]
 
     if cls in [Upload, Comment, Post]:
         # post
@@ -42,7 +41,7 @@ def recount(cls, obj_id):
         post_uploads_count = db.session.query(func.count(getattr(Upload, 'id'))).filter(Upload.comment_id.in_(comments_ids)).one()[0]
         post_uploads_size = db.session.query(func.sum(getattr(Upload, 'upload_size'))).filter(Upload.comment_id.in_(comments_ids)).one()[0]
         # update post
-        update(post, post_sum=post_comments_sum, meta={
+        update(post, meta={
             'comments_count': str(post_comments_count),
             'uploads_count': str(post_uploads_count),
             'uploads_size': str(post_uploads_size),
