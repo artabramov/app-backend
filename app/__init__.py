@@ -1,5 +1,6 @@
 from .config import Config
 from flask import Flask
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from app.core.app_logger import create_logger
 from app.core.app_errors import create_errors
@@ -9,6 +10,7 @@ import os
 
 app = Flask(__name__)
 app.config.from_object(Config)
+CORS(app)
 
 log = create_logger(app)
 err = create_errors()
