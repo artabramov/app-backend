@@ -31,6 +31,10 @@ class Config:
     QRCODES_PATH = '/app/qrcodes/'
     QRCODES_LINK = 'http://localhost/qrcodes/'
     QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
+    QRCODES_SIZE = 11
+    QRCODES_BORDER = 0
+    QRCODES_COLOR = 'black'
+    QRCODES_BACKGROUND = 'white'
 
     USER_PASS_HASH_SALT = 'abcd'
     USER_PASS_ATTEMPTS_LIMIT = 5
