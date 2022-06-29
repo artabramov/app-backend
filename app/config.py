@@ -16,20 +16,20 @@ class Config:
     CACHE_REDIS_PASSWORD = ''
 
     APP_PATH = '/app/'
-    APP_LINK = 'http://localhost:8080/'
+    APP_LINK = 'http://localhost/'
 
     UPLOADS_PATH = '/app/uploads/'
-    UPLOADS_LINK = 'http://localhost:8080/uploads/'
+    UPLOADS_LINK = 'http://localhost/uploads/'
     UPLOADS_MIMES = ['image/jpeg']
 
     IMAGES_PATH = '/app/images/'
-    IMAGES_LINK = 'http://localhost:8080/images/'
+    IMAGES_LINK = 'http://localhost/images/'
     IMAGES_MIMES = ['image/jpeg']
     IMAGES_SIZE = (320, 240)
     IMAGES_QUALITY = 90
 
     QRCODES_PATH = '/app/qrcodes/'
-    QRCODES_LINK = 'http://localhost:8080/qrcodes/'
+    QRCODES_LINK = 'http://localhost/qrcodes/'
     QRCODES_REF = 'otpauth://totp/myapp?secret=%s&issuer=%s'
 
     USER_PASS_HASH_SALT = 'abcd'
