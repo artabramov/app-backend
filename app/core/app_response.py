@@ -16,7 +16,7 @@ def app_response(func):
         except ValidationError as e:
             log.debug(e.messages)
             db.session.rollback()
-            errors, http_code = e.messages, 400
+            errors, http_code = e.messages, 200
 
         except SQLAlchemyError as e:
             log.error(e)
