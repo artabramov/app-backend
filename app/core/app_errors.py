@@ -3,7 +3,6 @@ def create_errors():
         INVALID_VALUE = 'Invalid value.'
         EMPTY_VALUE = 'Empty value.'
         VALUE_NOT_FOUND = 'Value not found.'
-        VALUE_IS_OCCUPIED = 'Value is occupied.'
         ALREADY_EXISTS = 'Already exists.'
         ATTEMPTS_ARE_OVER = 'Attempts are over.'
         PERMISSION_DENIED = 'Permission denied.'
@@ -17,7 +16,6 @@ def create_errors():
         NOT_FOUND = '__not found'
         NOT_LEFT = '__not left'
         NOT_ALLOWED = '__not allowed'
-
         IS_EMPTY = '__is empty'
         IS_EXIST = '__is exist'
         IS_INCORRECT = '__is incorrect'

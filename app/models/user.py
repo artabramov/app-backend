@@ -6,6 +6,7 @@ from marshmallow import Schema, fields, validate, ValidationError
 from marshmallow_enum import EnumField
 import random, string, json
 import base64, hashlib, time, pyotp
+from app import err
 
 
 USER_PASS_HASH_SALT = app.config['USER_PASS_HASH_SALT']
@@ -133,7 +134,7 @@ class User(db.Model, MetaMixin):
             return token_payload
 
         except Exception as e:
-            raise ValidationError({'user_token': ['Incorrect.']})
+            raise ValidationError({'user_token': [err.INVALID_VALUE]})
 
     @property
     def can_admin(self):
@@ -158,7 +159,7 @@ def before_insert_user(mapper, connect, user):
     })
 
     if User.query.filter_by(user_login=user.user_login).first():
-        raise ValidationError({'user_login': ['Already exists.']})
+        raise ValidationError({'user_login': [err.ALREADY_EXISTS]})
 
 
 @db.event.listens_for(User, 'before_update')
