@@ -47,13 +47,13 @@ def user_signin():
 
     user = select(User, user_login=user_login)
     if not user:
-        return {}, {'user_login': [err.NOT_FOUND], }, 400
+        return {}, {'user_login': [err.NOT_FOUND], }, 200
 
     elif user.user_status.name == 'blank':
-        return {}, {'user_login': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_login': [err.NOT_ALLOWED], }, 200
 
     elif user.totp_attempts >= USER_TOTP_ATTEMPTS_LIMIT:
-        return {}, {'user_totp': [err.NOT_LEFT], }, 400
+        return {}, {'user_totp': [err.NOT_LEFT], }, 200
 
     elif user_totp == user.user_totp:
         qrcode_remove(user.totp_key)
@@ -64,7 +64,7 @@ def user_signin():
     else:
         totp_attempts = user.totp_attempts + 1
         update(user, totp_attempts=totp_attempts)
-        return {}, {'user_totp': [err.IS_INCORRECT], }, 400
+        return {}, {'user_totp': [err.IS_INCORRECT], }, 200
 
 
 @app.route('/token/', methods=['PUT'], endpoint='user_signout')
@@ -85,13 +85,13 @@ def user_restore():
 
     user = select(User, user_login=user_login)
     if not user:
-        return {}, {'user_login': [err.NOT_FOUND], }, 400
+        return {}, {'user_login': [err.NOT_FOUND], }, 200
 
     elif user.user_status.name == 'blank':
-        return {}, {'user_login': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_login': [err.NOT_ALLOWED], }, 200
 
     elif user.pass_suspended > time.time():
-        return {}, {'user_pass': [err.IS_SUSPENDED], }, 400
+        return {}, {'user_pass': [err.IS_SUSPENDED], }, 200
 
     elif user.pass_hash == pass_hash:
         update(user, pass_attempts=0, pass_suspended=0, totp_attempts=0)
@@ -105,7 +105,7 @@ def user_restore():
             pass_suspended = time.time() + USER_PASS_SUSPEND_TIME
 
         update(user, pass_attempts=pass_attempts, pass_suspended=pass_suspended)
-        return {}, {'user_pass': [err.IS_INCORRECT], }, 400
+        return {}, {'user_pass': [err.IS_INCORRECT], }, 200
 
 
 @app.route('/user/<int:user_id>', methods=['GET'], endpoint='user_select')
@@ -118,7 +118,7 @@ def user_select(user_id):
         return {'user': user.to_dict()}, {}, 200
 
     else:
-        return {}, {'user_id': [err.NOT_FOUND]}, 404
+        return {}, {'user_id': [err.NOT_FOUND]}, 200
 
 
 @app.route('/user/<int:user_id>', methods=['PUT'], endpoint='user_update')
@@ -126,14 +126,14 @@ def user_select(user_id):
 @user_auth
 def user_update(user_id):
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 200
 
     user = select(User, id=user_id)
     if not user:
-        return {}, {'user_id': [err.NOT_FOUND]}, 404
+        return {}, {'user_id': [err.NOT_FOUND]}, 200
 
     elif user.id != g.user.id and not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 200
 
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
@@ -148,7 +148,7 @@ def user_update(user_id):
 
     if user_status:
         if not g.user.can_admin or g.user.id == user.id:
-            return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+            return {}, {'user_token': [err.NOT_ALLOWED], }, 200
 
         else:
             user_data['user_status'] = user_status
@@ -162,18 +162,18 @@ def user_update(user_id):
 @user_auth
 def user_image():
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 200
 
     try:
         user_file = request.files.getlist('user_file')[0]
     except:
-        return {}, {'user_file': [err.NOT_FOUND]}, 400
+        return {}, {'user_file': [err.NOT_FOUND]}, 200
 
     if not user_file or not user_file.filename:
-        return {}, {'user_file': [err.NOT_FOUND], }, 400
+        return {}, {'user_file': [err.NOT_FOUND], }, 200
 
     if user_file.mimetype not in IMAGES_MIMES:
-        return {}, {'user_file': [err.IS_INCORRECT], }, 400
+        return {}, {'user_file': [err.IS_INCORRECT], }, 200
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
     file_name = str(uuid.uuid4()) + '.' + file_ext
@@ -206,7 +206,7 @@ def user_image():
 @user_auth
 def users_list(offset):
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 200
 
     users = select_all(User, offset=offset, limit=USER_SELECT_LIMIT)
     users_count = select_count(User)
