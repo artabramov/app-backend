@@ -1,24 +1,28 @@
 def create_errors():
     class AppError:
         INVALID_VALUE = 'Invalid value.'
+        EMPTY_VALUE = 'Empty value.'
         VALUE_NOT_FOUND = 'Value not found.'
+        VALUE_IS_OCCUPIED = 'Value is occupied.'
         ALREADY_EXISTS = 'Already exists.'
-        PERMISSION_DENIED = 'Permission denied.'
         ATTEMPTS_ARE_OVER = 'Attempts are over.'
+        PERMISSION_DENIED = 'Permission denied.'
+        PERMISSION_SUSPENDED = 'Permission suspended.'
+        PERMISSION_EXPIRED = 'Permission expired.'
+        FILE_ERROR = 'File error.'
 
-        NOT_FOUND = '!not found'
-        NOT_LEFT = '!not left'
-        NOT_ALLOWED = '!not allowed'
+        SERVER_ERROR = 'Internal server error.'
+        SERVICE_UNAVAILABLE = 'Service unavailable.'
 
-        IS_EMPTY = '!is empty'
-        IS_EXIST = '!is exist'
-        IS_INCORRECT = '!is incorrect'
-        IS_OCCUPIED = '!is occupied'
-        IS_EXPIRED = '!is expired'
-        IS_SUSPENDED = '!is suspended'
+        NOT_FOUND = '__not found'
+        NOT_LEFT = '__not left'
+        NOT_ALLOWED = '__not allowed'
 
-        SERVER_ERROR = '!internal server error'
-        SERVICE_UNAVAILABLE = '!service unavailable'
-        FILE_ERROR = '!file error'
+        IS_EMPTY = '__is empty'
+        IS_EXIST = '__is exist'
+        IS_INCORRECT = '__is incorrect'
+        IS_OCCUPIED = '__is occupied'
+        IS_EXPIRED = '__is expired'
+        IS_SUSPENDED = '__is suspended'
 
     return AppError()
