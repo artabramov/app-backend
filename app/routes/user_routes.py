@@ -47,13 +47,13 @@ def user_signin():
 
     user = select(User, user_login=user_login)
     if not user:
-        return {}, {'user_login': [err.NOT_FOUND], }, 200
+        return {}, {'user_login': [err.VALUE_NOT_FOUND], }, 200
 
     elif user.user_status.name == 'blank':
-        return {}, {'user_login': [err.NOT_ALLOWED], }, 200
+        return {}, {'user_login': [err.PERMISSION_DENIED], }, 200
 
     elif user.totp_attempts >= USER_TOTP_ATTEMPTS_LIMIT:
-        return {}, {'user_totp': [err.NOT_LEFT], }, 200
+        return {}, {'user_totp': [err.ATTEMPTS_ARE_OVER], }, 200
 
     elif user_totp == user.user_totp:
         qrcode_remove(user.totp_key)
@@ -64,7 +64,7 @@ def user_signin():
     else:
         totp_attempts = user.totp_attempts + 1
         update(user, totp_attempts=totp_attempts)
-        return {}, {'user_totp': [err.IS_INCORRECT], }, 200
+        return {}, {'user_totp': [err.INVALID_VALUE], }, 200
 
 
 @app.route('/token/', methods=['PUT'], endpoint='user_signout')
