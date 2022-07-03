@@ -118,6 +118,7 @@ class User(db.Model, MetaMixin):
         token_payload = {
             'user_id': self.id,
             'user_name': self.user_name,
+            'user_status': self.user_status.name,
             'token_signature': self.token_signature,
             'token_expires': self.token_expires
         }
