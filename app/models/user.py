@@ -74,7 +74,7 @@ class User(db.Model, MetaMixin):
             'user_status': self.user_status.name,
             'user_name': self.user_name,
             'meta': {
-                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
+                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link', 'user_summary']
             } 
         }
         if g.user.can_admin or g.user.id == self.id:
