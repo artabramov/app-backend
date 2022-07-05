@@ -49,6 +49,9 @@ class Volume(db.Model, MetaMixin):
             'volume_currency': self.volume_currency.name,
             'volume_title': self.volume_title,
             'volume_sum': self.volume_sum,
+            'meta': {
+                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['volume_summary']
+            } 
         }
 
 
