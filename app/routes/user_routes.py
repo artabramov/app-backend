@@ -160,6 +160,31 @@ def user_update(user_id):
     return {}, {}, 200
 
 
+@app.route('/pass/', methods=['PUT'], endpoint='user_repass')
+@app_response
+@user_auth
+def user_repass():
+    if not g.user.can_read:
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
+
+    user_pass = request.args.get('user_pass', '')
+    user_repass = request.args.get('user_repass', '')
+
+    if g.user.pass_hash != User.get_pass_hash(g.user.user_login + user_pass):
+        return {}, {'user_pass': [err.INVALID_VALUE], }, 200
+
+    elif g.user.pass_hash == User.get_pass_hash(g.user.user_login + user_repass):
+        return {}, {'user_repass': [err.INVALID_VALUE], }, 200
+
+    try:
+        UserSchema().load({'user_pass': user_repass})
+    except:
+        return {}, {'user_repass': [err.INVALID_VALUE], }, 200
+
+    update(g.user, user_pass=user_repass)
+    return {}, {}, 200
+
+
 @app.route('/image/', methods=['POST'], endpoint='user_image')
 @app_response
 @user_auth
