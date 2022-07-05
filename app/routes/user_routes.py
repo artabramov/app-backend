@@ -136,16 +136,12 @@ def user_update(user_id):
         return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     user_name = request.args.get('user_name', '')
-    user_pass = request.args.get('user_pass', '')
     user_status = request.args.get('user_status', '')
     user_summary = request.args.get('user_summary', '')
 
     user_data = {}
     if user_name:
         user_data['user_name'] = user_name
-
-    if user_pass:
-        user_data['user_pass'] = user_pass
 
     if user_status:
         if not g.user.can_admin or g.user.id == user.id:
