@@ -108,7 +108,7 @@ def user_restore():
         return {}, {'user_pass': [err.INVALID_VALUE], }, 200
 
 
-@app.route('/user/<int:user_id>', methods=['GET'], endpoint='user_select')
+@app.route('/user/<int:user_id>/', methods=['GET'], endpoint='user_select')
 @app_response
 @user_auth
 def user_select(user_id):
@@ -121,7 +121,7 @@ def user_select(user_id):
         return {}, {'user_id': [err.VALUE_NOT_FOUND]}, 200
 
 
-@app.route('/user/<int:user_id>', methods=['PUT'], endpoint='user_update')
+@app.route('/user/<int:user_id>/', methods=['PUT'], endpoint='user_update')
 @app_response
 @user_auth
 def user_update(user_id):
@@ -201,7 +201,7 @@ def user_image():
     }, {}, 201
 
 
-@app.route('/users/<int:offset>', methods=['GET'], endpoint='users_list')
+@app.route('/users/<int:offset>/', methods=['GET'], endpoint='users_list')
 @app_response
 @user_auth
 def users_list(offset):
