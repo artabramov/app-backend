@@ -25,7 +25,7 @@ class Config:
     IMAGES_PATH = '/app/images/'
     IMAGES_LINK = 'http://localhost/images/'
     IMAGES_MIMES = ['image/jpeg']
-    IMAGES_SIZE = (320, 240)
+    IMAGES_SIZE = (457, 304)
     IMAGES_QUALITY = 90
 
     QRCODES_PATH = '/app/qrcodes/'
