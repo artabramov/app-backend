@@ -17,12 +17,17 @@ def volume_insert():
 
     volume_title = request.args.get('volume_title')
     volume_currency = request.args.get('volume_currency')
+    volume_summary = request.args.get('volume_summary', '')
 
-    volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency)
+    volume_meta = {}
+    if volume_summary:
+        volume_meta['volume_summary'] = volume_summary
+
+    volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency, meta=volume_meta)
     return {'volume_id': volume.id}, {}, 201
 
 
-@app.route('/volume/<int:volume_id>', methods=['PUT'], endpoint='volume_update')
+@app.route('/volume/<int:volume_id>/', methods=['PUT'], endpoint='volume_update')
 @app_response
 @user_auth
 def volume_update(volume_id):
@@ -31,6 +36,7 @@ def volume_update(volume_id):
 
     volume_title = request.args.get('volume_title', '')
     volume_currency = request.args.get('volume_currency', '')
+    volume_summary = request.args.get('volume_summary', '')
 
     volume = select(Volume, id=volume_id)
     if not volume:
@@ -43,11 +49,15 @@ def volume_update(volume_id):
     if volume_currency:
         volume_data['volume_currency'] = volume_currency
 
-    volume = update(volume, **volume_data)
+    volume_meta = {}
+    if volume_summary:
+        volume_meta['volume_summary'] = volume_summary
+
+    volume = update(volume, **volume_data, meta=volume_meta)
     return {}, {}, 200
 
 
-@app.route('/volume/<int:volume_id>', methods=['GET'], endpoint='volume_select')
+@app.route('/volume/<int:volume_id>/', methods=['GET'], endpoint='volume_select')
 @app_response
 @user_auth
 def volume_select(volume_id):
@@ -62,7 +72,7 @@ def volume_select(volume_id):
         return {}, {'volume_id': [err.NOT_FOUND]}, 404
 
 
-@app.route('/volume/<int:volume_id>', methods=['DELETE'], endpoint='volume_delete')
+@app.route('/volume/<int:volume_id>/', methods=['DELETE'], endpoint='volume_delete')
 @app_response
 @user_auth
 def volume_delete(volume_id):
@@ -77,7 +87,7 @@ def volume_delete(volume_id):
     return {}, {}, 200
 
 
-@app.route('/volumes/<int:offset>', methods=['GET'], endpoint='volumes_list')
+@app.route('/volumes/<int:offset>/', methods=['GET'], endpoint='volumes_list')
 @app_response
 @user_auth
 def volumes_list(offset):
