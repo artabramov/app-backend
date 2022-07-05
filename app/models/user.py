@@ -117,7 +117,6 @@ class User(db.Model, MetaMixin):
     def user_token(self):
         token_payload = {
             'user_id': self.id,
-            'user_name': self.user_name,
             'token_signature': self.token_signature,
             'token_expires': self.token_expires
         }
