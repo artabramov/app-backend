@@ -138,6 +138,7 @@ def user_update(user_id):
     user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
     user_status = request.args.get('user_status', '')
+    user_summary = request.args.get('user_summary', '')
 
     user_data = {}
     if user_name:
@@ -153,7 +154,9 @@ def user_update(user_id):
         else:
             user_data['user_status'] = user_status
 
-    update(user, **user_data)
+    user_meta = {'user_summary': user_summary}
+
+    update(user, **user_data, meta=user_meta)
     return {}, {}, 200
 
 
