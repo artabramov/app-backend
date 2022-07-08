@@ -27,10 +27,7 @@ class Comment(db.Model):
             'id': self.id, 
             'created': self.created, 
             'comment_content': self.comment_content,
-            'user': {
-                'id': self.user_id,
-                'user_name': self.user.user_name,
-            }
+            'user': self.user.to_dict(),
         }
 
 

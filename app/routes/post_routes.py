@@ -3,6 +3,7 @@ from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
+from app.models.user import User
 from app.models.post import Post, PostStatus
 from app.models.post_tag import PostTag
 from app.models.volume import Volume

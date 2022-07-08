@@ -4,6 +4,7 @@ from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_sum, select_count
 from app.models.post import Post
+from app.models.user import User
 from app.models.comment import Comment
 from app.core.app_decimal import app_decimal
 

@@ -78,11 +78,11 @@ class User(db.Model, MetaMixin):
             'user_name': self.user_name,
             'user_summary': self.user_summary if self.user_summary else '',
             'meta': {
-                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link', 'user_summary']
+                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
             } 
         }
-        if g.user.can_admin or g.user.id == self.id:
-            user_data['user_login'] = self.user_login
+        #if g.user.can_admin or g.user.id == self.id:
+        #    user_data['user_login'] = self.user_login
             
         return user_data
 
@@ -161,7 +161,7 @@ def before_insert_user(mapper, connect, user):
         'user_status': user.user_status,
     }
 
-    if user.user_sumamry:
+    if user.user_summary:
         user_data['user_summary'] = user.user_summary
         
     UserSchema().load(user_data)
@@ -177,7 +177,7 @@ def before_update_user(mapper, connect, user):
         'user_status': user.user_status,
     }
 
-    if user.user_sumamry:
+    if user.user_summary:
         user_data['user_summary'] = user.user_summary
 
     if user.user_pass:

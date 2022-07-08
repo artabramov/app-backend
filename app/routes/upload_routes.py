@@ -3,13 +3,13 @@ from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all
+from app.models.user import User
 from app.models.post import Post
 from app.models.upload import Upload
 from multiprocessing import Process, Manager
 from app.core.upload_async import upload_async
 from app.core.upload_files import upload_files
 from app.core.file_delete import file_delete
-#from app.core.recount import recount
 
 
 @app.route('/uploads/', methods=['POST'], endpoint='uploads_insert')
@@ -92,3 +92,16 @@ def upload_delete(upload_id):
     file_delete(upload.upload_path)
     delete(upload)
     return {}, {}, 200
+
+
+@app.route('/uploads/<int:post_id>/', methods=['GET'], endpoint='uploads_list')
+@app_response
+@user_auth
+def uploads_list(post_id):
+    if not g.user.can_read:
+        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+
+    uploads = select_all(Upload, post_id=post_id)
+    return {
+        'uploads': [upload.to_dict() for upload in uploads],
+    }, {}, 200

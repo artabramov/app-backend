@@ -5,6 +5,8 @@ from app.mixins.meta_mixin import MetaMixin
 from app.mixins.enum_mixin import EnumMixin
 import time
 from app.core.app_decimal import app_decimal
+from app.models.user import User
+#from app.core.basic_handlers import select
 
 
 class PostStatus(EnumMixin):
@@ -65,7 +67,13 @@ class Post(db.Model, MetaMixin):
             'post_title': self.post_title,
             'post_content': self.post_content,
             'post_sum': self.post_sum,
-            'tags': [tag.tag_value for tag in self.tags]
+            'tags': [tag.tag_value for tag in self.tags],
+            'meta': {
+                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['uploads_count', 'uploads_size', 'comments_count']
+            },
+            'user': self.user.to_dict(),
+            'volume': self.volume.to_dict(),
+            'category': self.category.to_dict(),
         }
 
 

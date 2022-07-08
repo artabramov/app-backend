@@ -19,11 +19,7 @@ def volume_insert():
     volume_currency = request.args.get('volume_currency')
     volume_summary = request.args.get('volume_summary', '')
 
-    volume_meta = {}
-    if volume_summary:
-        volume_meta['volume_summary'] = volume_summary
-
-    volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_currency=volume_currency, meta=volume_meta)
+    volume = insert(Volume, user_id=g.user.id, volume_title=volume_title, volume_summary=volume_summary, volume_currency=volume_currency, meta={})
     return {'volume_id': volume.id}, {}, 201
 
 
@@ -49,11 +45,10 @@ def volume_update(volume_id):
     if volume_currency:
         volume_data['volume_currency'] = volume_currency
 
-    volume_meta = {}
     if volume_summary:
-        volume_meta['volume_summary'] = volume_summary
+        volume_data['volume_summary'] = volume_summary
 
-    volume = update(volume, **volume_data, meta=volume_meta)
+    volume = update(volume, **volume_data, meta={})
     return {}, {}, 200
 
 

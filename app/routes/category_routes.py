@@ -14,8 +14,9 @@ def category_insert():
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     category_title = request.args.get('category_title')
+    category_summary = request.args.get('category_summary', '')
 
-    category = insert(Category, user_id=g.user.id, category_title=category_title)
+    category = insert(Category, user_id=g.user.id, category_title=category_title, category_summary=category_summary)
     return {'category_id': category.id}, {}, 201
 
 
@@ -27,6 +28,7 @@ def category_update(category_id):
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     category_title = request.args.get('category_title', '')
+    category_summary = request.args.get('category_summary', '')
 
     category = select(Category, id=category_id)
     if not category:
@@ -35,6 +37,9 @@ def category_update(category_id):
     category_data = {}
     if category_title:
         category_data['category_title'] = category_title
+
+    if category_summary:
+        category_data['category_summary'] = category_summary
 
     category = update(category, **category_data)
     return {}, {}, 200
