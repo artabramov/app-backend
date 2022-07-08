@@ -23,6 +23,7 @@ class UserStatus(EnumMixin):
 class UserSchema(Schema):
     user_login = fields.Str(validate=[validate.Length(min=4, max=40), lambda x: x.isalnum()])
     user_name = fields.Str(validate=validate.Length(min=2, max=128))
+    user_summary = fields.Str(validate=validate.Length(max=255))
     user_status = EnumField(UserStatus, by_value=True)
     user_pass = fields.Str(validate=validate.Length(min=4))
 
@@ -34,6 +35,7 @@ class User(db.Model, MetaMixin):
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_login = db.Column(db.String(40), nullable=False, unique=True)
     user_name = db.Column(db.String(128), nullable=False)
+    user_summary = db.Column(db.String(255), nullable=True)
     user_status = db.Column(db.Enum(UserStatus), nullable=False)
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
@@ -52,6 +54,7 @@ class User(db.Model, MetaMixin):
     def __init__(self, user_login, user_name, user_pass):
         self.user_login = user_login
         self.user_name = user_name
+        self.user_summary = None
         self.user_status = 'blank'
         self.user_pass = user_pass
         self.pass_attempts = 0
@@ -73,6 +76,7 @@ class User(db.Model, MetaMixin):
             'created': self.created,
             'user_status': self.user_status.name,
             'user_name': self.user_name,
+            'user_summary': self.user_summary if self.user_summary else '',
             'meta': {
                 meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link', 'user_summary']
             } 
@@ -150,12 +154,17 @@ class User(db.Model, MetaMixin):
 
 @db.event.listens_for(User, 'before_insert')
 def before_insert_user(mapper, connect, user):
-    UserSchema().load({
+    user_data = {
         'user_login': user.user_login,
         'user_name': user.user_name,
         'user_pass': user.user_pass,
         'user_status': user.user_status,
-    })
+    }
+
+    if user.user_sumamry:
+        user_data['user_summary'] = user.user_summary
+        
+    UserSchema().load(user_data)
 
     if User.query.filter_by(user_login=user.user_login).first():
         raise ValidationError({'user_login': [err.ALREADY_EXISTS]})
@@ -167,6 +176,9 @@ def before_update_user(mapper, connect, user):
         'user_name': user.user_name,
         'user_status': user.user_status,
     }
+
+    if user.user_sumamry:
+        user_data['user_summary'] = user.user_summary
 
     if user.user_pass:
         user_data['user_pass'] = user.user_pass
