@@ -68,7 +68,6 @@ def categories_list():
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
     categories = select_all(Category)
-
     return {
         'categories': [category.to_dict() for category in categories],
     }, {}, 200

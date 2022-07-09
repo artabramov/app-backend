@@ -82,17 +82,14 @@ def volume_delete(volume_id):
     return {}, {}, 200
 
 
-@app.route('/volumes/<int:offset>/', methods=['GET'], endpoint='volumes_list')
+@app.route('/volumes/', methods=['GET'], endpoint='volumes_list')
 @app_response
 @user_auth
-def volumes_list(offset):
+def volumes_list():
     if not g.user.can_read:
         return {}, {'user_token': [err.NOT_ALLOWED], }, 400
 
-    volumes = select_all(Volume, offset=offset, limit=VOLUME_SELECT_LIMIT)
-    volumes_count = select_count(Volume)
-
+    volumes = select_all(Volume)
     return {
         'volumes': [volume.to_dict() for volume in volumes],
-        'volumes_count': volumes_count,
     }, {}, 200

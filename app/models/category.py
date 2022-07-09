@@ -29,6 +29,7 @@ class Category(db.Model):
             'id': self.id,
             'created': self.created,
             'user_id': self.user_id,
+            'user': {'user_name': self.user.user_name},
             'category_title': self.category_title,
             'category_summary': self.category_summary,
         }

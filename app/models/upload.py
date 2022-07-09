@@ -34,8 +34,13 @@ class Upload(db.Model):
             'id': self.id, 
             'created': self.created, 
             'user_id': self.user_id,
+            'user': {'user_name': self.user.user_name},
             'post_id': self.post_id,
-            'user': self.user.to_dict(),
+            'post': {'post_title': self.post.post_title},
+            'upload_name': self.upload_name,
+            'upload_link': self.upload_link,
+            'upload_mime': self.upload_mime,
+            'upload_size': self.upload_size,
         }
 
 

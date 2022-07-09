@@ -26,8 +26,10 @@ class Comment(db.Model):
         return {
             'id': self.id, 
             'created': self.created, 
+            'user_id': self.user_id,
+            'user': {'user_name': self.user.user_name},
+            'post_id': self.post_id,
             'comment_content': self.comment_content,
-            'user': self.user.to_dict(),
         }
 
 
