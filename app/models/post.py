@@ -61,7 +61,7 @@ class Post(db.Model, MetaMixin):
             'id': self.id,
             'created': self.created,
             'user_id': self.user_id,
-            'user': {'user_name': self.user.user_name},
+            'user': {'user_login': self.user.user_login},
             'volume_id': self.volume_id,
             'volume': {'volume_title': self.volume.volume_title},
             'category_id': self.category_id,

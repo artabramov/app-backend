@@ -27,10 +27,9 @@ IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
 @app_response
 def user_register():
     user_login = request.args.get('user_login', '').lower()
-    user_name = request.args.get('user_name', '')
     user_pass = request.args.get('user_pass', '')
 
-    user = insert(User, user_login=user_login, user_name=user_name, user_pass=user_pass)
+    user = insert(User, user_login=user_login, user_pass=user_pass)
     qrcode_make(user.totp_key, user.user_login)
 
     return {
@@ -135,14 +134,11 @@ def user_update(user_id):
     elif user.id != g.user.id and not g.user.can_admin:
         return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
-    user_name = request.args.get('user_name', '')
     user_status = request.args.get('user_status', '')
     user_summary = request.args.get('user_summary', '')
 
     user_data = {}
-    if user_name:
-        user_data['user_name'] = user_name
-
+    
     if user_status:
         if not g.user.can_admin or g.user.id == user.id:
             return {}, {'user_token': [err.PERMISSION_DENIED], }, 200

@@ -50,7 +50,7 @@ class Volume(db.Model, MetaMixin):
             'id': self.id,
             'created': self.created,
             'user_id': self.user_id,
-            'user': {'user_name': self.user.user_name},
+            'user': {'user_login': self.user.user_login},
             'volume_currency': self.volume_currency.name,
             'volume_title': self.volume_title,
             'volume_summary': self.volume_summary if self.volume_summary else '',

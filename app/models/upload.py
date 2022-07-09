@@ -34,7 +34,7 @@ class Upload(db.Model):
             'id': self.id, 
             'created': self.created, 
             'user_id': self.user_id,
-            'user': {'user_name': self.user.user_name},
+            'user': {'user_login': self.user.user_login},
             'post_id': self.post_id,
             'post': {'post_title': self.post.post_title},
             'upload_name': self.upload_name,
