@@ -16,14 +16,14 @@ COMMENT_SELECT_LIMIT = app.config['COMMENT_SELECT_LIMIT']
 @user_auth
 def comment_insert():
     if not g.user.can_edit:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     post_id = request.args.get('post_id')
     comment_content = request.args.get('comment_content')
 
     post = select(Post, id=post_id)
     if not post:
-        return {}, {'post_id': [err.NOT_FOUND], }, 400
+        return {}, {'post_id': [err.VALUE_NOT_FOUND], }, 200
 
     comment = insert(Comment, user_id=g.user.id, post_id=post.id, comment_content=comment_content)
     return {'comment_id': comment.id}, {}, 201
@@ -34,13 +34,13 @@ def comment_insert():
 @user_auth
 def comment_update(comment_id):
     if not g.user.can_edit:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     comment_content = request.args.get('comment_content')
 
     comment = select(Comment, id=comment_id)
     if not comment:
-        return {}, {'comment_id': [err.NOT_FOUND]}, 404
+        return {}, {'comment_id': [err.VALUE_NOT_FOUND]}, 200
 
     comment_data = {}
     if comment_content:
@@ -55,11 +55,11 @@ def comment_update(comment_id):
 @user_auth
 def comment_delete(comment_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     comment = select(Comment, id=comment_id)
     if not comment:
-        return {}, {'comment_id': [err.NOT_FOUND]}, 404
+        return {}, {'comment_id': [err.VALUE_NOT_FOUND]}, 200
 
     delete(comment)
     return {}, {}, 200
@@ -70,7 +70,7 @@ def comment_delete(comment_id):
 @user_auth
 def comments_list(post_id, offset):
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     comments = select_all(Comment, post_id=post_id, offset=offset, limit=COMMENT_SELECT_LIMIT)
     comments_count = select_count(Comment, post_id=post_id)

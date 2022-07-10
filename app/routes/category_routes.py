@@ -11,7 +11,7 @@ from app.core.user_auth import user_auth
 @user_auth
 def category_insert():
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     category_title = request.args.get('category_title')
     category_summary = request.args.get('category_summary', '')
@@ -25,14 +25,14 @@ def category_insert():
 @user_auth
 def category_update(category_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     category_title = request.args.get('category_title', '')
     category_summary = request.args.get('category_summary', '')
 
     category = select(Category, id=category_id)
     if not category:
-        return {}, {'category_id': [err.NOT_FOUND]}, 404
+        return {}, {'category_id': [err.VALUE_NOT_FOUND]}, 200
 
     category_data = {}
     if category_title:
@@ -50,11 +50,11 @@ def category_update(category_id):
 @user_auth
 def category_delete(category_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     category = select(Category, id=category_id)
     if not category:
-        return {}, {'category_id': [err.NOT_FOUND]}, 404
+        return {}, {'category_id': [err.VALUE_NOT_FOUND]}, 200
 
     delete(category)
     return {}, {}, 200
@@ -65,7 +65,7 @@ def category_delete(category_id):
 @user_auth
 def categories_list():
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     categories = select_all(Category)
     return {

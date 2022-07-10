@@ -17,14 +17,14 @@ from app.core.file_delete import file_delete
 @user_auth
 def uploads_insert():
     if not g.user.can_edit:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     post_id = request.args.get('post_id')
     user_files = request.files.getlist('user_files')
 
     post = select(Post, id=post_id)
     if not post:
-        return {}, {'post_id': [err.NOT_FOUND], }, 400
+        return {}, {'post_id': [err.VALUE_NOT_FOUND], }, 200
 
     uploaded_files = upload_files(user_files)
 
@@ -66,13 +66,13 @@ def uploads_insert():
 @user_auth
 def upload_update(upload_id):
     if not g.user.can_edit:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     upload_name = request.args.get('upload_name')
 
     upload = select(Upload, id=upload_id)
     if not upload:
-        return {}, {'upload_id': [err.NOT_FOUND]}, 400
+        return {}, {'upload_id': [err.VALUE_NOT_FOUND]}, 200
     
     upload = update(upload, upload_name=upload_name)
     return {}, {}, 200
@@ -83,11 +83,11 @@ def upload_update(upload_id):
 @user_auth
 def upload_delete(upload_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     upload = select(Upload, id=upload_id)
     if not upload:
-        return {}, {'upload_id': [err.NOT_FOUND]}, 400
+        return {}, {'upload_id': [err.VALUE_NOT_FOUND]}, 200
 
     file_delete(upload.upload_path)
     delete(upload)
@@ -99,7 +99,7 @@ def upload_delete(upload_id):
 @user_auth
 def uploads_list(post_id):
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     uploads = select_all(Upload, post_id=post_id)
     return {

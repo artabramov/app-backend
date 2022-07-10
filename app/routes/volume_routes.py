@@ -13,7 +13,7 @@ VOLUME_SELECT_LIMIT = app.config['VOLUME_SELECT_LIMIT']
 @user_auth
 def volume_insert():
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     volume_title = request.args.get('volume_title')
     volume_currency = request.args.get('volume_currency')
@@ -28,7 +28,7 @@ def volume_insert():
 @user_auth
 def volume_update(volume_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     volume_title = request.args.get('volume_title', '')
     volume_currency = request.args.get('volume_currency', '')
@@ -36,7 +36,7 @@ def volume_update(volume_id):
 
     volume = select(Volume, id=volume_id)
     if not volume:
-        return {}, {'volume_id': [err.NOT_FOUND]}, 404
+        return {}, {'volume_id': [err.VALUE_NOT_FOUND]}, 200
 
     volume_data = {}
     if volume_title:
@@ -57,14 +57,14 @@ def volume_update(volume_id):
 @user_auth
 def volume_select(volume_id):
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     volume = select(Volume, id=volume_id)
     if volume:
         return {'volume': volume.to_dict()}, {}, 200
 
     else:
-        return {}, {'volume_id': [err.NOT_FOUND]}, 404
+        return {}, {'volume_id': [err.VALUE_NOT_FOUND]}, 200
 
 
 @app.route('/volume/<int:volume_id>/', methods=['DELETE'], endpoint='volume_delete')
@@ -72,11 +72,11 @@ def volume_select(volume_id):
 @user_auth
 def volume_delete(volume_id):
     if not g.user.can_admin:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     volume = select(Volume, id=volume_id)
     if not volume:
-        return {}, {'volume_id': [err.NOT_FOUND]}, 404
+        return {}, {'volume_id': [err.VALUE_NOT_FOUND]}, 200
 
     delete(volume)
     return {}, {}, 200
@@ -87,7 +87,7 @@ def volume_delete(volume_id):
 @user_auth
 def volumes_list():
     if not g.user.can_read:
-        return {}, {'user_token': [err.NOT_ALLOWED], }, 400
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     volumes = select_all(Volume)
     return {

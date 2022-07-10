@@ -13,14 +13,4 @@ def create_errors():
         SERVER_ERROR = 'Internal server error.'
         SERVICE_UNAVAILABLE = 'Service unavailable.'
 
-        NOT_FOUND = '__not found'
-        NOT_LEFT = '__not left'
-        NOT_ALLOWED = '__not allowed'
-        IS_EMPTY = '__is empty'
-        IS_EXIST = '__is exist'
-        IS_INCORRECT = '__is incorrect'
-        IS_OCCUPIED = '__is occupied'
-        IS_EXPIRED = '__is expired'
-        IS_SUSPENDED = '__is suspended'
-
     return AppError()

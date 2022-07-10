@@ -11,4 +11,4 @@ class EnumMixin(Enum):
         if value in cls._member_map_:
              return cls._member_map_[value]
         else:
-            raise ValidationError({key: [err.IS_INCORRECT]})
+            raise ValidationError({key: [err.INVALID_VALUE]})
