@@ -65,7 +65,7 @@ class Post(db.Model, MetaMixin):
             'volume_id': self.volume_id,
             'volume': {'volume_title': self.volume.volume_title},
             'category_id': self.category_id,
-            'category': {'category_title': self.category.category_title},
+            'category': {'category_title': self.category.category_title if self.category is not None else ''},
             'post_status': self.post_status.name,
             'post_title': self.post_title,
             'post_content': self.post_content,
