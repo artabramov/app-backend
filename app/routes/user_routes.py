@@ -23,6 +23,19 @@ IMAGES_SIZE =  app.config['IMAGES_SIZE']
 IMAGES_QUALITY =  app.config['IMAGES_QUALITY']
 
 
+def to_dict(user):
+    return  {
+        'id': user.id,
+        'created': user.created,
+        'user_status': user.user_status.name,
+        'user_login': user.user_login,
+        'user_summary': user.user_summary if user.user_summary else '',
+        'meta': {
+            meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']
+        } 
+    }
+
+
 @app.route('/user/', methods=['POST'], endpoint='user_register')
 @app_response
 def user_register():
@@ -114,7 +127,7 @@ def user_select(user_id):
     user = select(User, id=user_id)
 
     if user:
-        return {'user': user.to_dict()}, {}, 200
+        return {'user': to_dict(user)}, {}, 200
 
     else:
         return {}, {'user_id': [err.VALUE_NOT_FOUND]}, 200
@@ -233,6 +246,6 @@ def users_list(offset):
     users_count = select_count(User)
 
     return {
-        'users': [user.to_dict() for user in users],
+        'users': [to_dict(user) for user in users],
         'users_count': users_count,
     }, {}, 200

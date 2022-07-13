@@ -7,6 +7,7 @@ from marshmallow_enum import EnumField
 import random, string, json
 import base64, hashlib, time, pyotp
 from app import err
+from sqlalchemy.orm import backref
 
 
 USER_PASS_HASH_SALT = app.config['USER_PASS_HASH_SALT']
@@ -44,7 +45,7 @@ class User(db.Model, MetaMixin):
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     meta = db.relationship('UserMeta', backref='user', lazy='subquery')
-    volumes = db.relationship('Volume', backref='user', lazy='subquery')
+    volumes = db.relationship('Volume', lazy='subquery', cascade='all, delete-orphan', backref=backref('user', cascade='delete'), single_parent=True)
     categories = db.relationship('Category', backref='user', lazy='subquery')
     posts = db.relationship('Post', backref='user', lazy='subquery')
     comments = db.relationship('Comment', backref='user', lazy='subquery')
@@ -68,21 +69,6 @@ class User(db.Model, MetaMixin):
         else:
             super().__setattr__(name, value)
 
-    def to_dict(self):
-        user_data = {
-            'id': self.id,
-            'created': self.created,
-            'user_status': self.user_status.name,
-            'user_login': self.user_login,
-            'user_summary': self.user_summary if self.user_summary else '',
-            'meta': {
-                meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['image_link']
-            } 
-        }
-        #if g.user.can_admin or g.user.id == self.id:
-        #    user_data['user_login'] = self.user_login
-            
-        return user_data
 
     @property
     def user_pass(self):

@@ -22,16 +22,6 @@ class Comment(db.Model):
         self.post_id = post_id
         self.comment_content = comment_content
 
-    def to_dict(self):
-        return {
-            'id': self.id, 
-            'created': self.created, 
-            'user_id': self.user_id,
-            'user': {'user_login': self.user.user_login},
-            'post_id': self.post_id,
-            'comment_content': self.comment_content,
-        }
-
 
 @db.event.listens_for(Comment, 'before_insert')
 def before_insert_comment(mapper, connect, comment):

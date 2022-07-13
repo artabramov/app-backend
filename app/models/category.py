@@ -24,16 +24,6 @@ class Category(db.Model):
         self.category_title = category_title
         self.category_summary = category_summary
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'created': self.created,
-            'user_id': self.user_id,
-            'user': {'user_login': self.user.user_login},
-            'category_title': self.category_title,
-            'category_summary': self.category_summary,
-        }
-
 
 @db.event.listens_for(Category, 'before_insert')
 def before_insert_category(mapper, connect, category):

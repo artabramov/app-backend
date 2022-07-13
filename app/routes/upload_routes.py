@@ -12,6 +12,23 @@ from app.core.upload_files import upload_files
 from app.core.file_delete import file_delete
 
 
+def to_dict(upload):
+    user = select(User, id=upload.user_id)
+    post = select(Post, id=upload.post_id)
+    return {
+        'id': upload.id, 
+        'created': upload.created, 
+        'user_id': upload.user_id,
+        'user': {'user_login': user.user_login},
+        'post_id': upload.post_id,
+        'post': {'post_title': post.post_title},
+        'upload_name': upload.upload_name,
+        'upload_link': upload.upload_link,
+        'upload_mime': upload.upload_mime,
+        'upload_size': upload.upload_size,
+    }
+
+
 @app.route('/uploads/', methods=['POST'], endpoint='uploads_insert')
 @app_response
 @user_auth
@@ -61,7 +78,7 @@ def uploads_insert():
     }, errors, 201
 
 
-@app.route('/upload/<int:upload_id>', methods=['PUT'], endpoint='upload_update')
+@app.route('/upload/<int:upload_id>/', methods=['PUT'], endpoint='upload_update')
 @app_response
 @user_auth
 def upload_update(upload_id):
@@ -103,5 +120,5 @@ def uploads_list(post_id):
 
     uploads = select_all(Upload, post_id=post_id)
     return {
-        'uploads': [upload.to_dict() for upload in uploads],
+        'uploads': [to_dict(upload) for upload in uploads],
     }, {}, 200

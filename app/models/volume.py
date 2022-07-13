@@ -45,19 +45,6 @@ class Volume(db.Model, MetaMixin):
         else:
             super().__setattr__(name, value)
 
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'created': self.created,
-            'user_id': self.user_id,
-            'user': {'user_login': self.user.user_login},
-            'volume_currency': self.volume_currency.name,
-            'volume_title': self.volume_title,
-            'volume_summary': self.volume_summary if self.volume_summary else '',
-            'volume_sum': self.volume_sum,
-            'meta': {meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['posts_count', 'uploads_count', 'uploads_size']}, 
-        }
-
 
 @db.event.listens_for(Volume, 'before_insert')
 def before_insert_volume(mapper, connect, volume):

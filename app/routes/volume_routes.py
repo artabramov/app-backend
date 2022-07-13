@@ -4,8 +4,23 @@ from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.models.volume import Volume #, VolumeCurrency
 from app.core.user_auth import user_auth
+from app.models.user import User
 
 VOLUME_SELECT_LIMIT = app.config['VOLUME_SELECT_LIMIT']
+
+def to_dict(volume):
+    user = select(User, id=volume.user_id)
+    return {
+        'id': volume.id,
+        'created': volume.created,
+        'user_id': volume.user_id,
+        'user': {'user_login': user.user_login},
+        'volume_currency': volume.volume_currency.name,
+        'volume_title': volume.volume_title,
+        'volume_summary': volume.volume_summary if volume.volume_summary else '',
+        'volume_sum': volume.volume_sum,
+        'meta': {meta.meta_key: meta.meta_value for meta in volume.meta if meta.meta_key in ['posts_count', 'uploads_count', 'uploads_size']}, 
+    }
 
 
 @app.route('/volume/', methods=['POST'], endpoint='volume_insert')
@@ -61,7 +76,7 @@ def volume_select(volume_id):
 
     volume = select(Volume, id=volume_id)
     if volume:
-        return {'volume': volume.to_dict()}, {}, 200
+        return {'volume': to_dict(volume)}, {}, 200
 
     else:
         return {}, {'volume_id': [err.VALUE_NOT_FOUND]}, 200
@@ -91,5 +106,5 @@ def volumes_list():
 
     volumes = select_all(Volume)
     return {
-        'volumes': [volume.to_dict() for volume in volumes],
+        'volumes': [to_dict(volume) for volume in volumes],
     }, {}, 200

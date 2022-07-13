@@ -38,8 +38,8 @@ class Post(db.Model, MetaMixin):
 
     meta = db.relationship('PostMeta', backref='post', cascade='all,delete', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
-    comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
-    uploads = db.relationship('Upload', backref='post', lazy='noload')
+    comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='subquery')
+    uploads = db.relationship('Upload', backref='post', lazy='subquery')
 
     def __init__(self, user_id, volume_id, category_id, post_status, post_title, post_content, post_sum):
         self.user_id = user_id
@@ -55,24 +55,6 @@ class Post(db.Model, MetaMixin):
             super().__setattr__('post_status', PostStatus.get_enum(post_status=value))
         else:
             super().__setattr__(name, value)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'created': self.created,
-            'user_id': self.user_id,
-            'user': {'user_login': self.user.user_login},
-            'volume_id': self.volume_id,
-            'volume': {'volume_title': self.volume.volume_title},
-            'category_id': self.category_id,
-            'category': {'category_title': self.category.category_title if self.category is not None else ''},
-            'post_status': self.post_status.name,
-            'post_title': self.post_title,
-            'post_content': self.post_content,
-            'post_sum': self.post_sum,
-            'tags': [tag.tag_value for tag in self.tags],
-            'meta': {meta.meta_key: meta.meta_value for meta in self.meta if meta.meta_key in ['comments_count', 'uploads_count', 'uploads_size']},
-        }
 
 
 @db.event.listens_for(Post, 'before_insert')

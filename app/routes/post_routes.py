@@ -13,6 +13,28 @@ from marshmallow import ValidationError
 POST_SELECT_LIMIT = app.config['POST_SELECT_LIMIT']
 
 
+def to_dict(post):
+    user = select(User, id=post.user_id)
+    volume = select(Volume, id=post.volume_id)
+    category = select(Category, id=post.category_id) if post.category_id else None
+    return {
+        'id': post.id,
+        'created': post.created,
+        'user_id': post.user_id,
+        'user': {'user_login': user.user_login},
+        'volume_id': post.volume_id,
+        'volume': {'volume_title': volume.volume_title},
+        'category_id': post.category_id if post.category_id else 0,
+        'category': {'category_title': category.category_title if category is not None else ''},
+        'post_status': post.post_status.name,
+        'post_title': post.post_title,
+        'post_content': post.post_content,
+        'post_sum': post.post_sum,
+        'tags': [tag.tag_value for tag in post.tags],
+        'meta': {meta.meta_key: meta.meta_value for meta in post.meta if meta.meta_key in ['comments_count', 'uploads_count', 'uploads_size']},
+    }
+
+
 @app.route('/post/', methods=['POST'], endpoint='post_insert')
 @app_response
 @user_auth
@@ -44,7 +66,7 @@ def post_insert():
     return {'post_id': post.id}, {}, 201
 
 
-@app.route('/post/<int:post_id>', methods=['PUT'], endpoint='post_update')
+@app.route('/post/<int:post_id>/', methods=['PUT'], endpoint='post_update')
 @app_response
 @user_auth
 def post_update(post_id):
@@ -81,7 +103,7 @@ def post_update(post_id):
     return {}, {}, 200
 
 
-@app.route('/post/<int:post_id>', methods=['GET'], endpoint='post_select')
+@app.route('/post/<int:post_id>/', methods=['GET'], endpoint='post_select')
 @app_response
 @user_auth
 def post_select(post_id):
@@ -90,13 +112,13 @@ def post_select(post_id):
 
     post = select(Post, id=post_id)
     if post:
-        return {'post': post.to_dict()}, {}, 200
+        return {'post': to_dict(post)}, {}, 200
 
     else:
         return {}, {'post_id': [err.VALUE_NOT_FOUND]}, 200
 
 
-@app.route('/post/<int:post_id>', methods=['DELETE'], endpoint='post_delete')
+@app.route('/post/<int:post_id>/', methods=['DELETE'], endpoint='post_delete')
 @app_response
 @user_auth
 def post_delete(post_id):
@@ -140,6 +162,6 @@ def posts_list(offset):
         posts_count = select_count(Post, tag_value=post_tag)
 
     return {
-        'posts': [post.to_dict() for post in posts],
+        'posts': [to_dict(post) for post in posts],
         'posts_count': posts_count,
     }, {}, 200

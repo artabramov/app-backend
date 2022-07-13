@@ -3,7 +3,20 @@ from app import app, err
 from app.core.app_response import app_response
 from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
 from app.models.category import Category
+from app.models.user import User
 from app.core.user_auth import user_auth
+
+
+def to_dict(category):
+    user = select(User, id=category.user_id)
+    return {
+        'id': category.id,
+        'created': category.created,
+        'user_id': category.user_id,
+        'user': {'user_login': user.user_login},
+        'category_title': category.category_title,
+        'category_summary': category.category_summary,
+    }
 
 
 @app.route('/category/', methods=['POST'], endpoint='category_insert')
@@ -20,7 +33,7 @@ def category_insert():
     return {'category_id': category.id}, {}, 201
 
 
-@app.route('/category/<int:category_id>', methods=['PUT'], endpoint='category_update')
+@app.route('/category/<int:category_id>/', methods=['PUT'], endpoint='category_update')
 @app_response
 @user_auth
 def category_update(category_id):
@@ -45,7 +58,7 @@ def category_update(category_id):
     return {}, {}, 200
 
 
-@app.route('/category/<int:category_id>', methods=['DELETE'], endpoint='category_delete')
+@app.route('/category/<int:category_id>/', methods=['DELETE'], endpoint='category_delete')
 @app_response
 @user_auth
 def category_delete(category_id):
@@ -69,5 +82,5 @@ def categories_list():
 
     categories = select_all(Category)
     return {
-        'categories': [category.to_dict() for category in categories],
+        'categories': [to_dict(category) for category in categories],
     }, {}, 200

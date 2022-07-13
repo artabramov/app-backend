@@ -11,6 +11,18 @@ from app.core.app_decimal import app_decimal
 COMMENT_SELECT_LIMIT = app.config['COMMENT_SELECT_LIMIT']
 
 
+def to_dict(comment):
+    user = select(User, id=comment.user_id)
+    return {
+        'id': comment.id, 
+        'created': comment.created, 
+        'user_id': comment.user_id,
+        'user': {'user_login': user.user_login},
+        'post_id': comment.post_id,
+        'comment_content': comment.comment_content,
+    }
+    
+
 @app.route('/comment/', methods=['POST'], endpoint='comment_insert')
 @app_response
 @user_auth
@@ -50,7 +62,7 @@ def comment_update(comment_id):
     return {}, {}, 200
 
 
-@app.route('/comment/<int:comment_id>', methods=['DELETE'], endpoint='comment_delete')
+@app.route('/comment/<int:comment_id>/', methods=['DELETE'], endpoint='comment_delete')
 @app_response
 @user_auth
 def comment_delete(comment_id):
@@ -76,7 +88,7 @@ def comments_list(post_id, offset):
     comments_count = select_count(Comment, post_id=post_id)
 
     return {
-        'comments': [comment.to_dict() for comment in comments],
+        'comments': [to_dict(comment) for comment in comments],
         'comments_count': comments_count,
     }, {}, 200
 

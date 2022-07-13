@@ -29,21 +29,6 @@ class Upload(db.Model):
         self.upload_size = upload_size
 
 
-    def to_dict(self):
-        return {
-            'id': self.id, 
-            'created': self.created, 
-            'user_id': self.user_id,
-            'user': {'user_login': self.user.user_login},
-            'post_id': self.post_id,
-            'post': {'post_title': self.post.post_title},
-            'upload_name': self.upload_name,
-            'upload_link': self.upload_link,
-            'upload_mime': self.upload_mime,
-            'upload_size': self.upload_size,
-        }
-
-
 @db.event.listens_for(Upload, 'before_insert')
 def before_insert_upload(mapper, connect, upload):
     UploadSchema().load({
