@@ -50,7 +50,7 @@ def upload_async(user_file, uploaded_files, allowed_mimes=[]):
 
     except Exception as e:
         log.error(e)
-        file_data['error'] = 'Internal server error'
+        file_data['error'] = str(e)
         uploaded_files.append(file_data)
         return
 

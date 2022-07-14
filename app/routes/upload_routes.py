@@ -1,5 +1,5 @@
 from flask import g, request
-from app import app, err, log
+from app import app, err
 from app.core.app_response import app_response
 from app.core.user_auth import user_auth
 from app.core.basic_handlers import insert, update, delete, select, select_all
@@ -43,10 +43,7 @@ def uploads_insert():
     if not post:
         return {}, {'post_id': [err.VALUE_NOT_FOUND], }, 200
 
-    try:
-        uploaded_files = upload_files(user_files)
-    except Exception as e:
-        log.error(e)
+    uploaded_files = upload_files(user_files)
 
     uploads, errors = [], {}
     for uploaded_file in uploaded_files:
