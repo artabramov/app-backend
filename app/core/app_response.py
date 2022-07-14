@@ -31,7 +31,8 @@ def app_response(func):
         except Exception as e:
             log.error(e)
             db.session.rollback()
-            errors, http_code = {'app': [err.SERVER_ERROR]}, 500
+            #errors, http_code = {'app': [err.SERVER_ERROR]}, 500
+            errors, http_code = {'app': [str(e)]}, 500
 
         response = make_response(
             jsonify({
