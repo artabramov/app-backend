@@ -32,7 +32,7 @@ def app_response(func):
             log.error(e)
             db.session.rollback()
             #errors, http_code = {'app': [err.SERVER_ERROR]}, 500
-            errors, http_code = {'app': [str(e), repr(e), 'fuck']}, 500
+            errors, http_code = {'app': [str(e), repr(e)]}, 500
 
         response = make_response(
             jsonify({

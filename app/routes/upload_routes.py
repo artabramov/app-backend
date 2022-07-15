@@ -37,7 +37,10 @@ def uploads_insert():
         return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
     post_id = request.args.get('post_id')
-    user_files = request.files.getlist('user_files')
+    try:
+        user_files = request.files.getlist('user_files')
+    except:
+        return {}, {'user_files': [err.VALUE_NOT_FOUND]}, 200
 
     post = select(Post, id=post_id)
     if not post:

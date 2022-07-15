@@ -18,6 +18,7 @@ class Config:
     APP_PATH = '/app/'
     APP_LINK = 'http://localhost/'
 
+    UPLOADS_ASYNC = False
     UPLOADS_PATH = '/app/uploads/'
     UPLOADS_LINK = 'http://localhost/uploads/'
     UPLOADS_MIMES = ['image/jpeg']
