@@ -160,8 +160,7 @@ def user_update(user_id):
         else:
             user_data['user_status'] = user_status
 
-    if user_summary:
-        user_data['user_summary'] = user_summary
+    user_data['user_summary'] = user_summary
 
     update(user, **user_data, meta={})
     return {}, {}, 200
