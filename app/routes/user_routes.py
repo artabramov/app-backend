@@ -30,8 +30,9 @@ def to_dict(user):
         'user_status': user.user_status.name,
         'user_login': user.user_login,
         'user_summary': user.user_summary if user.user_summary else '',
+        'user_image': os.path.join(IMAGES_LINK, user.user_image) if user.user_image else '',
         'meta': {
-            meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in ['image_link']
+            meta.meta_key: meta.meta_value for meta in user.meta if meta.meta_key in []
         } 
     }
 
@@ -198,6 +199,11 @@ def user_image():
     if not g.user.can_read:
         return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
 
+    if g.user.user_image:
+        user_image = os.path.join(IMAGES_PATH, g.user.user_image)
+        if os.path.isfile(user_image):
+            os.remove(user_image)
+
     try:
         user_file = request.files.getlist('user_file')[0]
     except:
@@ -211,27 +217,20 @@ def user_image():
 
     file_ext = user_file.filename.rsplit('.', 1)[1].lower()
     file_name = str(uuid.uuid4()) + '.' + file_ext
-    file_path = os.path.join(IMAGES_PATH, file_name)
-    file_link = IMAGES_LINK + file_name
-    user_file.save(file_path)
+    #file_path = os.path.join(IMAGES_PATH, file_name)
+    #file_link = IMAGES_LINK + file_name
+    user_image = os.path.join(IMAGES_PATH, file_name)
+    user_file.save(user_image)
 
-    if g.user.has_meta_key('image_path'):
-        image_path = g.user.get_meta_value('image_path')
-        if os.path.isfile(image_path):
-            os.remove(image_path)
-
-    image = Image.open(file_path)
+    image = Image.open(user_image)
     image.thumbnail(IMAGES_SIZE, Image.ANTIALIAS)
-    image.save(file_path, quality=IMAGES_QUALITY)
+    image.save(user_image, quality=IMAGES_QUALITY)
 
-    user_meta = {
-        'image_path': file_path,
-        'image_link': file_link,
-    }
-    update(g.user, meta=user_meta)
+    g.user.user_image = file_name
+    update(g.user, meta={})
 
     return {
-        'image_link': file_link,
+        'user_image': os.path.join(IMAGES_LINK, file_name),
     }, {}, 201
 
 

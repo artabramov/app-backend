@@ -43,6 +43,7 @@ class User(db.Model, MetaMixin):
     totp_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
+    user_image = db.Column(db.String(255), nullable=True)
 
     meta = db.relationship('UserMeta', backref='user', lazy='subquery')
     volumes = db.relationship('Volume', lazy='subquery', cascade='all, delete-orphan', backref=backref('user', cascade='delete'), single_parent=True)
@@ -62,6 +63,7 @@ class User(db.Model, MetaMixin):
         self.totp_attempts = 0
         self.token_signature = self.generate_token_signature()
         self.token_expires = time.time() + USER_TOKEN_EXPIRATION_TIME
+        self.user_image = None
 
     def __setattr__(self, name, value):
         if name == 'user_status':
