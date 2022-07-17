@@ -34,8 +34,9 @@ class User(db.Model, MetaMixin):
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_login = db.Column(db.String(40), nullable=False, unique=True)
-    user_summary = db.Column(db.String(255), nullable=True)
     user_status = db.Column(db.Enum(UserStatus), nullable=False)
+    user_summary = db.Column(db.String(255), nullable=True)
+    user_image = db.Column(db.String(255), nullable=True)
     pass_hash = db.Column(db.String(128), nullable=False, index=True)
     pass_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     pass_suspended = db.Column(db.Integer(), nullable=False, default=0)
@@ -43,7 +44,6 @@ class User(db.Model, MetaMixin):
     totp_attempts = db.Column(db.SmallInteger(), nullable=False, default=0)
     token_signature = db.Column(db.String(128), nullable=False, index=True, unique=True)
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
-    user_image = db.Column(db.String(255), nullable=True)
 
     meta = db.relationship('UserMeta', backref='user', lazy='subquery')
     volumes = db.relationship('Volume', lazy='subquery', cascade='all, delete-orphan', backref=backref('user', cascade='delete'), single_parent=True)
