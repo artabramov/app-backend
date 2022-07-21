@@ -12,7 +12,7 @@ class Upload(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
-    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id', ondelete='CASCADE'), index=True)
     upload_name = db.Column(db.String(255), nullable=False, index=True)
     upload_path = db.Column(db.String(255), nullable=False, index=True, unique=True)
     upload_link = db.Column(db.String(255), nullable=False, index=True, unique=True)

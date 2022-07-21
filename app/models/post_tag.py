@@ -13,7 +13,7 @@ class PostTag(db.Model):
     _parent = 'post_id'
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
-    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id', ondelete='CASCADE'), index=True)
     tag_value = db.Column(db.String(255), nullable=False, index=True)
 
     def __init__(self, post_id, tag_value):

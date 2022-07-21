@@ -15,7 +15,7 @@ class PostMeta(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
-    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id', ondelete='CASCADE'), index=True)
     meta_key = db.Column(db.String(40), index=True, nullable=False)
     meta_value = db.Column(db.String(255), nullable=True)
 

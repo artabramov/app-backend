@@ -29,7 +29,7 @@ class Post(db.Model, MetaMixin):
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
-    volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id'), index=True)
+    volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id', ondelete='CASCADE'), index=True)
     category_id = db.Column(db.BigInteger, db.ForeignKey('categories.id', ondelete='SET NULL'), index=True)
     post_status = db.Column(db.Enum(PostStatus), nullable=False, index=True)
     post_title = db.Column(db.String(255), nullable=False, index=True)
@@ -38,7 +38,7 @@ class Post(db.Model, MetaMixin):
 
     meta = db.relationship('PostMeta', backref='post', cascade='all,delete', lazy='subquery')
     tags = db.relationship('PostTag', backref='post', cascade='all,delete', lazy='subquery')
-    comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='subquery')
+    comments = db.relationship('Comment', backref='post', cascade='all,delete', lazy='noload')
     uploads = db.relationship('Upload', backref='post', lazy='subquery')
 
     def __init__(self, user_id, volume_id, category_id, post_status, post_title, post_content, post_sum):

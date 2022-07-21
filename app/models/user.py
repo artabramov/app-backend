@@ -46,11 +46,11 @@ class User(db.Model, MetaMixin):
     token_expires = db.Column(db.Integer(), nullable=False, default=0)
 
     meta = db.relationship('UserMeta', backref='user', lazy='subquery')
-    volumes = db.relationship('Volume', lazy='subquery', backref='user', single_parent=True)
-    categories = db.relationship('Category', backref='user', lazy='subquery')
-    posts = db.relationship('Post', backref='user', lazy='subquery')
-    comments = db.relationship('Comment', backref='user', lazy='subquery')
-    uploads = db.relationship('Upload', backref='user', lazy='subquery')
+    volumes = db.relationship('Volume', backref='user', lazy='noload', cascade='all,delete') # , single_parent=True
+    categories = db.relationship('Category', backref='user', lazy='noload')
+    posts = db.relationship('Post', backref='user', lazy='noload')
+    comments = db.relationship('Comment', backref='user', lazy='noload')
+    uploads = db.relationship('Upload', backref='user', lazy='noload')
 
     def __init__(self, user_login, user_pass):
         self.user_login = user_login

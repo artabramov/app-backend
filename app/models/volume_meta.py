@@ -16,7 +16,7 @@ class VolumeMeta(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     updated = db.Column(db.Integer(), nullable=False, default=0, onupdate=lambda: int(time.time()))
-    volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id'), index=True)
+    volume_id = db.Column(db.BigInteger, db.ForeignKey('volumes.id', ondelete='CASCADE'), index=True)
     meta_key = db.Column(db.String(40), index=True, nullable=False)
     meta_value = db.Column(db.String(255), nullable=True)
 

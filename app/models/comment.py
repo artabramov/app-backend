@@ -14,7 +14,7 @@ class Comment(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     created = db.Column(db.Integer(), nullable=False, default=lambda: int(time.time()))
     user_id = db.Column(db.BigInteger, db.ForeignKey('users.id'), index=True)
-    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id'), index=True)
+    post_id = db.Column(db.BigInteger, db.ForeignKey('posts.id', ondelete='CASCADE'), index=True)
     comment_content = db.Column(db.Text(), nullable=False)
 
     def __init__(self, user_id, post_id, comment_content):
