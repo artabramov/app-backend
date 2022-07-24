@@ -33,6 +33,21 @@ def category_insert():
     return {'category_id': category.id}, {}, 201
 
 
+@app.route('/category/<int:category_id>/', methods=['GET'], endpoint='category_select')
+@app_response
+@user_auth
+def category_select(category_id):
+    if not g.user.can_read:
+        return {}, {'user_token': [err.PERMISSION_DENIED], }, 200
+
+    category = select(Category, id=category_id)
+    if category:
+        return {'category': to_dict(category)}, {}, 200
+
+    else:
+        return {}, {'category_id': [err.VALUE_NOT_FOUND]}, 200
+
+
 @app.route('/category/<int:category_id>/', methods=['PUT'], endpoint='category_update')
 @app_response
 @user_auth
