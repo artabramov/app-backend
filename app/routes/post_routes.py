@@ -77,6 +77,8 @@ def post_update(post_id):
     if not post:
         return {}, {'post_id': [err.VALUE_NOT_FOUND]}, 200
 
+    volume_id = request.args.get('volume_id')
+    category_id = request.args.get('category_id')
     post_status = request.args.get('post_status')
     post_title = request.args.get('post_title')
     post_content = request.args.get('post_content')
@@ -84,6 +86,18 @@ def post_update(post_id):
     post_tags = PostTag.crop(request.args.get('post_tags'))
 
     post_data = {}
+    if volume_id:
+        volume = select(Volume, id=volume_id)
+        if not volume:
+            return {}, {'volume_id': [err.VALUE_NOT_FOUND], }, 200
+        post_data['volume_id'] = volume_id
+
+    if category_id:
+        category = select(Category, id=category_id)
+        if not category:
+            category_id = None
+        post_data['category_id'] = category_id
+
     if post_status:
         post_data['post_status'] = post_status
     
