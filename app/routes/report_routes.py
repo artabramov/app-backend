@@ -1,7 +1,7 @@
 from flask import g, request
 from app import app, err
 from app.core.app_response import app_response
-from app.core.basic_handlers import insert, update, delete, select, select_all, select_count
+from app.core.basic_handlers import insert, update, delete, select, select_all, select_count, select_posts_data, select_categories_data
 from app.core.user_auth import user_auth
 from app.models.volume import Volume
 
@@ -20,6 +20,8 @@ def report_select():
         return {}, {'volume_id': [err.VALUE_NOT_FOUND]}, 200
 
     else:
+        posts_data = select_posts_data(volume_id)
+        categories_data = select_categories_data(volume_id)
         return {
             'volume': {
                 'id': volume.id,
@@ -30,6 +32,8 @@ def report_select():
                 'volume_summary': volume.volume_summary if volume.volume_summary else '',
                 'volume_sum': volume.volume_sum,
                 'meta': {meta.meta_key: meta.meta_value for meta in volume.meta if meta.meta_key in ['posts_count', 'uploads_count', 'uploads_size']}, 
-            }
+            },
+            'posts_data': posts_data,
+            'categories_data': categories_data,
         }, {}, 200
 

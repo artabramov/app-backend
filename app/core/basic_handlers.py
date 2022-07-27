@@ -1,7 +1,8 @@
 from flask import g
+import datetime
 
 from app import db, cache
-from sqlalchemy import asc, desc, column
+from sqlalchemy import asc, desc, column, text
 from sqlalchemy.sql import func
 
 from app.models.upload import Upload
@@ -265,3 +266,68 @@ def recount(obj):
                 'uploads_count': str(volume_uploads_count),
                 'uploads_size': str(volume_uploads_size),
             })
+
+
+def select_posts_data(volume_id):
+    sql = text("SELECT sum(post_sum), date(to_timestamp(created)) as date FROM posts WHERE volume_id=" + volume_id + " AND post_status='done' AND post_sum>0 AND date(to_timestamp(created)) > current_date - interval '30' day GROUP BY date ORDER BY date ASC")
+    result = db.engine.execute(sql)
+    incomes = {row[1].strftime('%d.%m.%Y'):row[0] for row in result}
+
+    sql = text("SELECT sum(post_sum), date(to_timestamp(created)) as date FROM posts WHERE volume_id=" + volume_id + " AND post_status='done' AND post_sum<0 AND date(to_timestamp(created)) > current_date - interval '30' day GROUP BY date ORDER BY date ASC")
+    result = db.engine.execute(sql)
+    outcomes = {row[1].strftime('%d.%m.%Y'):row[0] for row in result}
+
+    tod = datetime.datetime.now()
+    labels = [(tod - datetime.timedelta(days = x)).strftime('%d.%m.%Y') for x in reversed(range(60))]
+    income_data, outcome_data = [], []
+    for label in labels:
+        income_data.append(incomes[label] if label in incomes else 0)
+        outcome_data.append(outcomes[label] if label in outcomes else 0)
+
+    #for row in results:
+    #    if row['date'] in incomes:
+    #        row['income'] = incomes[row['date']]
+    #    if row['date'] in outcomes:
+    #        row['outcome'] = outcomes[row['date']]
+
+    return {
+        'labels': labels,
+        'income_data': income_data,
+        'outcome_data': outcome_data,
+    }
+
+
+def select_categories_data(volume_id):
+    income_sql = text("SELECT categories.category_title AS category_title, sum(post_sum) FROM posts LEFT JOIN categories ON categories.id=posts.category_id WHERE volume_id=" + volume_id + " AND post_status='done' AND post_sum>0 GROUP BY category_title")
+    income_result = db.engine.execute(income_sql)
+    income_labels, income_data = [], []
+    for row in income_result:
+        income_labels.append(row[0])
+        income_data.append(row[1])
+    income_sum = sum(income_data)
+    for k, v in enumerate(income_data):
+        if v != 0:
+            income_data[k] = round(100 / (income_sum / v), 2)
+
+    outcome_sql = text("SELECT categories.category_title AS category_title, sum(post_sum) FROM posts LEFT JOIN categories ON categories.id=posts.category_id WHERE volume_id=" + volume_id + " AND post_status='done' AND post_sum<0 GROUP BY category_title")
+    outcome_result = db.engine.execute(outcome_sql)
+    outcome_labels, outcome_data = [], []
+    for row in outcome_result:
+        outcome_labels.append(row[0])
+        outcome_data.append(row[1])
+    outcome_sum = sum(outcome_data)
+    for k, v in enumerate(outcome_data):
+        if v != 0:
+            outcome_data[k] = round(100 / (outcome_sum / v), 2)
+
+    return {
+        'income': {
+            'data': income_data,
+            'labels': income_labels,
+        },
+        'outcome': {
+            'data': outcome_data,
+            'labels': outcome_labels,
+        }
+    }
+
