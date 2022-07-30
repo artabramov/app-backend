@@ -23,7 +23,7 @@ def to_dict(post):
         'user_id': post.user_id,
         'user': {'user_login': user.user_login},
         'volume_id': post.volume_id,
-        'volume': {'volume_title': volume.volume_title, 'volume_currency': volume.volume_currency},
+        'volume': {'volume_title': volume.volume_title, 'volume_currency': volume.volume_currency.name},
         'category_id': post.category_id if post.category_id else 0,
         'category': {'category_title': category.category_title if category is not None else ''},
         'post_status': post.post_status.name,
