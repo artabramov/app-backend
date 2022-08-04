@@ -29,5 +29,3 @@ def before_first_request():
 
 from app.routes import user_routes, volume_routes, category_routes, post_routes, comment_routes, upload_routes, report_routes, hi_routes
 
-
-
